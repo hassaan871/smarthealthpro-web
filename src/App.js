@@ -1,7 +1,12 @@
+import Login from "./components/authentication/login/Login";
+import SignUp from "./components/authentication/signup/SignUp";
+
+
 function App() {
   return (
     <div>
-      <h1>Let's get started</h1>
+      {/* <Login/> */}
+      <SignUp/>
     </div>
   );
 }
