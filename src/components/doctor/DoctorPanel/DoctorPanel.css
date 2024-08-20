@@ -1,0 +1,15 @@
+/* DoctorPanel.css */
+
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .patient-details-container {
+    width: 40%;
+  }
+  
+  .chat-container {
+    width: 60%;
+  }
+  
