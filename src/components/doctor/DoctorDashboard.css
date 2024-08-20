@@ -1,0 +1,92 @@
+/* DoctorDashboard.css */
+
+.dashboard-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #f4f4f4;
+  }
+  
+  .dashboard-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 32px;
+    color: #333;
+  }
+  
+  .section {
+    margin-bottom: 30px;
+  }
+  
+  .section-title {
+    font-size: 24px;
+    color: #007bff;
+    margin-bottom: 15px;
+  }
+  
+  .appointment-list,
+  .client-list,
+  .request-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .appointment-item,
+  .client-item,
+  .request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  .appointment-client,
+  .client-name,
+  .request-client {
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .appointment-date,
+  .appointment-time,
+  .client-contact,
+  .request-date,
+  .request-time {
+    color: #555;
+  }
+  
+  .accept-button,
+  .decline-button {
+    padding: 5px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .accept-button {
+    background-color: #28a745;
+    color: white;
+    margin-right: 5px;
+  }
+  
+  .decline-button {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .accept-button:hover {
+    background-color: #218838;
+  }
+  
+  .decline-button:hover {
+    background-color: #c82333;
+  }
+  
