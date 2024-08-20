@@ -19,6 +19,23 @@
     flex-direction: column;
   }
   
+  .chat-mode-selector {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .chat-mode-selector label {
+    margin-right: 10px;
+  }
+  
+  .chat-mode-selector select {
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
   .patient-details-title {
     font-size: 24px;
     margin-bottom: 20px;
@@ -55,6 +72,12 @@
     margin-bottom: 20px;
     font-size: 24px;
     color: #333;
+  }
+  
+  .chat-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
   
   .message-list {
