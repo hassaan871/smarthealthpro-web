@@ -1,0 +1,120 @@
+/* AddNotes.css */
+
+/* Container styling */
+.add-notes-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Header styling */
+  .add-notes-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #444;
+    font-size: 30px;
+    font-weight: 500;
+  }
+  
+  /* Note input container styling */
+  .note-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  /* Input field styling */
+  .note-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    transition: border-color 0.3s ease;
+    resize: vertical;
+  }
+  
+  .note-input:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  
+  /* Add note button styling */
+  .add-note-button {
+    align-self: flex-end;
+    padding: 12px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .add-note-button:hover {
+    background-color: #218838;
+  }
+  
+  /* Notes list container styling */
+  .notes-list-container {
+    margin-top: 20px;
+  }
+  
+  /* Notes list styling */
+  .notes-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Individual note item styling */
+  .note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Note text styling */
+  .note-text {
+    flex: 1;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  /* Delete note button styling */
+  .delete-note-button {
+    padding: 8px 12px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: background-color 0.3s ease;
+  }
+  
+  .delete-note-button:hover {
+    background-color: #c82333;
+  }
+  
+  /* No notes message styling */
+  .no-notes {
+    text-align: center;
+    font-size: 16px;
+    color: #777;
+  }
+  

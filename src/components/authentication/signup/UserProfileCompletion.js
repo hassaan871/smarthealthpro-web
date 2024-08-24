@@ -1,10 +1,10 @@
-import "./UserProfileCompletion.css";import React, { useState } from 'react';
+import React, { useState } from 'react';
+import "./UserProfileCompletion.css";
 
-// Define the UserProfileCompletion component
 const UserProfileCompletion = () => {
   // State variables for form inputs
   const [user, setUser] = useState({
-    userId: '66c0b2aa90040b7bc334b842',  // Sample user ID
+    userId: '66c0b2aa90040b7bc334b842',
     specialization: '',
     cnic: '',
     address: '',
@@ -23,19 +23,17 @@ const UserProfileCompletion = () => {
     profileImage: null // For storing the uploaded profile image
   });
 
-  // Handler for input change
+  // Handler functions
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUser({ ...user, [name]: value });
   };
 
-  // Handler for office hours input change
   const handleOfficeHoursChange = (e) => {
     const { name, value } = e.target;
     setUser({ ...user, officeHours: { ...user.officeHours, [name]: value } });
   };
 
-  // Handler for education input change
   const handleEducationChange = (index, e) => {
     const { name, value } = e.target;
     const updatedEducation = [...user.education];
@@ -43,7 +41,6 @@ const UserProfileCompletion = () => {
     setUser({ ...user, education: updatedEducation });
   };
 
-  // Handler for adding more education fields
   const addEducationField = () => {
     setUser({
       ...user,
@@ -51,28 +48,22 @@ const UserProfileCompletion = () => {
     });
   };
 
-  // Handler for removing an education field
   const removeEducationField = (index) => {
     const updatedEducation = [...user.education];
     updatedEducation.splice(index, 1);
     setUser({ ...user, education: updatedEducation });
   };
 
-  // Handler for PDF file upload
   const handleFileChange = (e) => {
     setUser({ ...user, degreeFiles: e.target.files });
   };
 
-  // Handler for image file upload
   const handleImageChange = (e) => {
     setUser({ ...user, profileImage: e.target.files[0] });
   };
 
-  // Handler for form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Convert the form data into a FormData object for sending to the server
     const formData = new FormData();
     formData.append('userId', user.userId);
     formData.append('specialization', user.specialization);
@@ -95,7 +86,6 @@ const UserProfileCompletion = () => {
       formData.append('profileImage', user.profileImage);
     }
 
-    // TODO: Send formData to the server using fetch or axios
     console.log('Form submitted', formData);
   };
 
@@ -113,7 +103,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <label>CNIC:</label>
           <input
@@ -124,7 +113,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <label>Address:</label>
           <input
@@ -135,7 +123,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <label>About:</label>
           <textarea
@@ -145,7 +132,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <h3>Office Hours</h3>
           {Object.keys(user.officeHours).map((day) => (
@@ -161,7 +147,6 @@ const UserProfileCompletion = () => {
             </div>
           ))}
         </div>
-
         <div className="form-group">
           <h3>Education</h3>
           {user.education.map((edu, index) => (
@@ -204,7 +189,6 @@ const UserProfileCompletion = () => {
             Add More
           </button>
         </div>
-
         <div className="form-group">
           <label>Upload Degrees (PDF only):</label>
           <input
@@ -215,7 +199,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <label>Upload Profile Image (JPG, PNG):</label>
           <input
@@ -225,7 +208,6 @@ const UserProfileCompletion = () => {
             required
           />
         </div>
-
         <button type="submit">Submit</button>
       </form>
     </div>
