@@ -4,6 +4,7 @@ import DoctorChatWithPatientDetails from "./components/doctor/DoctorChatWithPati
 import SignUp from "./components/authentication/signup/SignUp";
 import DoctorDashboard from "./components/doctor/DoctorDashboard/DoctorDashboard";
 import DoctorPanel from "./components/doctor/DoctorPanel/DoctorPanel";
+import UserProfileCompletion from "./components/authentication/signup/UserProfileCompletion";
 
 
 function App() {
@@ -11,10 +12,11 @@ function App() {
     <div>
       {/* <Login/> */}
       {/* <SignUp/> */}
+      <UserProfileCompletion/>
       {/* <DoctorDashboard/> */}
       {/* <DoctorChat/> */}
       {/* <DoctorPanel/> */}
-      <DoctorChatWithPatientDetails/>
+      {/* <DoctorChatWithPatientDetails/> */}
     </div>
   );
 }
