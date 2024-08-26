@@ -6,6 +6,8 @@ import DoctorDashboard from "./components/doctor/DoctorDashboard/DoctorDashboard
 import DoctorPanel from "./components/doctor/DoctorPanel/DoctorPanel";
 import UserProfileCompletion from "./components/authentication/signup/UserProfileCompletion";
 import AddNotes from "./components/notes/AddNotes";
+import DoctorDetailView from "./components/doctor/DoctorDetailView/DoctorDetailView";
+import DoctorDetailEdit from "./components/doctor/DoctorDetailEdit/DoctorDetailEdit";
 
 
 function App() {
@@ -18,7 +20,9 @@ function App() {
       {/* <DoctorChat/> */}
       {/* <DoctorPanel/> */}
       {/* <DoctorChatWithPatientDetails/> */}
-      <AddNotes/>
+      {/* <AddNotes/> */}
+      {/* <DoctorDetailView/> */}
+      <DoctorDetailEdit/>
     </div>
   );
 }

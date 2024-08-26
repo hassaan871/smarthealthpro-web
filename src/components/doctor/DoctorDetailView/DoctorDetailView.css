@@ -1,0 +1,110 @@
+/* File: DoctorDashboard.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .doctor-dashboard {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-top: 5px solid #007bff;
+  }
+  
+  .doctor-info {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .doctor-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid #007bff;
+    margin-bottom: 10px;
+  }
+  
+  .doctor-name {
+    margin: 10px 0 5px;
+    color: #333;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .doctor-specialization {
+    font-size: 18px;
+    color: #777;
+  }
+  
+  .appointment-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+  }
+  
+  .appointment-details p {
+    margin: 8px 0;
+  }
+  
+  .time-slots {
+    text-align: center;
+  }
+  
+  .time-slots h3 {
+    color: #007bff;
+    margin-bottom: 10px;
+  }
+  
+  ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  li {
+    padding: 10px 15px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: 1px solid transparent;
+  }
+  
+  li:hover {
+    background-color: #d1e7fd;
+  }
+  
+  .selected-slot {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border: 1px solid #0056b3;
+  }
+  
+  .edit-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+  
+  .edit-button:hover {
+    background-color: #0056b3;
+  }
+  
