@@ -28,11 +28,25 @@ function Login() {
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email:</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="form-input" />
+            <input 
+              id="email"
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+              className="form-input"
+            />
           </div>
           <div className="form-group">
             <label htmlFor="password">Password:</label>
-            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="form-input" />
+            <input 
+              id="password"
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+              className="form-input"
+            />
           </div>
           <button type="submit" className="login-button">Login</button>
           <div className="extra-options">

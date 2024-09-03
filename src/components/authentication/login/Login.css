@@ -6,7 +6,6 @@ body {
   color: #333;  /* Dark text color */
   display: flex;
   align-items: center;
-  justify-content: center;
   height: 100vh;
 }
 
@@ -16,9 +15,7 @@ body {
   width: 80%;
   max-width: 1200px;
   height: 80%;
-  background-image: url('//public/background-02.jpg');  /* Background image from public folder */
-  background-size: cover;
-  background-position: center;
+  background-color: #fff;  /* White background */
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   margin: 0 auto;  /* Center the wrapper */
@@ -29,8 +26,6 @@ body {
   flex: 1;
   padding: 40px;
   border-right: 1px solid #ddd;  /* Light gray border */
-  background-color: rgba(27, 27, 27, 0.6);  /* Semi-transparent dark background */
-  color: #e0e0e0;  /* Off-white text color */
 }
 
 .app-title {
@@ -43,15 +38,13 @@ body {
 .welcome-text {
   font-size: 16px;
   line-height: 1.6;
-  color: #e0e0e0;  /* Off-white text color */
+  color: #666;  /* Dark gray text color */
 }
 
 /* Login Section */
 .login-section {
   flex: 1;
   padding: 40px;
-  background-color: rgba(27, 27, 27, 0.6);  /* Semi-transparent dark background */
-  color: #e0e0e0;  /* Off-white text color */
 }
 
 .login-title {
@@ -138,7 +131,8 @@ a:focus, button:focus, .form-input:focus {
   outline-offset: 2px;
 }
 
-/* Divider */
+/* Add this to your existing CSS file */
+
 .divider {
   position: relative;
   margin: 20px 0;
@@ -154,17 +148,15 @@ a:focus, button:focus, .form-input:focus {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #1b1b1b;  /* Dark background to match info-section and login-section */
+  background-color: #fff;
   padding: 0 10px;
-  color: #e0e0e0;  /* Off-white text color */
 }
 
-/* Sign Up Button */
 .signup-button {
   width: 100%;
   padding: 12px;
   font-size: 16px;
-  background-color: #4CAF50;  /* Green button */
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 6px;
@@ -173,6 +165,6 @@ a:focus, button:focus, .form-input:focus {
 }
 
 .signup-button:hover {
-  background-color: #3e8e41;  /* Darker green on hover */
+  background-color: #3e8e41;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
