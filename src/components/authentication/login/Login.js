@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Login.css';  // Import the CSS file
+import './Login.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -50,13 +50,14 @@ function Login() {
           </div>
           <button type="submit" className="login-button">Login</button>
           <div className="extra-options">
-            <a href="#" className="forgot-password">Forgot Password?</a>
+            <span>Forget password?</span>
+            <button type="button" className="signup-button">Sign up</button>
+            <span>Don't have an account?</span>
           </div>
           <div className="divider">
             <hr />
             <span>or</span>
           </div>
-          <button type="button" className="signup-button">Sign up</button>
         </form>
       </div>
     </div>
