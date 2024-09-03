@@ -13,7 +13,7 @@ import DoctorDetailEdit from "./components/doctor/DoctorDetailEdit/DoctorDetailE
 function App() {
   return (
     <div>
-      {/* <Login/> */}
+      <Login/>
       {/* <SignUp/> */}
       {/* <UserProfileCompletion/> */}
       {/* <DoctorDashboard/> */}
@@ -22,7 +22,7 @@ function App() {
       {/* <DoctorChatWithPatientDetails/> */}
       {/* <AddNotes/> */}
       {/* <DoctorDetailView/> */}
-      <DoctorDetailEdit/>
+      {/* <DoctorDetailEdit/> */}
     </div>
   );
 }
