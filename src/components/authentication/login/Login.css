@@ -15,7 +15,7 @@ body {
   width: 80%;
   max-width: 1200px;
   height: 80%;
-  background-color: #fff;  /* White background */
+  background-color: #fff;   /* White background */
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   margin: 0 auto;  /* Center the wrapper */
