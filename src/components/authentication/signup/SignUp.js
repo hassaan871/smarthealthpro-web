@@ -1,5 +1,7 @@
+// src/components/authentication/signup/SignUp.js
 import React, { useState } from 'react';
-import './SignUp.css';  // Import the CSS file
+import axiosInstance from '../../../axiosInstance';
+import './SignUp.css';
 
 function SignUp() {
   const [name, setName] = useState('');
@@ -8,19 +10,26 @@ function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Handle sign-up logic here
     if (password !== confirmPassword) {
-      alert("Passwords don't match!");
+      setError("Passwords don't match!");
       return;
     }
-    console.log('Name:', name);
-    console.log('Email:', email);
-    console.log('Password:', password);
-    console.log('Specialty:', specialty);
-    console.log('Contact Number:', contactNumber);
+    try {
+      await axiosInstance.post('/auth/signup', {
+        name,
+        email,
+        password,
+        specialty,
+        contactNumber,
+      });
+      window.location.href = '/login'; // Redirect to login after successful sign-up
+    } catch (err) {
+      setError('Failed to register. Please try again.');
+    }
   };
 
   return (
@@ -87,6 +96,7 @@ function SignUp() {
             className="form-input"
           />
         </div>
+        {error && <p className="error-text">{error}</p>}
         <button type="submit" className="signup-button">Sign Up</button>
       </form>
     </div>

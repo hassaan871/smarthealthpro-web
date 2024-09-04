@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+// src/components/authentication/signup/UserProfileCompletion.js
+import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../../axiosInstance';
 import "./UserProfileCompletion.css";
 
 const UserProfileCompletion = () => {
-  // State variables for form inputs
   const [user, setUser] = useState({
-    userId: '66c0b2aa90040b7bc334b842',
     specialization: '',
     cnic: '',
     address: '',
@@ -19,11 +19,10 @@ const UserProfileCompletion = () => {
       sunday: '',
     },
     education: [{ degree: '', institution: '', year: '' }],
-    degreeFiles: [], // For storing uploaded PDF files
-    profileImage: null // For storing the uploaded profile image
+    degreeFiles: [],
+    profileImage: null
   });
 
-  // Handler functions
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUser({ ...user, [name]: value });
@@ -62,10 +61,9 @@ const UserProfileCompletion = () => {
     setUser({ ...user, profileImage: e.target.files[0] });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('userId', user.userId);
     formData.append('specialization', user.specialization);
     formData.append('cnic', user.cnic);
     formData.append('address', user.address);
@@ -86,8 +84,31 @@ const UserProfileCompletion = () => {
       formData.append('profileImage', user.profileImage);
     }
 
-    console.log('Form submitted', formData);
+    try {
+      await axiosInstance.post('/auth/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      window.location.href = '/dashboard'; // Redirect to dashboard after profile completion
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  useEffect(() => {
+    // Fetch existing profile data if needed
+    const fetchProfile = async () => {
+      try {
+        const response = await axiosInstance.get('/auth/profile');
+        setUser(response.data);
+      } catch (err) {
+        console.error('Failed to fetch profile data');
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   return (
     <div className="user-profile-completion">
@@ -95,120 +116,113 @@ const UserProfileCompletion = () => {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Specialization:</label>
-          <input
-            type="text"
+          <input 
+            type="text" 
             name="specialization"
-            value={user.specialization}
-            onChange={handleInputChange}
-            required
+            value={user.specialization} 
+            onChange={handleInputChange} 
+            required 
+            className="form-input"
           />
         </div>
         <div className="form-group">
           <label>CNIC:</label>
-          <input
-            type="text"
+          <input 
+            type="text" 
             name="cnic"
-            value={user.cnic}
-            onChange={handleInputChange}
-            required
+            value={user.cnic} 
+            onChange={handleInputChange} 
+            required 
+            className="form-input"
           />
         </div>
         <div className="form-group">
           <label>Address:</label>
-          <input
-            type="text"
+          <input 
+            type="text" 
             name="address"
-            value={user.address}
-            onChange={handleInputChange}
-            required
+            value={user.address} 
+            onChange={handleInputChange} 
+            required 
+            className="form-input"
           />
         </div>
         <div className="form-group">
           <label>About:</label>
-          <textarea
+          <textarea 
             name="about"
-            value={user.about}
-            onChange={handleInputChange}
-            required
+            value={user.about} 
+            onChange={handleInputChange} 
+            required 
+            className="form-input"
+          ></textarea>
+        </div>
+        <div className="form-group">
+          <label>Office Hours:</label>
+          <input 
+            type="text" 
+            name="monday"
+            value={user.officeHours.monday} 
+            onChange={handleOfficeHoursChange} 
+            placeholder="Monday" 
+            className="form-input"
           />
+          {/* Add more days similarly */}
         </div>
         <div className="form-group">
-          <h3>Office Hours</h3>
-          {Object.keys(user.officeHours).map((day) => (
-            <div key={day}>
-              <label>{day.charAt(0).toUpperCase() + day.slice(1)}:</label>
-              <input
-                type="text"
-                name={day}
-                value={user.officeHours[day]}
-                onChange={handleOfficeHoursChange}
-                required
-              />
-            </div>
-          ))}
-        </div>
-        <div className="form-group">
-          <h3>Education</h3>
+          <label>Education:</label>
           {user.education.map((edu, index) => (
-            <div key={index} className="education-item">
-              <input
-                type="text"
+            <div key={index} className="education-entry">
+              <input 
+                type="text" 
                 name="degree"
-                placeholder="Degree"
-                value={edu.degree}
-                onChange={(e) => handleEducationChange(index, e)}
-                required
+                value={edu.degree} 
+                onChange={(e) => handleEducationChange(index, e)} 
+                placeholder="Degree" 
+                required 
+                className="form-input"
               />
-              <input
-                type="text"
+              <input 
+                type="text" 
                 name="institution"
-                placeholder="Institution"
-                value={edu.institution}
-                onChange={(e) => handleEducationChange(index, e)}
-                required
+                value={edu.institution} 
+                onChange={(e) => handleEducationChange(index, e)} 
+                placeholder="Institution" 
+                required 
+                className="form-input"
               />
-              <input
-                type="text"
+              <input 
+                type="text" 
                 name="year"
-                placeholder="Year"
-                value={edu.year}
-                onChange={(e) => handleEducationChange(index, e)}
-                required
+                value={edu.year} 
+                onChange={(e) => handleEducationChange(index, e)} 
+                placeholder="Year" 
+                required 
+                className="form-input"
               />
-              {index > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeEducationField(index)}
-                >
-                  Remove
-                </button>
-              )}
+              <button type="button" onClick={() => removeEducationField(index)}>Remove</button>
             </div>
           ))}
-          <button type="button" onClick={addEducationField}>
-            Add More
-          </button>
+          <button type="button" onClick={addEducationField}>Add Education</button>
         </div>
         <div className="form-group">
-          <label>Upload Degrees (PDF only):</label>
-          <input
-            type="file"
-            accept=".pdf"
-            multiple
-            onChange={handleFileChange}
-            required
+          <label>Upload Degrees:</label>
+          <input 
+            type="file" 
+            multiple 
+            onChange={handleFileChange} 
+            className="form-input"
           />
         </div>
         <div className="form-group">
-          <label>Upload Profile Image (JPG, PNG):</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            required
+          <label>Profile Image:</label>
+          <input 
+            type="file" 
+            onChange={handleImageChange} 
+            className="form-input"
           />
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit" className="submit-button">Complete Profile</button>
       </form>
     </div>
   );
