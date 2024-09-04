@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line,
-} from 'recharts';
+import React from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Home, File, Mail, Bell, MapPin, PieChart } from 'lucide-react';
 import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
-  const [selectedTab, setSelectedTab] = useState('appointments');
+  const appointments = [
+    { id: 1, client: 'John Doe', date: '2024-08-21', time: '10:00 AM', status: 'Confirmed' },
+    { id: 2, client: 'Jane Smith', date: '2024-08-22', time: '11:00 AM', status: 'Pending' },
+  ];
 
-  const appointmentsData = [
+  const monthlyData = [
     { name: 'JAN', visited: 20, pending: 10 },
     { name: 'FEB', visited: 35, pending: 15 },
     { name: 'MAR', visited: 25, pending: 20 },
@@ -20,53 +21,15 @@ const DoctorDashboard = () => {
     { name: 'SEP', visited: 28, pending: 15 },
   ];
 
-  const shareData = [
-    { name: 'JAN', share: 120 },
-    { name: 'FEB', share: 210 },
-    { name: 'MAR', share: 150 },
-    { name: 'APR', share: 220 },
-    { name: 'MAY', share: 300 },
-    { name: 'JUN', share: 450 },
-    { name: 'JUL', share: 500 },
-    { name: 'AUG', share: 650 },
-    { name: 'SEP', share: 300 },
+  const areaChartData = [
+    { name: 'JAN', uv: 4000, pv: 2400, amt: 2400 },
+    { name: 'FEB', uv: 3000, pv: 1398, amt: 2210 },
+    { name: 'MAR', uv: 2000, pv: 9800, amt: 2290 },
+    { name: 'APR', uv: 2780, pv: 3908, amt: 2000 },
+    { name: 'MAY', uv: 1890, pv: 4800, amt: 2181 },
+    { name: 'JUN', uv: 2390, pv: 3800, amt: 2500 },
+    { name: 'JUL', uv: 3490, pv: 4300, amt: 2100 },
   ];
-
-  const likesData = [
-    { name: 'JAN', likes: 400 },
-    { name: 'FEB', likes: 600 },
-    { name: 'MAR', likes: 500 },
-    { name: 'APR', likes: 700 },
-    { name: 'MAY', likes: 800 },
-    { name: 'JUN', likes: 1000 },
-    { name: 'JUL', likes: 1200 },
-    { name: 'AUG', likes: 1400 },
-    { name: 'SEP', likes: 1100 },
-  ];
-
-  const ratingData = [
-    { name: 'JAN', rating: 4 },
-    { name: 'FEB', rating: 3.5 },
-    { name: 'MAR', rating: 4.2 },
-    { name: 'APR', rating: 4.5 },
-    { name: 'MAY', rating: 4.7 },
-    { name: 'JUN', rating: 4.3 },
-    { name: 'JUL', rating: 4.6 },
-    { name: 'AUG', rating: 4.8 },
-    { name: 'SEP', rating: 4.5 },
-  ];
-
-  const severityData = [
-    { name: 'Mild (0-20%)', value: 30, color: '#4caf50' },
-    { name: 'Moderate (20-40%)', value: 25, color: '#8bc34a' },
-    { name: 'Significant (40-60%)', value: 20, color: '#ffc107' },
-    { name: 'Severe (60-80%)', value: 15, color: '#ff9800' },
-    { name: 'Critical (80-100%)', value: 10, color: '#f44336' },
-  ];
-
-  const handleTabChange = (tab) => {
-    setSelectedTab(tab);
-  };
 
   return (
     <div className="dashboard-container">
@@ -91,138 +54,75 @@ const DoctorDashboard = () => {
           <button className="menu-toggle">☰</button>
         </header>
         <div className="stats-row">
-          <div
-            className={`stat-card ${selectedTab === 'appointments' ? 'primary' : ''}`}
-            onClick={() => handleTabChange('appointments')}
-          >
-            <span>Appointments</span>
-            <h3>100</h3>
-            <span className="icon">📅</span>
+          <div className="stat-card primary">
+            <span>Earning</span>
+            <h3>$ 628</h3>
+            <span className="icon">$</span>
           </div>
-          <div
-            className={`stat-card ${selectedTab === 'share' ? 'primary' : ''}`}
-            onClick={() => handleTabChange('share')}
-          >
+          <div className="stat-card">
             <span>Share</span>
             <h3>2434</h3>
             <span className="icon">
               <Mail size={20} />
             </span>
           </div>
-          <div
-            className={`stat-card ${selectedTab === 'likes' ? 'primary' : ''}`}
-            onClick={() => handleTabChange('likes')}
-          >
+          <div className="stat-card">
             <span>Likes</span>
             <h3>1259</h3>
             <span className="icon">👍</span>
           </div>
-          <div
-            className={`stat-card ${selectedTab === 'rating' ? 'primary' : ''}`}
-            onClick={() => handleTabChange('rating')}
-          >
+          <div className="stat-card">
             <span>Rating</span>
-            <h3>4.5</h3>
+            <h3>8,5</h3>
             <span className="icon">⭐</span>
           </div>
         </div>
         <div className="charts-row">
-          {selectedTab === 'appointments' && (
-            <>
-              <div className="chart-card large">
-                <h3>Appointments Overview</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={appointmentsData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="visited" fill="#1e40af" />
-                    <Bar dataKey="pending" fill="#fbbf24" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="chart-card">
-                <h3>Appointment Status</h3>
-                <div className="donut-chart">
-                  <svg viewBox="0 0 36 36" className="circular-chart">
-                    {severityData.map((severity, index) => (
-                      <path
-                        key={index}
-                        className="circle"
-                        strokeDasharray={`${severity.value}, 100`}
-                        stroke={severity.color}
-                        d={`M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831`}
-                      />
-                    ))}
-                    <text x="18" y="20.35" className="percentage">{`${severityData.reduce((acc, cur) => acc + cur.value, 0)}%`}</text>
-                  </svg>
-                </div>
-                <ul className="legend">
-                  {severityData.map((severity, index) => (
-                    <li key={index}>{`${severity.name}: ${severity.value} cases`}</li>
-                  ))}
-                </ul>
-                <select className="check-now">
-                  <option>Ongoing Appointments</option>
-                  <option>Last 7 Days Appointments Severity Index</option>
-                  <option>Last 30 Days Appointments Severity Index</option>
-                  <option>Last 60 Days Appointments Severity Index</option>
-                  <option>Last 90 Days Appointments Severity Index</option>
-                  <option>Last 120 Days Appointments Severity Index</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          {selectedTab === 'share' && (
-            <div className="chart-card large">
-              <h3>Share Trends</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={shareData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="share" stroke="#8884d8" />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="chart-card large">
+            <h3>Result</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="visited" fill="#1e40af" />
+                <Bar dataKey="pending" fill="#fbbf24" />
+              </BarChart>
+            </ResponsiveContainer>
+            <button className="check-now">Check Now</button>
+          </div>
+          <div className="chart-card">
+            <h3>Appointment Status</h3>
+            <div className="donut-chart">
+              <svg viewBox="0 0 36 36" className="circular-chart">
+                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path className="circle" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" className="percentage">45%</text>
+              </svg>
             </div>
-          )}
-
-          {selectedTab === 'likes' && (
-            <div className="chart-card large">
-              <h3>Likes Trends</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={likesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="likes" stroke="#8884d8" fill="#8884d8" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {selectedTab === 'rating' && (
-            <div className="chart-card large">
-              <h3>Rating Trends</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={ratingData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="rating" stroke="#82ca9d" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+            <ul className="legend">
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+            </ul>
+            <button className="check-now">Check Now</button>
+          </div>
+        </div>
+        <div className="appointment-trends">
+          <h3>Appointment Trends</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={areaChartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="uv" stackId="1" stroke="#fbbf24" fill="#fde68a" />
+              <Area type="monotone" dataKey="pv" stackId="1" stroke="#1e40af" fill="#3b82f6" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
