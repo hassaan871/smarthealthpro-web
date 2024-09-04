@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Home, File, Mail, Bell, MapPin, PieChart } from 'lucide-react';
 import './DoctorDashboard.css';
@@ -31,6 +31,13 @@ const DoctorDashboard = () => {
     { name: 'JUL', uv: 3490, pv: 4300, amt: 2100 },
   ];
 
+    const [activeBlock, setActiveBlock] = useState(null);
+  
+    const handleBlockClick = (blockType) => {
+      setActiveBlock(blockType);
+    };
+  
+
   return (
     <div className="dashboard-container">
       <div className="sidebar">
@@ -53,7 +60,7 @@ const DoctorDashboard = () => {
           <h1>Dashboard User</h1>
           <button className="menu-toggle">☰</button>
         </header>
-        <div className="stats-row">
+        {/* <div className="stats-row">
           <div className="stat-card primary">
             <span>Earning</span>
             <h3>$ 628</h3>
@@ -76,7 +83,43 @@ const DoctorDashboard = () => {
             <h3>8,5</h3>
             <span className="icon">⭐</span>
           </div>
-        </div>
+        </div> */}
+        <div className="stats-row">
+      <div
+        className={`stat-card ${activeBlock === 'earning' ? 'active' : ''}`}
+        onClick={() => handleBlockClick('earning')}
+      >
+        <span>Appointments</span>
+        <h3>Overview</h3>
+        <span className="icon">$</span>
+      </div>
+      <div
+        className={`stat-card ${activeBlock === 'share' ? 'active' : ''}`}
+        onClick={() => handleBlockClick('share')}
+      >
+        <span>Share</span>
+        <h3>2434</h3>
+        <span className="icon">
+          <Mail size={20} />
+        </span>
+      </div>
+      <div
+        className={`stat-card ${activeBlock === 'like' ? 'active' : ''}`}
+        onClick={() => handleBlockClick('like')}
+      >
+        <span>Likes</span>
+        <h3>1259</h3>
+        <span className="icon">👍</span>
+      </div>
+      <div
+        className={`stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
+        onClick={() => handleBlockClick('rating')}
+      >
+        <span>Rating</span>
+        <h3>8,5</h3>
+        <span className="icon">⭐</span>
+      </div>
+    </div>
         <div className="charts-row">
           <div className="chart-card large">
             <h3>Result</h3>
@@ -130,3 +173,4 @@ const DoctorDashboard = () => {
 };
 
 export default DoctorDashboard;
+
