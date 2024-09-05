@@ -97,8 +97,8 @@ const DoctorDashboard = () => {
         className={`stat-card ${activeBlock === 'share' ? 'active' : ''}`}
         onClick={() => handleBlockClick('share')}
       >
-        <span>Share</span>
-        <h3>2434</h3>
+        <span>Patients</span>
+        <h3>All Time</h3>
         <span className="icon">
           <Mail size={20} />
         </span>
@@ -116,7 +116,7 @@ const DoctorDashboard = () => {
         onClick={() => handleBlockClick('rating')}
       >
         <span>Rating</span>
-        <h3>8,5</h3>
+        <h3>4/5</h3>
         <span className="icon">⭐</span>
       </div>
     </div>

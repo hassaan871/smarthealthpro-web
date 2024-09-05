@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../../axiosInstance';
 import "./UserProfileCompletion.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faAddressCard, faClock, faGraduationCap, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const UserProfileCompletion = () => {
   const [user, setUser] = useState({
@@ -18,6 +20,7 @@ const UserProfileCompletion = () => {
       saturday: '',
       sunday: '',
     },
+    // education: [{ degree:
     education: [{ degree: '', institution: '', year: '' }],
     degreeFiles: [],
     profileImage: null
@@ -111,68 +114,74 @@ const UserProfileCompletion = () => {
   }, []);
 
   return (
-    <div className="user-profile-completion">
-      <h2>Complete Your Profile</h2>
+    <div className="profile-completionscreen-container">
+      <h2 className="profile-completionscreen-header">Complete Your Profile</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Specialization:</label>
+          <FontAwesomeIcon icon={faUser} />
           <input 
             type="text" 
             name="specialization"
             value={user.specialization} 
             onChange={handleInputChange} 
             required 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>CNIC:</label>
+          <FontAwesomeIcon icon={faAddressCard} />
           <input 
             type="text" 
             name="cnic"
             value={user.cnic} 
             onChange={handleInputChange} 
             required 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Address:</label>
+          <FontAwesomeIcon icon={faAddressCard} />
           <input 
             type="text" 
             name="address"
             value={user.address} 
             onChange={handleInputChange} 
             required 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>About:</label>
+          <FontAwesomeIcon icon={faUser} />
           <textarea 
             name="about"
             value={user.about} 
             onChange={handleInputChange} 
             required 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           ></textarea>
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Office Hours:</label>
+          <FontAwesomeIcon icon={faClock} />
           <input 
             type="text" 
             name="monday"
             value={user.officeHours.monday} 
             onChange={handleOfficeHoursChange} 
             placeholder="Monday" 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
           {/* Add more days similarly */}
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Education:</label>
+          <FontAwesomeIcon icon={faGraduationCap} />
           {user.education.map((edu, index) => (
-            <div key={index} className="education-entry">
+            <div key={index} className="profile-completionscreen-education-entry">
               <input 
                 type="text" 
                 name="degree"
@@ -180,7 +189,7 @@ const UserProfileCompletion = () => {
                 onChange={(e) => handleEducationChange(index, e)} 
                 placeholder="Degree" 
                 required 
-                className="form-input"
+                className="profile-completionscreen-form-input"
               />
               <input 
                 type="text" 
@@ -189,7 +198,7 @@ const UserProfileCompletion = () => {
                 onChange={(e) => handleEducationChange(index, e)} 
                 placeholder="Institution" 
                 required 
-                className="form-input"
+                className="profile-completionscreen-form-input"
               />
               <input 
                 type="text" 
@@ -198,31 +207,33 @@ const UserProfileCompletion = () => {
                 onChange={(e) => handleEducationChange(index, e)} 
                 placeholder="Year" 
                 required 
-                className="form-input"
+                className="profile-completionscreen-form-input"
               />
               <button type="button" onClick={() => removeEducationField(index)}>Remove</button>
             </div>
           ))}
           <button type="button" onClick={addEducationField}>Add Education</button>
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Upload Degrees:</label>
+          <FontAwesomeIcon icon={faUpload} />
           <input 
             type="file" 
             multiple 
             onChange={handleFileChange} 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
         </div>
-        <div className="form-group">
+        <div className="profile-completionscreen-form-group">
           <label>Profile Image:</label>
+          <FontAwesomeIcon icon={faUpload} />
           <input 
             type="file" 
             onChange={handleImageChange} 
-            className="form-input"
+            className="profile-completionscreen-form-input"
           />
         </div>
-        <button type="submit" className="submit-button">Complete Profile</button>
+        <button type="submit" className="profile-completionscreen-button">Complete Profile</button>
       </form>
     </div>
   );
