@@ -10,7 +10,7 @@ body {
 }
 
 /* Wrapper */
-.login-wrapper {
+.loginpage-wrapper {
   display: flex;
   width: 80%;
   max-width: 1200px;
@@ -22,32 +22,32 @@ body {
 }
 
 /* Info Section */
-.info-section {
+.loginpage-info-section {
   flex: 1;
   padding: 40px;
   border-right: 1px solid #ddd;  /* Light gray border */
 }
 
-.app-title {
+.loginpage-app-title {
   font-size: 36px;
   color: #3498db;  /* Bright blue title */
   margin-bottom: 20px;
   font-weight: 700;
 }
 
-.welcome-text {
+.loginpage-welcome-text {
   font-size: 16px;
   line-height: 1.6;
   color: #666;  /* Dark gray text color */
 }
 
 /* Login Section */
-.login-section {
+.loginpage-login-section {
   flex: 1;
   padding: 40px;
 }
 
-.login-title {
+.loginpage-login-title {
   font-size: 28px;
   color: #3498db;  /* Bright blue title */
   margin-bottom: 20px;
@@ -55,25 +55,25 @@ body {
   font-weight: 700;
 }
 
-.login-form {
+.loginpage-login-form {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.form-group {
+.loginpage-form-group {
   width: 100%;
   margin-bottom: 20px;
 }
 
-.form-group label {
+.loginpage-form-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: 600;
   color: #666;  /* Dark gray text color */
 }
 
-.form-input {
+.loginpage-form-input {
   width: 100%;
   padding: 12px;
   font-size: 16px;
@@ -85,65 +85,65 @@ body {
   transition: border-color 0.3s, background-color 0.3s;
 }
 
-.form-input:focus {
+.loginpage-form-input:focus {
   border-color: #3498db;  /* Bright blue focus border */
   background-color: #fff;  /* White input background */
 }
 
 /* Button */
-.login-button {
-  width: 100%;
+.loginpage-login-button {
+  width: 50%;
   padding: 12px;
   font-size: 16px;
   background-color: #3498db;  /* Bright blue button */
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-.login-button:hover {
+.loginpage-login-button:hover {
   background-color: #2980b9;  /* Darker blue on hover */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Extra Options */
-.extra-options {
+.loginpage-extra-options {
   margin-top: 20px;
   text-align: center;
 }
 
-.forgot-password {
+.loginpage-forgot-password {
   color: #3498db;  /* Bright blue link */
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
 }
 
-.forgot-password:hover {
+.loginpage-forgot-password:hover {
   text-decoration: underline;
 }
 
 /* Accessibility */
-a:focus, button:focus, .form-input:focus {
+a:focus, button:focus, .loginpage-form-input:focus {
   outline: 2px solid #3498db;  /* Bright blue focus outline */
   outline-offset: 2px;
 }
 
 /* Add this to your existing CSS file */
 
-.divider {
+.loginpage-divider {
   position: relative;
   margin: 20px 0;
 }
 
-.divider hr {
+.loginpage-divider hr {
   border: none;
   border-top: 1px solid #ccc;
 }
 
-.divider span {
+.loginpage-divider span {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -152,19 +152,19 @@ a:focus, button:focus, .form-input:focus {
   padding: 0 10px;
 }
 
-.signup-button {
-  width: 100%;
+.loginpage-signup-button {
+  width: 50%;
   padding: 12px;
   font-size: 16px;
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-.signup-button:hover {
+.loginpage-signup-button:hover {
   background-color: #3e8e41;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
