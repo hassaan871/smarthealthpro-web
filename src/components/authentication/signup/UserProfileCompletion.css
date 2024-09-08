@@ -7,19 +7,16 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Full viewport height */
-  background-color: #f0f2f5; /* Light background color */
-  overflow: hidden; /* Prevent scrolling */
+  min-height: 100vh;
+  background-color: #ECF0F1;
+  color: #34495E;
 }
 
 /* Form container styling */
 .profile-completionscreen-container {
-  width: 95%;
-  height: 95%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 20px;
-  padding: 20px;
+  width: 90%;
+  max-width: 1200px;
+  padding: 30px;
   border-radius: 8px;
   background-color: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -28,13 +25,14 @@ body {
 /* Header styling */
 .profile-completionscreen-header {
   text-align: center;
-  margin-bottom: 20px;
-  color: #3498db;
+  margin-bottom: 30px;
+  color: #3498DB;
+  font-size: 28px;
 }
 
 /* Form group styling */
 .profile-completionscreen-form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 /* Label styling */
@@ -46,63 +44,83 @@ body {
 }
 
 /* Input and textarea styling */
-.profile-completionscreen-form-group input,
+.profile-completionscreen-form-input,
 .profile-completionscreen-form-group textarea {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #ECF0F1;
   border-radius: 4px;
-  margin-bottom: 10px;
   font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.profile-completionscreen-form-input:focus,
+.profile-completionscreen-form-group textarea:focus {
+  border-color: #3498DB;
+  outline: none;
 }
 
 /* Textarea specific styling */
 .profile-completionscreen-form-group textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 100px;
 }
 
 /* Education item styling */
-.profile-completionscreen-education-item {
-  margin-bottom: 10px;
+.profile-completionscreen-education-entry {
+  margin-bottom: 15px;
   padding: 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #ECF0F1;
   border-radius: 4px;
   background-color: #f7f7f7;
 }
 
 /* Button styling */
 .profile-completionscreen-button {
-  padding: 10px 15px;
+  padding: 10px 20px;
   background-color: #F1C40F;
-  color: white;
+  color: #34495E;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s ease;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.1s ease;
   margin-top: 10px;
   margin-right: 10px;
 }
 
 /* Hover effect for buttons */
 .profile-completionscreen-button:hover {
-  background-color: #FFA07A;
+  background-color: #f39c12;
+  transform: translateY(-2px);
 }
 
 /* Remove button styling */
 .profile-completionscreen-button[type='button'] {
-  background-color: #dc3545;
+  background-color: #e74c3c;
+  color: white;
 }
 
 /* Remove button hover effect */
 .profile-completionscreen-button[type='button']:hover {
-  background-color: #c82333;
+  background-color: #c0392b;
+}
+
+/* Icon styling */
+.profile-completionscreen-form-group .fa-icon {
+  margin-right: 10px;
+  color: #3498DB;
 }
 
 /* Responsive design adjustments */
 @media (max-width: 768px) {
   .profile-completionscreen-container {
-    grid-template-columns: 1fr;
+    width: 95%;
+    padding: 20px;
+  }
+  
+  .profile-completionscreen-header {
+    font-size: 24px;
   }
 }
