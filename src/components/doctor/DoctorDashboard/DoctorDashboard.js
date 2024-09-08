@@ -39,10 +39,10 @@ const DoctorDashboard = () => {
   
 
   return (
-    <div className="dashboard-container">
-      <div className="sidebar">
-        <div className="profile">
-          <img src="/api/placeholder/100/100" alt="Doctor" className="profile-picture" />
+    <div className="DoctorDashboard-container">
+      <div className="DoctorDashboard-sidebar">
+        <div className="DoctorDashboard-profile">
+          <img src="/api/placeholder/100/100" alt="Doctor" className="DoctorDashboard-profile-picture" />
           <h2>JOHN DON</h2>
           <p>johndon@company.com</p>
         </div>
@@ -55,73 +55,73 @@ const DoctorDashboard = () => {
           <a href="#"><PieChart size={20} /> Graph</a>
         </nav>
       </div>
-      <div className="main-content">
+      <div className="DoctorDashboard-main-content">
         <header>
           <h1>Dashboard User</h1>
-          <button className="menu-toggle">☰</button>
+          <button className="DoctorDashboard-menu-toggle">☰</button>
         </header>
-        {/* <div className="stats-row">
-          <div className="stat-card primary">
+        {/* <div className="DoctorDashboard-stats-row">
+          <div className="DoctorDashboard-stat-card primary">
             <span>Earning</span>
             <h3>$ 628</h3>
-            <span className="icon">$</span>
+            <span className="DoctorDashboard-icon">$</span>
           </div>
-          <div className="stat-card">
+          <div className="DoctorDashboard-stat-card">
             <span>Share</span>
             <h3>2434</h3>
-            <span className="icon">
+            <span className="DoctorDashboard-icon">
               <Mail size={20} />
             </span>
           </div>
-          <div className="stat-card">
+          <div className="DoctorDashboard-stat-card">
             <span>Likes</span>
             <h3>1259</h3>
-            <span className="icon">👍</span>
+            <span className="DoctorDashboard-icon">👍</span>
           </div>
-          <div className="stat-card">
+          <div className="DoctorDashboard-stat-card">
             <span>Rating</span>
             <h3>8,5</h3>
-            <span className="icon">⭐</span>
+            <span className="DoctorDashboard-icon">⭐</span>
           </div>
         </div> */}
-        <div className="stats-row">
+        <div className="DoctorDashboard-stats-row">
       <div
-        className={`stat-card ${activeBlock === 'earning' ? 'active' : ''}`}
+        className={`DoctorDashboard-stat-card ${activeBlock === 'earning' ? 'active' : ''}`}
         onClick={() => handleBlockClick('earning')}
       >
         <span>Appointments</span>
         <h3>Overview</h3>
-        <span className="icon">$</span>
+        <span className="DoctorDashboard-icon">$</span>
       </div>
       <div
-        className={`stat-card ${activeBlock === 'share' ? 'active' : ''}`}
+        className={`DoctorDashboard-stat-card ${activeBlock === 'share' ? 'active' : ''}`}
         onClick={() => handleBlockClick('share')}
       >
         <span>Patients</span>
         <h3>All Time</h3>
-        <span className="icon">
+        <span className="DoctorDashboard-icon">
           <Mail size={20} />
         </span>
       </div>
       <div
-        className={`stat-card ${activeBlock === 'like' ? 'active' : ''}`}
+        className={`DoctorDashboard-stat-card ${activeBlock === 'like' ? 'active' : ''}`}
         onClick={() => handleBlockClick('like')}
       >
         <span>Likes</span>
         <h3>1259</h3>
-        <span className="icon">👍</span>
+        <span className="DoctorDashboard-icon">👍</span>
       </div>
       {/* <div
-        className={`stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
+        className={`DoctorDashboard-stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
         onClick={() => handleBlockClick('rating')}
       >
         <span>Rating</span>
         <h3>4/5</h3>
-        <span className="icon">⭐</span>
+        <span className="DoctorDashboard-icon">⭐</span>
       </div>
     </div>
-        <div className="charts-row">
-          <div className="chart-card large">
+        <div className="DoctorDashboard-charts-row">
+          <div className="DoctorDashboard-chart-card large">
             <h3>Result</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
@@ -134,27 +134,27 @@ const DoctorDashboard = () => {
                 <Bar dataKey="pending" fill="#fbbf24" />
               </BarChart>
             </ResponsiveContainer>
-            <button className="check-now">Check Now</button>
+            <button className="DoctorDashboard-check-now">Check Now</button>
           </div>
-          <div className="chart-card">
+          <div className="DoctorDashboard-chart-card">
             <h3>Appointment Status</h3>
-            <div className="donut-chart">
-              <svg viewBox="0 0 36 36" className="circular-chart">
-                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path className="circle" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <text x="18" y="20.35" className="percentage">45%</text>
+            <div className="DoctorDashboard-donut-chart">
+              <svg viewBox="0 0 36 36" className="DoctorDashboard-circular-chart">
+                <path className="DoctorDashboard-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path className="DoctorDashboard-circle" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" className="DoctorDashboard-percentage">45%</text>
               </svg>
             </div>
-            <ul className="legend">
+            <ul className="DoctorDashboard-legend">
               <li>Lorem ipsum</li>
               <li>Lorem ipsum</li>
               <li>Lorem ipsum</li>
               <li>Lorem ipsum</li>
             </ul>
-            <button className="check-now">Check Now</button>
+            <button className="DoctorDashboard-check-now">Check Now</button>
           </div>
         </div>
-        <div className="appointment-trends">
+        <div className="DoctorDashboard-appointment-trends">
           <h3>Appointment Trends</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={areaChartData}>
