@@ -17,7 +17,8 @@
   left: 0;
   height: 100vh;
   width: 250px;
-  background-color: #34495E;
+  background-color: #3498DB;
+  /* background-color: #34495E; */
   color: white;
   padding: 20px;
   z-index: 1;
