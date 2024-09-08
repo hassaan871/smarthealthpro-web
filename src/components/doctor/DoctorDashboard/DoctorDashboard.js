@@ -84,44 +84,6 @@ const DoctorDashboard = () => {
             <span className="DoctorDashboard-icon">⭐</span>
           </div>
         </div> */}
-
-
-<div className="DoctorDashboard-stats-row">
-  <div className="DoctorDashboard-stat-card-container">
-    <div
-      className={`DoctorDashboard-stat-card ${activeBlock === 'earning' ? 'active' : ''}`}
-      onClick={() => handleBlockClick('earning')}
-    >
-      <span>Appointments</span>
-      <h3>Overview</h3>
-      <span className="DoctorDashboard-icon">$</span>
-    </div>
-    <div
-      className={`DoctorDashboard-stat-card ${activeBlock === 'share' ? 'active' : ''}`}
-      onClick={() => handleBlockClick('share')}
-    >
-      <span>Patients</span>
-      <h3>All Time</h3>
-      <span className="DoctorDashboard-icon">
-        <Mail size={20} />
-      </span>
-    </div>
-    <div
-      className={`DoctorDashboard-stat-card ${activeBlock === 'like' ? 'active' : ''}`}
-      onClick={() => handleBlockClick('like')}
-    >
-      <span>Likes</span>
-      <h3>1259</h3>
-      <span className="DoctorDashboard-icon">👍</span>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-{/*         
         <div className="DoctorDashboard-stats-row">
       <div
         className={`DoctorDashboard-stat-card ${activeBlock === 'earning' ? 'active' : ''}`}
@@ -148,20 +110,7 @@ const DoctorDashboard = () => {
         <span>Likes</span>
         <h3>1259</h3>
         <span className="DoctorDashboard-icon">👍</span>
-      </div> */}
-
-
-
-
-
-
-
-
-
-
-
-
-
+      </div>
       {/* <div
         className={`DoctorDashboard-stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
         onClick={() => handleBlockClick('rating')}
@@ -220,7 +169,7 @@ const DoctorDashboard = () => {
           
         </div> 
       </div> 
-    // </div>
+    </div>
   );
 };
 
