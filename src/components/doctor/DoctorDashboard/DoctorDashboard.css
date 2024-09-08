@@ -1,13 +1,12 @@
 .dashboard-container {
   display: flex;
-  /* min-height: 100vh;
-  background-color: #f0f2f5; */
   font-family: Arial, sans-serif;
+  background-color: #ECF0F1;
 }
 
 .sidebar {
   width: 250px;
-  background-color: #0f172a;
+  background-color: #34495E;
   color: white;
   padding: 20px;
 }
@@ -27,12 +26,13 @@
 .profile h2 {
   margin: 0;
   font-size: 18px;
+  color: white;
 }
 
 .profile p {
   margin: 5px 0;
   font-size: 14px;
-  color: #94a3b8;
+  color: #3498DB;
 }
 
 .sidebar nav {
@@ -54,7 +54,7 @@
 }
 
 .sidebar nav a.active, .sidebar nav a:hover {
-  background-color: #1e293b;
+  background-color: #2E4053;
   border-radius: 5px;
 }
 
@@ -62,6 +62,7 @@
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  background-color: #ECF0F1;
 }
 
 header {
@@ -74,6 +75,7 @@ header {
 header h1 {
   margin: 0;
   font-size: 24px;
+  color: #34495E;
 }
 
 .menu-toggle {
@@ -82,6 +84,7 @@ header h1 {
   border: none;
   font-size: 24px;
   cursor: pointer;
+  color: #34495E;
 }
 
 .stats-row {
@@ -101,28 +104,29 @@ header h1 {
 }
 
 .stat-card.primary {
-  background-color: #1e40af;
+  background-color: #3498DB;
   color: white;
 }
 
 .stat-card.active {
-  background-color: #1e40af; /* same color as the earning block */
+  background-color: #3498DB;
   color: white;
 }
 
 .stat-card:not(.active):hover {
-  background-color: #f7f7f7; /* light gray background on hover */
-  cursor: pointer; /* change cursor to pointer on hover */
+  background-color: #F1C40F;
+  cursor: pointer;
 }
 
 .stat-card span {
   font-size: 14px;
-  color: #64748b;
+  color: #34495E;
 }
 
 .stat-card h3 {
   font-size: 24px;
   margin: 10px 0;
+  color: #34495E;
 }
 
 .stat-card .icon {
@@ -130,7 +134,7 @@ header h1 {
   top: 20px;
   right: 20px;
   font-size: 20px;
-  color: #3b82f6;
+  color: #3498DB;
 }
 
 .charts-row {
@@ -150,6 +154,7 @@ header h1 {
 .chart-card h3 {
   margin-top: 0;
   margin-bottom: 20px;
+  color: #34495E;
 }
 
 .donut-chart {
@@ -198,12 +203,12 @@ header h1 {
 
 .legend li {
   margin-bottom: 5px;
-  font-size: 14px;
-  color: #64748b;
+  font-size:  14px;
+  color: #34495E;
 }
 
 .check-now {
-  background-color: #f59e0b;
+  background-color: #F1C40F;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -222,6 +227,7 @@ header h1 {
 .appointment-trends h3 {
   margin-top: 0;
   margin-bottom: 20px;
+  color: #34495E;
 }
 
 @media (max-width: 1024px) {
@@ -240,6 +246,7 @@ header h1 {
 
   .menu-toggle {
     display: block;
+    color: #34495E;
   }
 
   .stats-row, .charts-row {

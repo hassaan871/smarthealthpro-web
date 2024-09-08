@@ -8,7 +8,7 @@ function DoctorChatWithPatientDetails() {
   ]);
 
   const [newMessage, setNewMessage] = useState('');
-  const [chatMode, setChatMode] = useState('patient'); // 'patient' or 'ai'
+  // const [chatMode, setChatMode] = useState('patient'); // 'patient' or 'ai'
 
   const patientInfo = {
     name: 'John Doe',
@@ -35,10 +35,10 @@ function DoctorChatWithPatientDetails() {
     setNewMessage('');
   };
 
-  const handleChatModeChange = (event) => {
-    setChatMode(event.target.value);
-    setMessages([]); // Clear messages when switching modes if needed
-  };
+  // const handleChatModeChange = (event) => {
+  //   // setChatMode(event.target.value);
+  //   // setMessages([]); // Clear messages when switching modes if needed
+  // };
 
   return (
     <div className="chat-with-details-container">
@@ -61,60 +61,34 @@ function DoctorChatWithPatientDetails() {
       </div>
 
       <div className="chat-container">
-        <div className="chat-mode-selector">
+        {/* <div className="chat-mode-selector">
           <label htmlFor="chat-mode">Chat Mode:</label>
           <select id="chat-mode" value={chatMode} onChange={handleChatModeChange}>
             <option value="patient">Chat with Patient</option>
             <option value="ai">Chat with AI Chatbot</option>
           </select>
+        </div> */}
+
+        <div className="chat-box">
+          <h1 className="chat-title">Chat with Patient</h1>
+          <div className="message-list">
+            {messages.map((message) => (
+              <div key={message.id} className={`message-item ${message.sender}`}>
+                <div className="message-bubble">{message.text}</div>
+              </div>
+            ))}
+          </div>
+          <div className="message-input-container">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="message-input"
+            />
+            <button onClick={handleSendMessage} className="send-button">Send</button>
+          </div>
         </div>
-
-        {chatMode === 'patient' && (
-          <div className="chat-box">
-            <h1 className="chat-title">Chat with Patient</h1>
-            <div className="message-list">
-              {messages.map((message) => (
-                <div key={message.id} className={`message-item ${message.sender}`}>
-                  <div className="message-bubble">{message.text}</div>
-                </div>
-              ))}
-            </div>
-            <div className="message-input-container">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="message-input"
-              />
-              <button onClick={handleSendMessage} className="send-button">Send</button>
-            </div>
-          </div>
-        )}
-
-        {chatMode === 'ai' && (
-          <div className="chat-box">
-            <h1 className="chat-title">Chat with AI Chatbot</h1>
-            {/* AI Chatbot interface here */}
-            <div className="message-list">
-              {messages.map((message) => (
-                <div key={message.id} className={`message-item ${message.sender}`}>
-                  <div className="message-bubble">{message.text}</div>
-                </div>
-              ))}
-            </div>
-            <div className="message-input-container">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="message-input"
-              />
-              <button onClick={handleSendMessage} className="send-button">Send</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
