@@ -3,6 +3,7 @@
     width: 85vw;
     min-height: 100vh;
     font-family: Arial, sans-serif;
+    /* background-color: red; */
 }
 
 .DoctorProfile-view,
@@ -14,6 +15,7 @@
 
 .DoctorProfile-view {
     background-color: #f0f0f0;
+    /* background-color: red; */
 }
 
 .DoctorProfile-edit {

@@ -48,10 +48,10 @@ const DoctorDashboard = () => {
         </div>
         <nav>
           <a href="#" className="active"><Home size={20} /> Home</a>
-          <a href="#"><File size={20} /> File</a>
+          <a href="#"><File size={20} /> Appointments</a>
           <a href="#"><Mail size={20} /> Messages</a>
-          <a href="#"><Bell size={20} /> Notification</a>
-          <a href="#"><MapPin size={20} /> Location</a>
+          <a href="#"><Bell size={20} /> Notifications</a>
+          <a href="#"><MapPin size={20} /> Patients</a>
           <a href="#"><PieChart size={20} /> Graph</a>
         </nav>
       </div>
@@ -111,7 +111,7 @@ const DoctorDashboard = () => {
         <h3>1259</h3>
         <span className="icon">👍</span>
       </div>
-      <div
+      {/* <div
         className={`stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
         onClick={() => handleBlockClick('rating')}
       >
@@ -165,9 +165,10 @@ const DoctorDashboard = () => {
               <Area type="monotone" dataKey="uv" stackId="1" stroke="#fbbf24" fill="#fde68a" />
               <Area type="monotone" dataKey="pv" stackId="1" stroke="#1e40af" fill="#3b82f6" />
             </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+          </ResponsiveContainer>*/}
+          
+        </div> 
+      </div> 
     </div>
   );
 };
