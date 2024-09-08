@@ -23,7 +23,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/profile-completion" element={<UserProfileCompletion />} />
-        <Route path="/doctordashboard" element={<DoctorDashboard />} />
+        <Route path="/doctordashboard" element={<DoctorDashboard doctorId={doctorId}/>} />
         <Route path="/doctorchat" element={<DoctorChat/>} />
         <Route path="/patientdetails" element={<PatientDetails/>} />
         <Route path="/doctorchatwithpatientdetail" element={<DoctorChatWithPatientDetails/>} />

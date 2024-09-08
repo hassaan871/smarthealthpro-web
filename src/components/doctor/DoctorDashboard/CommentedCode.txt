@@ -1,0 +1,81 @@
+{/* <div className="DoctorDashboard-stats-row">
+          <div className="DoctorDashboard-stat-card primary">
+            <span>Earning</span>
+            <h3>$ 628</h3>
+            <span className="DoctorDashboard-icon">$</span>
+          </div>
+          <div className="DoctorDashboard-stat-card">
+            <span>Share</span>
+            <h3>2434</h3>
+            <span className="DoctorDashboard-icon">
+              <Mail size={20} />
+            </span>
+          </div>
+          <div className="DoctorDashboard-stat-card">
+            <span>Likes</span>
+            <h3>1259</h3>
+            <span className="DoctorDashboard-icon">👍</span>
+          </div>
+          <div className="DoctorDashboard-stat-card">
+            <span>Rating</span>
+            <h3>8,5</h3>
+            <span className="DoctorDashboard-icon">⭐</span>
+          </div>
+        </div> */}
+
+
+        {/* <div
+        className={`DoctorDashboard-stat-card ${activeBlock === 'rating' ? 'active' : ''}`}
+        onClick={() => handleBlockClick('rating')}
+      >
+        <span>Rating</span>
+        <h3>4/5</h3>
+        <span className="DoctorDashboard-icon">⭐</span>
+      </div>
+    </div>
+        <div className="DoctorDashboard-charts-row">
+          <div className="DoctorDashboard-chart-card large">
+            <h3>Result</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="visited" fill="#1e40af" />
+                <Bar dataKey="pending" fill="#fbbf24" />
+              </BarChart>
+            </ResponsiveContainer>
+            <button className="DoctorDashboard-check-now">Check Now</button>
+          </div>
+          <div className="DoctorDashboard-chart-card">
+            <h3>Appointment Status</h3>
+            <div className="DoctorDashboard-donut-chart">
+              <svg viewBox="0 0 36 36" className="DoctorDashboard-circular-chart">
+                <path className="DoctorDashboard-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path className="DoctorDashboard-circle" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" className="DoctorDashboard-percentage">45%</text>
+              </svg>
+            </div>
+            <ul className="DoctorDashboard-legend">
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+              <li>Lorem ipsum</li>
+            </ul>
+            <button className="DoctorDashboard-check-now">Check Now</button>
+          </div>
+        </div>
+        <div className="DoctorDashboard-appointment-trends">
+          <h3>Appointment Trends</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={areaChartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="uv" stackId="1" stroke="#fbbf24" fill="#fde68a" />
+              <Area type="monotone" dataKey="pv" stackId="1" stroke="#1e40af" fill="#3b82f6" />
+            </AreaChart>
+          </ResponsiveContainer>*/}
