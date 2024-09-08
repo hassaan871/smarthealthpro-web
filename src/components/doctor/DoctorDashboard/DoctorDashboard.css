@@ -106,20 +106,40 @@
   color: #34495E;
 }
 
-.DoctorDashboard-stats-row {
+/* .DoctorDashboard-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 20px;
+} */
+
+.DoctorDashboard-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #2E4053;
+  border-radius: 5px;
+  margin-bottom: 20px;
 }
 
-.DoctorDashboard-stat-card {
+/* .DoctorDashboard-stat-card {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   transition: background-color 0.2s ease-in-out;
+} */
+
+.DoctorDashboard-stat-card {
+  background-color: transparent;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  margin: 0;
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
 }
 
 .DoctorDashboard-stat-card.primary {
@@ -142,18 +162,32 @@
   color: #34495E;
 }
 
-.DoctorDashboard-stat-card h3 {
+/* .DoctorDashboard-stat-card h3 {
   font-size: 24px;
   margin: 10px 0;
   color: #34495E;
+} */
+
+.DoctorDashboard-stat-card h3 {
+  font-size: 18px;
+  margin: 0;
+  color: white;
 }
 
-.DoctorDashboard-stat-card .icon {
+/* .DoctorDashboard-stat-card .icon {
   position: absolute;
   top: 20px;
   right: 20px;
   font-size: 20px;
   color: #3498DB;
+} */
+
+.DoctorDashboard-stat-card .icon {
+  position: relative;
+  top: 0;
+  right: 0;
+  font-size: 18px;
+  color: white;
 }
 
 .DoctorDashboard-charts-row {
@@ -247,6 +281,20 @@
   margin-top: 0;
   margin-bottom: 20px;
   color: #34495E;
+}
+
+.DoctorDashboard-stat-card.active {
+  background-color: #1e40af;
+}
+
+.DoctorDashboard-stat-card-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #2E4053;
+  border-radius: 5px;
+  margin-bottom: 20px;
 }
 
 @media (max-width: 1024px) {
