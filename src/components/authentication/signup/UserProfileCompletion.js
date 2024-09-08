@@ -6,36 +6,46 @@ import { faUser, faAddressCard, faClock, faGraduationCap, faUpload } from '@fort
 
 const UserProfileCompletion = () => {
   const [user, setUser] = useState({
+    fullName: '',
     specialization: '',
     cnic: '',
     address: '',
     about: '',
-    officeHours: {
-      monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: ''
+    clinicHours: {
+      monday: { open: '', close: '' },
+      tuesday: { open: '', close: '' },
+      wednesday: { open: '', close: '' },
+      thursday: { open: '', close: '' },
+      friday: { open: '', close: '' },
+      saturday: { open: '', close: '' },
+      sunday: { open: '', close: '' }
     },
-    education: [{ degree: '', institution: '', year: '' }],
+    education: [{ degree: '', institution: '', startYear: '', endYear: '' }],
     degreeFiles: [],
     profileImage: null
   });
+
+  const [previewImage, setPreviewImage] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUser(prevUser => ({ ...prevUser, [name]: value }));
   };
 
-  const handleOfficeHoursChange = (e) => {
-    const { name, value } = e.target;
+  const handleClinicHoursChange = (day, type, value) => {
     setUser(prevUser => ({
       ...prevUser,
-      officeHours: { ...prevUser.officeHours, [name]: value }
+      clinicHours: {
+        ...prevUser.clinicHours,
+        [day]: { ...prevUser.clinicHours[day], [type]: value }
+      }
     }));
   };
 
-  const handleEducationChange = (index, e) => {
-    const { name, value } = e.target;
+  const handleEducationChange = (index, field, value) => {
     setUser(prevUser => {
       const updatedEducation = [...prevUser.education];
-      updatedEducation[index] = { ...updatedEducation[index], [name]: value };
+      updatedEducation[index] = { ...updatedEducation[index], [field]: value };
       return { ...prevUser, education: updatedEducation };
     });
   };
@@ -43,7 +53,7 @@ const UserProfileCompletion = () => {
   const addEducationField = () => {
     setUser(prevUser => ({
       ...prevUser,
-      education: [...prevUser.education, { degree: '', institution: '', year: '' }]
+      education: [...prevUser.education, { degree: '', institution: '', startYear: '', endYear: '' }]
     }));
   };
 
@@ -59,7 +69,15 @@ const UserProfileCompletion = () => {
   };
 
   const handleImageChange = (e) => {
-    setUser(prevUser => ({ ...prevUser, profileImage: e.target.files[0] }));
+    const file = e.target.files[0];
+    setUser(prevUser => ({ ...prevUser, profileImage: file }));
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -67,9 +85,10 @@ const UserProfileCompletion = () => {
     const formData = new FormData();
     
     Object.keys(user).forEach(key => {
-      if (key === 'officeHours') {
-        Object.entries(user.officeHours).forEach(([day, hours]) => {
-          formData.append(`officeHours[${day}]`, hours);
+      if (key === 'clinicHours') {
+        Object.entries(user.clinicHours).forEach(([day, hours]) => {
+          formData.append(`clinicHours[${day}][open]`, hours.open);
+          formData.append(`clinicHours[${day}][close]`, hours.close);
         });
       } else if (key === 'education') {
         user.education.forEach((edu, index) => {
@@ -95,7 +114,6 @@ const UserProfileCompletion = () => {
       window.location.href = '/dashboard';
     } catch (err) {
       console.error('Error submitting profile:', err);
-      // Add error handling here (e.g., display error message to user)
     }
   };
 
@@ -106,74 +124,69 @@ const UserProfileCompletion = () => {
         setUser(prevUser => ({ ...prevUser, ...response.data }));
       } catch (err) {
         console.error('Failed to fetch profile data:', err);
-        // Add error handling here (e.g., display error message to user)
       }
     };
 
     fetchProfile();
   }, []);
 
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear; year >= currentYear - 50; year--) {
+      years.push(
+        <option key={year} value={year}>
+          {year}
+        </option>
+      );
+    }
+    return years;
+  };
+
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const timeLabel = hour < 10 ? `0${hour}:00` : `${hour}:00`;
+      times.push(
+        <option key={hour} value={timeLabel}>
+          {timeLabel}
+        </option>
+      );
+    }
+    return times;
+  };
+
   return (
     <div className="profile-completionscreen-container">
       <h2 className="profile-completionscreen-header">Complete Your Profile</h2>
       <form onSubmit={handleSubmit}>
         <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faUser} className="fa-icon" />Specialization:</label>
+          <label><FontAwesomeIcon icon={faUser} className="fa-icon" />Full Name:</label>
           <input 
             type="text" 
-            name="specialization"
-            value={user.specialization} 
+            name="fullName"
+            value={user.fullName} 
             onChange={handleInputChange} 
             required 
             className="profile-completionscreen-form-input"
           />
         </div>
-        <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faAddressCard} className="fa-icon" />CNIC:</label>
+        
+        <div className="profile-picture-container">
+          <img 
+            src={previewImage || 'https://via.placeholder.com/100'} 
+            alt="Profile Preview" 
+            className="profile-picture-preview"
+          />
+          <label htmlFor="profileImage" className="profile-picture-label">Choose Profile Picture</label>
           <input 
-            type="text" 
-            name="cnic"
-            value={user.cnic} 
-            onChange={handleInputChange} 
-            required 
-            className="profile-completionscreen-form-input"
+            type="file" 
+            id="profileImage" 
+            onChange={handleImageChange} 
+            className="profile-picture-input"
           />
         </div>
-        <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faAddressCard} className="fa-icon" />Address:</label>
-          <input 
-            type="text" 
-            name="address"
-            value={user.address} 
-            onChange={handleInputChange} 
-            required 
-            className="profile-completionscreen-form-input"
-          />
-        </div>
-        <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faUser} className="fa-icon" />About:</label>
-          <textarea 
-            name="about"
-            value={user.about} 
-            onChange={handleInputChange} 
-            required 
-            className="profile-completionscreen-form-input"
-          ></textarea>
-        </div>
-        <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faClock} className="fa-icon" />Office Hours:</label>
-          {Object.entries(user.officeHours).map(([day, hours]) => (
-            <input 
-              key={day}
-              type="text" 
-              name={day}
-              value={hours} 
-              onChange={handleOfficeHoursChange} 
-              placeholder={day.charAt(0).toUpperCase() + day.slice(1)} 
-              className="profile-completionscreen-form-input"
-            />
-          ))}
-        </div>
+        
         <div className="profile-completionscreen-form-group">
           <label><FontAwesomeIcon icon={faGraduationCap} className="fa-icon" />Education:</label>
           {user.education.map((edu, index) => (
@@ -182,7 +195,7 @@ const UserProfileCompletion = () => {
                 type="text" 
                 name="degree"
                 value={edu.degree} 
-                onChange={(e) => handleEducationChange(index, e)} 
+                onChange={(e) => handleEducationChange(index, 'degree', e.target.value)} 
                 placeholder="Degree" 
                 required 
                 className="profile-completionscreen-form-input"
@@ -191,43 +204,73 @@ const UserProfileCompletion = () => {
                 type="text" 
                 name="institution"
                 value={edu.institution} 
-                onChange={(e) => handleEducationChange(index, e)} 
+                onChange={(e) => handleEducationChange(index, 'institution', e.target.value)} 
                 placeholder="Institution" 
                 required 
                 className="profile-completionscreen-form-input"
               />
-              <input 
-                type="text" 
-                name="year"
-                value={edu.year} 
-                onChange={(e) => handleEducationChange(index, e)} 
-                placeholder="Year" 
-                required 
-                className="profile-completionscreen-form-input"
-              />
+              <select
+                value={edu.startYear}
+                onChange={(e) => handleEducationChange(index, 'startYear', e.target.value)}
+                required
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions()}
+              </select>
+              <select
+                value={edu.endYear}
+                onChange={(e) => handleEducationChange(index, 'endYear', e.target.value)}
+                required
+                disabled={!edu.startYear}
+              >
+                <option value="">End Year</option>
+                {generateYearOptions()}
+              </select>
               <button type="button" onClick={() => removeEducationField(index)} className="profile-completionscreen-button">Remove</button>
             </div>
           ))}
           <button type="button" onClick={addEducationField} className="profile-completionscreen-button">Add Education</button>
         </div>
+        
         <div className="profile-completionscreen-form-group">
           <label><FontAwesomeIcon icon={faUpload} className="fa-icon" />Upload Degrees:</label>
-          <input 
-            type="file" 
-            multiple 
-            onChange={handleFileChange} 
-            className="profile-completionscreen-form-input"
-          />
+          <div className="degree-upload-container">
+            <input 
+              type="file" 
+              multiple 
+              onChange={handleFileChange} 
+              className="degree-upload-input"
+            />
+            <span>Drag and drop or click to upload files</span>
+          </div>
         </div>
+        
         <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faUpload} className="fa-icon" />Profile Image:</label>
-          <input 
-            type="file" 
-            onChange={handleImageChange} 
-            className="profile-completionscreen-form-input"
-          />
+          <label><FontAwesomeIcon icon={faClock} className="fa-icon" />Clinic Hours:</label>
+          {Object.entries(user.clinicHours).map(([day, hours]) => (
+            <div key={day} className="clinic-hours-entry">
+              <label>{day.charAt(0).toUpperCase() + day.slice(1)}:</label>
+              <select
+                value={hours.open}
+                onChange={(e) => handleClinicHoursChange(day, 'open', e.target.value)}
+                className="clinic-hours-select"
+              >
+                <option value="">Open</option>
+                {generateTimeOptions()}
+              </select>
+              <select
+                value={hours.close}
+                onChange={(e) => handleClinicHoursChange(day, 'close', e.target.value)}
+                className="clinic-hours-select"
+              >
+                <option value="">Close</option>
+                {generateTimeOptions()}
+              </select>
+            </div>
+          ))}
         </div>
-        <button type="submit" className="profile-completionscreen-button">Complete Profile</button>
+
+        <button type="submit" className="profile-completionscreen-submit-button">Save Profile</button>
       </form>
     </div>
   );
