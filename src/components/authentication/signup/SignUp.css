@@ -4,11 +4,15 @@
   display: flex;
   width: 90%;
   height: 90vh;
-  margin: auto;
+  margin: 0; /* removed auto */
   background-color: white;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .welcome-back {
