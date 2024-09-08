@@ -59,7 +59,7 @@
   }
   
   .message-item.doctor .message-bubble {
-    background-color: #007bff;
+    background-color: #3498DB;
     color: white;
     border-radius: 10px 10px 0 10px;
   }
@@ -81,7 +81,8 @@
   .send-button {
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #007bff;
+    /* background-color: #F1C40F; */
+    background-color: #3498DB;
     color: white;
     border: none;
     border-radius: 5px;
@@ -89,6 +90,6 @@
   }
   
   .send-button:hover {
-    background-color: #0056b3;
+    background-color: #F1C40F;
   }
   

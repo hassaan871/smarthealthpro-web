@@ -12,6 +12,7 @@ import DoctorDetailView from "./components/doctor/DoctorDetailView/DoctorDetailV
 import DoctorPanel from "./components/doctor/DoctorPanel/DoctorPanel";
 import PatientDetails from "./components/doctor/PatientDetails/PatientDetails";
 import AllPatients from './components/doctor/DoctorDashboard/AllPatients';
+import DoctorProfile from './components/doctor/DoctorProfile/DoctorProfile';
 
 function App() {
   const doctorId = '66c0b2aa90040b7bc334b842';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/doctorchatwithpatientdetail" element={<DoctorChatWithPatientDetails/>} />
         <Route path="/doctordetailedit" element={<DoctorDetailEdit/>} />
         <Route path="/doctordetailview" element={<DoctorDetailView/>} />
+        <Route path="/doctorprofile" element={<DoctorProfile/>} />
         <Route path="/doctorpanel" element={<DoctorPanel/>} />
       </Routes>
     </Router>
