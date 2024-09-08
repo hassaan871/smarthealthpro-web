@@ -130,6 +130,11 @@ const UserProfileCompletion = () => {
     fetchProfile();
   }, []);
 
+  // const generateYearOptions = () => {
+  //   const currentYear = new Date().getFullYear();
+  //   const years = [];
+  //   for (let year = currentYear; year >= currentYear -
+
   const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -173,11 +178,15 @@ const UserProfileCompletion = () => {
         </div>
         
         <div className="profile-picture-container">
-          <img 
-            src={previewImage || 'https://via.placeholder.com/100'} 
-            alt="Profile Preview" 
-            className="profile-picture-preview"
-          />
+          {previewImage ? (
+            <img 
+              src={previewImage} 
+              alt="Profile Preview" 
+              className="profile-picture-preview"
+            />
+          ) : (
+            <FontAwesomeIcon icon={faUser} className="profile-picture-placeholder" />
+          )}
           <label htmlFor="profileImage" className="profile-picture-label">Choose Profile Picture</label>
           <input 
             type="file" 
@@ -255,25 +264,26 @@ const UserProfileCompletion = () => {
                 onChange={(e) => handleClinicHoursChange(day, 'open', e.target.value)}
                 className="clinic-hours-select"
               >
+                {/* <option value="">Open</ */}
                 <option value="">Open</option>
-                {generateTimeOptions()}
-              </select>
-              <select
-                value={hours.close}
-                onChange={(e) => handleClinicHoursChange(day, 'close', e.target.value)}
-                className="clinic-hours-select"
-              >
-                <option value="">Close</option>
-                {generateTimeOptions()}
-              </select>
-            </div>
-          ))}
-        </div>
+                  {generateTimeOptions()}
+                </select>
+                <select
+                  value={hours.close}
+                  onChange={(e) => handleClinicHoursChange(day, 'close', e.target.value)}
+                  className="clinic-hours-select"
+                >
+                  <option value="">Close</option>
+                  {generateTimeOptions()}
+                </select>
+              </div>
+            ))}
+          </div>
 
-        <button type="submit" className="profile-completionscreen-submit-button">Save Profile</button>
-      </form>
-    </div>
-  );
-};
+          <button type="submit" className="profile-completionscreen-submit-button">Save Profile</button>
+        </form>
+      </div>
+    );
+  };
 
-export default UserProfileCompletion;
+  export default UserProfileCompletion;

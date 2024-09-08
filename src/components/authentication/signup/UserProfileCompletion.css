@@ -10,8 +10,8 @@ body {
   min-height: 100vh;
   background-color: #ECF0F1;
   color: #34495E;
-  align-items: flex-start; /* Add this line */
-  margin-top: 0; /* Add this line */
+  align-items: flex-start;
+  margin-top: 0;
 }
 
 /* Form container styling */
@@ -225,8 +225,8 @@ body {
 
 .profile-completionscreen-submit-button {
   padding: 10px 20px;
-  background-color: #F1C40F; /* Update the background color */
-  color: #ffffff; /* Update the text color */
+  background-color: #F1C40F;
+  color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -235,10 +235,33 @@ body {
   transition: background-color 0.3s ease, transform 0.1s ease;
   margin-top: 10px;
   margin-right: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Add a box shadow to give it a 3D effect */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .profile-completionscreen-submit-button:hover {
-  background-color: #F7DC6F; /* Update the hover background color */
+  background-color: #F7DC6F;
   transform: translateY(-2px);
+}
+
+/* Additional styles for clinic hours select */
+.clinic-hours-select {
+  width: 150px;
+  margin-right: 10px;
+}
+
+/* Additional styles for open and close hours */
+.open-hours, .close-hours {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.open-hours label, .close-hours label {
+  width: 100px;
+  margin-right: 10px;
+}
+
+.open-hours select, .close-hours select {
+  flex: 1;
+  margin-right: 10px;
 }
