@@ -161,23 +161,22 @@ const UserProfileCompletion = () => {
     return times;
   };
 
+  const handleCnicChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'cnic') {
+      // Limit CNIC input to 13 digits
+      setUser(prevUser => ({ ...prevUser, [name]: value.slice(0, 13).replace(/\D/g, '') }));
+    } else {
+      setUser(prevUser => ({ ...prevUser, [name]: value }));
+    }
+  };
+
   return (
     <div className="profile-completionscreen-container">
       <h2 className="profile-completionscreen-header">Complete Your Profile</h2>
       <form onSubmit={handleSubmit}>
-        <div className="profile-completionscreen-form-group">
-          <label><FontAwesomeIcon icon={faUser} className="fa-icon" />Full Name:</label>
-          <input 
-            type="text" 
-            name="fullName"
-            value={user.fullName} 
-            onChange={handleInputChange} 
-            required 
-            className="profile-completionscreen-form-input"
-          />
-        </div>
-        
-        <div className="profile-picture-container">
+
+      <div className="profile-picture-container">
           {previewImage ? (
             <img 
               src={previewImage} 
@@ -195,6 +194,35 @@ const UserProfileCompletion = () => {
             className="profile-picture-input"
           />
         </div>
+        
+        <div className="profile-completionscreen-form-group">
+          <label><FontAwesomeIcon icon={faUser} className="fa-icon" />Full Name:</label>
+          <input 
+            type="text" 
+            name="fullName"
+            value={user.fullName} 
+            onChange={handleInputChange} 
+            required 
+            className="profile-completionscreen-form-input"
+          />
+        </div>
+
+        
+        <div className="profile-completionscreen-form-group">
+          <label><FontAwesomeIcon icon={faAddressCard} className="fa-icon" />CNIC:</label>
+          <input
+            type="text"
+            name="cnic"
+            value={user.cnic}
+            onChange={handleInputChange}
+            required
+            className="profile-completionscreen-form-input"
+            pattern="[0-9]{13}"
+            title="Please enter a valid 13-digit CNIC number"
+          />
+        </div>
+        
+        
         
         <div className="profile-completionscreen-form-group">
           <label><FontAwesomeIcon icon={faGraduationCap} className="fa-icon" />Education:</label>
