@@ -1,25 +1,45 @@
-.nav-container {
+/* Reset body margin and padding */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Ensure all elements use border-box */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Navbar container */
+  .nav-container {
     background-color: #ECF0F1;
     width: 100%;
     padding: 10px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Optional: Set fixed position to stick the navbar to the top */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
   }
   
+  /* Navbar content */
   .nav-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 0 20px;
+    max-width: 100%; /* Ensure it doesn't exceed screen width */
   }
   
+  /* Navbar title */
   .nav-title {
     color: #34495E;
     font-size: 24px;
     font-weight: bold;
   }
   
+  /* Navbar list */
   .nav-list {
     display: flex;
     list-style-type: none;
@@ -27,6 +47,7 @@
     padding: 0;
   }
   
+  /* Navbar items */
   .nav-item {
     margin: 0 5px;
   }
@@ -46,6 +67,7 @@
     color: #ECF0F1;
   }
   
+  /* Navbar user icon */
   .nav-user-icon {
     color: #34495E;
     cursor: pointer;
@@ -54,3 +76,29 @@
   .nav-user-icon:hover {
     color: #3498DB;
   }
+  
+  /* Media query for responsiveness */
+  @media (max-width: 768px) {
+    .nav-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .nav-list {
+      flex-direction: column;
+      width: 100%;
+      margin-top: 10px;
+    }
+  
+    .nav-item {
+      margin: 5px 0;
+      width: 100%;
+    }
+  
+    .nav-item a {
+      display: block;
+      width: 100%;
+      text-align: left;
+    }
+  }
+  
