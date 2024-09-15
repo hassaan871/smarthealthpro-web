@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { FiUser } from 'react-icons/fi';
+import { FiUser, FiCalendar, FiUsers, FiSettings, FiLogOut } from 'react-icons/fi';
 import './Nav.css';
 
 const Nav = () => {
-  const [activeItem, setActiveItem] = useState('Home');
+  const [activeItem, setActiveItem] = useState('Appointments');
 
-  const navItems = ['Home', 'Services', 'Contact us', 'Our projects'];
+  const navItems = [
+    { name: 'Appointments', icon: FiCalendar },
+    { name: 'Patients', icon: FiUsers },
+    { name: 'Profile', icon: FiSettings },
+    { name: 'Log out', icon: FiLogOut },
+  ];
 
   return (
     <nav className="nav-container">
@@ -13,15 +18,16 @@ const Nav = () => {
         <h1 className="nav-title">SmartHealthPro</h1>
         <ul className="nav-list">
           {navItems.map((item) => (
-            <li key={item} className={`nav-item ${activeItem === item ? 'active' : ''}`}>
+            <li key={item.name} className={`nav-item ${activeItem === item.name ? 'active' : ''}`}>
               <a
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  setActiveItem(item);
+                  setActiveItem(item.name);
                 }}
               >
-                {item}
+                <item.icon className="nav-icon" />
+                {item.name}
               </a>
             </li>
           ))}

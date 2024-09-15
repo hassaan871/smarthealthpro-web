@@ -13,6 +13,7 @@ body {
   /* Navbar container */
   .nav-container {
     background-color: #ECF0F1;
+    /* background-color: #F1C40F; */
     width: 100%;
     padding: 10px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -59,6 +60,13 @@ body {
     border-radius: 4px;
     font-size: 16px;
     transition: background-color 0.3s, color 0.3s;
+    /**/
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-icon {
+    margin-right: 8px;
   }
   
   .nav-item:hover a,
