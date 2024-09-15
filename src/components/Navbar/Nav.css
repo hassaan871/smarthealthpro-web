@@ -1,0 +1,42 @@
+/* Colors */
+:root {
+    --primary-color: #3498DB;
+    --secondary-color: #ECF0F1;
+    --dark-color: #34495E;
+    --accent-color: #F1C40F;
+  }
+  
+  /* Navbar styles */
+  .navbar {
+    background-color: var(--primary-color);
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Navigation list styles */
+  .nav-list {
+    list-style-type: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Navigation item styles */
+  .nav-item {
+    color: var(--secondary-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s, background-color 0.3s;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+  }
+  
+  .nav-item:hover {
+    background-color: var(--accent-color);
+    color: var(--dark-color);
+  }
+  
