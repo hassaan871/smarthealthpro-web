@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
-import { Calendar, Users, User, LogOut } from 'lucide-react';
+import { FiUser } from 'react-icons/fi';
+import './Nav.css';
 
 const Nav = () => {
-  const [activeItem, setActiveItem] = useState('Appointments');
+  const [activeItem, setActiveItem] = useState('Home');
 
-  const navItems = [
-    { name: 'Appointments', icon: Calendar },
-    { name: 'Patients', icon: Users },
-    { name: 'Profile', icon: User },
-    { name: 'Logout', icon: LogOut },
-  ];
+  const navItems = ['Home', 'Services', 'Contact us', 'Our projects'];
 
   return (
-    <nav className="bg-[#34495E] text-[#ECF0F1] p-4 w-full shadow-lg">
-      <ul className="flex justify-between items-center max-w-4xl mx-auto">
-        {navItems.map((item) => (
-          <li key={item.name} className="flex-1 mx-1">
-            <button
-              onClick={() => setActiveItem(item.name)}
-              className={`nav-item flex flex-col items-center justify-center w-full p-3 rounded-lg transition-all ${
-                activeItem === item.name
-                  ? 'bg-[#3498DB] shadow-md transform scale-105'
-                  : 'hover:bg-[#3498DB]/30'
-              }`}
-            >
-              <item.icon className="nav-icon mb-2" size={28} />
-              <span className="nav-text text-sm font-medium">{item.name}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+    <nav className="nav-container">
+      <div className="nav-content">
+        <h1 className="nav-title">SmartHealthPro</h1>
+        <ul className="nav-list">
+          {navItems.map((item) => (
+            <li key={item} className={`nav-item ${activeItem === item ? 'active' : ''}`}>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveItem(item);
+                }}
+              >
+                {item}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div className="nav-user-icon">
+          <FiUser size={24} />
+        </div>
+      </div>
     </nav>
   );
 };
