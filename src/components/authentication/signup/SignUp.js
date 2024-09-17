@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
-import axiosInstance from '../../../axiosInstance';
 import './SignUp.css';
 import { User, Mail, Lock, Phone } from 'lucide-react';
+import {useNavigate} from 'react-router-dom';
+
 
 function SignUp() {
   const [name, setName] = useState('');
+  // const [fullName, setFullName] = useState(name);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [specialty, setSpecialty] = useState('');
+  const [gender, setGender] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState('');
+  const role = 'doctor';
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords don't match!");
-      return;
-    }
-    try {
-      await axiosInstance.post('/auth/signup', {
-        name,
-        email,
-        password,
-        specialty,
-        contactNumber,
-      });
-      window.location.href = '/login'; // Redirect to login after successful sign-up
-    } catch (err) {
-      setError('Failed to register. Please try again.');
-    }
+  //   const result = fetch('',{
+  //     method:'POST',
+  //     body: JSON.stringify({name,fullName,email,password,role,gender}),
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //   });
+
+  if(password !== confirmPassword){
+    setError('Password and confirm password do not match');
+    return;
+  }
+
+  setError('');
+
+
+  // console.warn('name: '+ name);
+  // console.warn('email: '+ email);
+  // console.warn('password: '+ password);
+  // console.warn('confirmed Password: '+ confirmPassword);
+  // console.warn('gender: '+ gender);
+  // console.warn('contact-number: '+ contactNumber);
+
+  const signupData = {name, email, password, gender};
+  localStorage.setItem('signupData', JSON.stringify(signupData));
+
+  navigate('/profile-completion');
+
   };
+  
 
   return (
     <div className="signup-container">
@@ -98,15 +116,16 @@ function SignUp() {
           </div>
           <div className="form-group">
             <select 
-              value={specialty} 
-              onChange={(e) => setSpecialty(e.target.value)} 
+              value={gender} 
+              onChange={(e) => setGender(e.target.value)} 
               required 
               className="form-input"
             >
-              <option value="">Select Specialty</option>
-              <option value="heart">Heart</option>
-              <option value="diabetes">Diabetes</option>
-              <option value="blood pressure">Blood Pressure</option>
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+              {/* <option value="blood pressure">Blood Pressure</option> */}
             </select>
           </div>
           <div className="form-group">

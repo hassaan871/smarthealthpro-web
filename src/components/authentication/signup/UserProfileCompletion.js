@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance from '../../../axiosInstance';
 import "./UserProfileCompletion.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faAddressCard, faClock, faGraduationCap, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faAddressCard, faClock, faGraduationCap, faUpload, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 
 const UserProfileCompletion = () => {
   const [user, setUser] = useState({
@@ -80,10 +79,10 @@ const UserProfileCompletion = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData();
-    
+
     Object.keys(user).forEach(key => {
       if (key === 'clinicHours') {
         Object.entries(user.clinicHours).forEach(([day, hours]) => {
@@ -107,33 +106,15 @@ const UserProfileCompletion = () => {
       }
     });
 
-    try {
-      await axiosInstance.post('/auth/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      window.location.href = '/dashboard';
-    } catch (err) {
-      console.error('Error submitting profile:', err);
-    }
+    // Handle form submission without axios
+    console.log('Form data submitted:', formData);
+    // You can implement your own submission logic here
   };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await axiosInstance.get('/auth/profile');
-        setUser(prevUser => ({ ...prevUser, ...response.data }));
-      } catch (err) {
-        console.error('Failed to fetch profile data:', err);
-      }
-    };
-
-    fetchProfile();
+    // Fetch profile data logic can be added here
+    console.log('Component mounted or user data changed');
   }, []);
-
-  // const generateYearOptions = () => {
-  //   const currentYear = new Date().getFullYear();
-  //   const years = [];
-  //   for (let year = currentYear; year >= currentYear -
 
   const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -176,7 +157,7 @@ const UserProfileCompletion = () => {
       <h2 className="profile-completionscreen-header">Complete Your Profile</h2>
       <form onSubmit={handleSubmit}>
 
-      <div className="profile-picture-container">
+        <div className="profile-picture-container">
           {previewImage ? (
             <img 
               src={previewImage} 
@@ -207,22 +188,31 @@ const UserProfileCompletion = () => {
           />
         </div>
 
-        
         <div className="profile-completionscreen-form-group">
           <label><FontAwesomeIcon icon={faAddressCard} className="fa-icon" />CNIC:</label>
           <input
             type="text"
             name="cnic"
             value={user.cnic}
-            onChange={handleInputChange}
+            onChange={handleCnicChange}
             required
             className="profile-completionscreen-form-input"
             pattern="[0-9]{13}"
             title="Please enter a valid 13-digit CNIC number"
           />
         </div>
-        
-        
+
+        <div className="profile-completionscreen-form-group">
+          <label><FontAwesomeIcon icon={faUserDoctor} className="fa-icon" />Specialization:</label>
+          <input 
+            type="text" 
+            name="specialization"
+            value={user.specialization} 
+            onChange={handleInputChange} 
+            required 
+            className="profile-completionscreen-form-input"
+          />
+        </div>
         
         <div className="profile-completionscreen-form-group">
           <label><FontAwesomeIcon icon={faGraduationCap} className="fa-icon" />Education:</label>
@@ -292,26 +282,25 @@ const UserProfileCompletion = () => {
                 onChange={(e) => handleClinicHoursChange(day, 'open', e.target.value)}
                 className="clinic-hours-select"
               >
-                {/* <option value="">Open</ */}
                 <option value="">Open</option>
-                  {generateTimeOptions()}
-                </select>
-                <select
-                  value={hours.close}
-                  onChange={(e) => handleClinicHoursChange(day, 'close', e.target.value)}
-                  className="clinic-hours-select"
-                >
-                  <option value="">Close</option>
-                  {generateTimeOptions()}
-                </select>
-              </div>
-            ))}
-          </div>
+                {generateTimeOptions()}
+              </select>
+              <select
+                value={hours.close}
+                onChange={(e) => handleClinicHoursChange(day, 'close', e.target.value)}
+                className="clinic-hours-select"
+              >
+                <option value="">Close</option>
+                {generateTimeOptions()}
+              </select>
+            </div>
+          ))}
+        </div>
 
-          <button type="submit" className="profile-completionscreen-submit-button">Save Profile</button>
-        </form>
-      </div>
-    );
-  };
+        <button type="submit" className="profile-completionscreen-submit-button">Save Profile</button>
+      </form>
+    </div>
+  );
+};
 
-  export default UserProfileCompletion;
+export default UserProfileCompletion;

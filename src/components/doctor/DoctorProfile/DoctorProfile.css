@@ -4,6 +4,7 @@
     min-height: 100vh;
     font-family: Arial, sans-serif;
     /* background-color: red; */
+    margin-top: 60px;  /*Patch for Navbar*/
 }
 
 .DoctorProfile-view,

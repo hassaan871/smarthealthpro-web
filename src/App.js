@@ -18,23 +18,26 @@ import Nav from './components/Navbar/Nav';
 function App() {
   const doctorId = '66c0b2aa90040b7bc334b842';
   return (
-    // <Router>
-    //   <Routes>
-    //     <Route path="/" element={<AllPatients doctorId={doctorId} />} />
-    //     <Route path="/login" element={<Login />} />
-    //     <Route path="/signup" element={<SignUp />} />
-    //     <Route path="/profile-completion" element={<UserProfileCompletion />} />
-    //     <Route path="/doctordashboard" element={<DoctorDashboard doctorId={doctorId}/>} />
-    //     <Route path="/doctorchat" element={<DoctorChat/>} />
-    //     <Route path="/patientdetails" element={<PatientDetails/>} />
-    //     <Route path="/doctorchatwithpatientdetail" element={<DoctorChatWithPatientDetails/>} />
-    //     <Route path="/doctordetailedit" element={<DoctorDetailEdit/>} />
-    //     <Route path="/doctordetailview" element={<DoctorDetailView/>} />
-    //     <Route path="/doctorprofile" element={<DoctorProfile/>} />
-    //     <Route path="/doctorpanel" element={<DoctorPanel/>} />
-    //   </Routes>
-    // </Router>
-    <Nav/>
+    <Router>
+      <Routes>
+        {/* <Route path="/" element={<AllPatients doctorId={doctorId} />} /> */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/profile-completion" element={<UserProfileCompletion />} />
+        <Route path="/doctordashboard" element={<DoctorDashboard doctorId={doctorId}/>} />
+        <Route path="/doctorchat" element={<DoctorChat/>} />
+        <Route path="/patientdetails" element={<PatientDetails/>} />
+        <Route path="/doctorchatwithpatientdetail" element={<DoctorChatWithPatientDetails/>} />
+        <Route path="/doctordetailedit" element={<DoctorDetailEdit/>} />
+        <Route path="/doctordetailview" element={<DoctorDetailView/>} />
+        <Route path="/doctorprofile" element={<DoctorProfile/>} />
+        <Route path="/doctorpanel" element={<DoctorPanel/>} />
+      </Routes>
+    </Router>
+    // <>
+    // <Nav/>
+    // <DoctorProfile/>
+    // </>
   );
 }
 
