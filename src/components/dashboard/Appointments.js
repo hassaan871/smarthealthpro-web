@@ -1,79 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { format, isToday, isThisWeek, isThisMonth, parseISO } from 'date-fns';
 import './Appointments.css';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
-  const [filter, setFilter] = useState('today');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const doctorId = user.id;
-      
       try {
+        const userString = localStorage.getItem('user');
+        if (!userString) {
+          throw new Error('User data not found in local storage');
+        }
+
+        const user = JSON.parse(userString);
+        const doctorId = user.id;
+
+        if (!doctorId) {
+          throw new Error('Doctor ID not found in user data');
+        }
+
+        console.log('Doctor ID:', doctorId);
+
         const response = await fetch(`http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`);
-        if (!response.ok) throw new Error('Failed to fetch appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+
         const data = await response.json();
-        setAppointments(data.filter(app => app.appointmentStatus === 'pending'));
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
+        const pendingAppointments = data.filter(apt => apt.appointmentStatus === 'pending');
+        setAppointments(pendingAppointments);
+      } catch (err) {
+        setError(err.message);
       }
     };
 
     fetchAppointments();
   }, []);
 
-  const filteredAppointments = appointments.filter(app => {
-    const appointmentDate = parseISO(app.date);
-    switch (filter) {
-      case 'today':
-        return isToday(appointmentDate);
-      case 'week':
-        return isThisWeek(appointmentDate);
-      case 'month':
-        return isThisMonth(appointmentDate);
-      default:
-        return true;
-    }
-  });
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
-  const getPriorityBarWidth = (priority) => {
-    switch (priority.toLowerCase()) {
-      case 'low': return '20%';
-      case 'mild': return '40%';
-      case 'high': return '80%';
-      case 'very high': return '100%';
-      default: return '0%';
-    }
-  };
+  if (appointments.length === 0) {
+    return <div className="no-appointments">No Pending Appointments</div>;
+  }
 
   return (
     <div className="appointments-container">
-      <div className="filter-buttons">
-        <button onClick={() => setFilter('today')} className={filter === 'today' ? 'active' : ''}>Today</button>
-        <button onClick={() => setFilter('week')} className={filter === 'week' ? 'active' : ''}>Week</button>
-        <button onClick={() => setFilter('month')} className={filter === 'month' ? 'active' : ''}>Month</button>
-      </div>
-      <div className="appointments-list">
-        {filteredAppointments.map(app => (
-          <div key={app._id} className="appointment-card">
-            <img src={app.patient.avatar} alt={app.patient.name} className="patient-avatar" />
-            <div className="appointment-details">
-              <h3>{app.patient.name}</h3>
-              <p>Date: {format(parseISO(app.date), 'MMM dd, yyyy')}</p>
-              <p>Time: {app.time}</p>
-              <p>Status: {app.appointmentStatus}</p>
-              <p>Description: {app.description}</p>
-              <p>Booked On: {format(parseISO(app.bookedOn), 'MMM dd, yyyy')}</p>
-              <div className="priority-bar">
-                <div className="priority-fill" style={{ width: getPriorityBarWidth(app.priority) }}></div>
-              </div>
-              <p>Priority: {app.priority}</p>
-            </div>
+      {appointments.map((appointment) => (
+        <div key={appointment._id} className="appointment-card">
+          <img src={appointment.patient.avatar} alt={appointment.patient.name} className="patient-avatar" />
+          <div className="appointment-details">
+            <h3>{appointment.patient.name}</h3>
+            <p><strong>Date:</strong> {appointment.date}</p>
+            <p><strong>Time:</strong> {appointment.time}</p>
+            <p><strong>Status:</strong> {appointment.appointmentStatus}</p>
+            <p><strong>Description:</strong> {appointment.description}</p>
+            <p><strong>Location:</strong> {appointment.location}</p>
+            <p><strong>Priority:</strong> {appointment.priority}</p>
+            <p><strong>Booked On:</strong> {new Date(appointment.bookedOn).toLocaleString()}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 };
