@@ -12,7 +12,7 @@ function Login() {
   useEffect(()=>{
     const auth = localStorage.getItem('user');
     if(auth){
-      navigate("/doctordashboard");
+      navigate("/dashboard");
     }
   },[])
 
@@ -30,7 +30,7 @@ function Login() {
     console.warn(result);
     if(result.email){
       localStorage.setItem("user", JSON.stringify(result));
-      navigate("/doctordashboard");
+      navigate("/dashboard");
     }else{
       alert('Please enter correct details')
     }
