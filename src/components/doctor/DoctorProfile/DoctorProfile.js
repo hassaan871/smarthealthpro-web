@@ -1,28 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './DoctorProfile.css';
 
 const DoctorProfile = () => {
     const [doctor, setDoctor] = useState({
-        fullName: 'Dr. Alice Smith',
-        specialization: 'Cardiologist',
-        cnic: '35201-1234567-1',
-        email: 'alice.smith@example.com',
-        contactNumber: '123-456-7890',
-        address: '123 Medical St, Lahore',
-        about: 'Experienced cardiologist with 10+ years of experience.',
+        fullName: '',
+        specialization: '',
+        cnic: '',
+        email: '',
+        contactNumber: '',
+        address: '',
+        about: '',
         clinicHours: {
-            monday: { status: 'open', open: '09:00', close: '17:00' },
-            tuesday: { status: 'open', open: '09:00', close: '17:00' },
-            wednesday: { status: 'open', open: '09:00', close: '17:00' },
-            thursday: { status: 'open', open: '09:00', close: '17:00' },
-            friday: { status: 'open', open: '09:00', close: '17:00' },
-            saturday: { status: 'open', open: '09:00', close: '14:00' },
+            monday: { status: 'closed', open: '', close: '' },
+            tuesday: { status: 'closed', open: '', close: '' },
+            wednesday: { status: 'closed', open: '', close: '' },
+            thursday: { status: 'closed', open: '', close: '' },
+            friday: { status: 'closed', open: '', close: '' },
+            saturday: { status: 'closed', open: '', close: '' },
             sunday: { status: 'closed', open: '', close: '' },
         },
+        education: [],
         profileImage: 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png',
     });
 
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        const fetchDoctorData = async () => {
+            const userString = localStorage.getItem('user');
+            const user = JSON.parse(userString);
+            const userId = user.id;
+
+            const userResponse = await fetch(`http://localhost:5000/user/getUserInfo/${userId}`);
+            const userData = await userResponse.json();
+
+            const doctorsResponse = await fetch('http://localhost:5000/user/getAllDoctors');
+            const doctorsData = await doctorsResponse.json();
+
+            const doctorData = doctorsData.find(doctor => doctor.user === userId);
+            const doctorId = doctorData ? doctorData._id : null;
+
+            if (doctorId) {
+                const doctorResponse = await fetch(`http://localhost:5000/user/getDoctorById/${doctorId}`);
+                const doctorDetails = await doctorResponse.json();
+                setDoctor(doctorDetails);
+            }
+        };
+
+        fetchDoctorData();
+    }, []);
 
     const validateField = (name, value) => {
         switch (name) {
@@ -111,9 +137,17 @@ const DoctorProfile = () => {
                 <p className="DoctorProfile-detail"><strong>CNIC:</strong> {doctor.cnic}</p>
                 <p className="DoctorProfile-detail"><strong>Address:</strong> {doctor.address}</p>
                 <p className="DoctorProfile-detail"><strong>About:</strong> {doctor.about}</p>
+                <div className="DoctorProfile-detail"><strong>Education:</strong></div>
+                <ul>
+                    {doctor.education && doctor.education.map((edu) => (
+                        <li key={edu._id}>
+                            {edu.degree} from {edu.institution} ({edu.year})
+                        </li>
+                    ))}
+                </ul>
                 <div className="DoctorProfile-clinicHours">
                     <strong>Clinic Hours:</strong>
-                    {Object.entries(doctor.clinicHours).map(([day, hours]) => (
+                    {doctor.clinicHours && Object.entries(doctor.clinicHours).map(([day, hours]) => (
                         <p key={day} className="DoctorProfile-detail">
                             <strong>{day.charAt(0).toUpperCase() + day.slice(1)}:</strong> 
                             {hours.status === 'closed' ? 'Closed' : `${hours.open} - ${hours.close}`}
@@ -222,7 +256,7 @@ const DoctorProfile = () => {
                     <div className="DoctorProfile-form-group">
                         <label>Clinic Hours:</label>
                         <div className="DoctorProfile-clinicHours-edit">
-                            {Object.entries(doctor.clinicHours).map(([day, hours]) => (
+                            {doctor.clinicHours && Object.entries(doctor.clinicHours).map(([day, hours]) => (
                                 <div key={day} className="DoctorProfile-clinicHours-entry">
                                     <label>{day.charAt(0).toUpperCase() + day.slice(1)}:</label>
                                     <select
