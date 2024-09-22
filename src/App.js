@@ -20,7 +20,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={<AllPatients doctorId={doctorId} />} /> */}
+        <Route path="/" element={<AllPatients doctorId={doctorId} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/profile-completion" element={<UserProfileCompletion />} />

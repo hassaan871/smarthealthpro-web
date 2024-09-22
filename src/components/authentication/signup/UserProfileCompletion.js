@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import "./UserProfileCompletion.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faAddressCard, faClock, faGraduationCap, faUpload, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import {useNavigate} from 'react-router-dom';
+
 
 const UserProfileCompletion = () => {
   const [user, setUser] = useState({
@@ -25,6 +27,86 @@ const UserProfileCompletion = () => {
   });
 
   const [previewImage, setPreviewImage] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const signupData = JSON.parse(localStorage.getItem('signupData'));
+    if (signupData) {
+      setUser(prevUser => ({
+        ...prevUser,
+        name: signupData.name,
+        email: signupData.email,
+        gender: signupData.gender
+      }));
+    }
+    }, []);
+
+    const registerUser = async (userData) => {
+      try {
+        const response = await fetch('http://localhost:5000/user/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Registration failed');
+        }
+  
+        const data = await response.json();
+        console.log('Registration successful:', data);
+        // Clear signup data from localStorage
+        localStorage.removeItem('signupData');
+        // Redirect to dashboard or login page
+        navigate('/doctordashboard');
+      } catch (error) {
+        console.error('Error during registration:', error);
+        // Handle error (e.g., show error message to user)
+      }
+    };
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const signupData = JSON.parse(localStorage.getItem('signupData'));
+      
+      // Prepare clinic hours in the required format
+      const officeHours = {};
+      Object.entries(user.clinicHours).forEach(([day, hours]) => {
+        if (hours.open && hours.close) {
+          officeHours[day] = `${hours.open} - ${hours.close}`;
+        } else {
+          officeHours[day] = "Closed";
+        }
+      });
+  
+      const userData = {
+        userName: `dr.${user.fullName.toLowerCase().replace(/\s/g, '')}`,
+        fullName: user.fullName,
+        email: signupData.email,
+        password: signupData.password,
+        avatar: previewImage || "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png",
+        specialization: user.specialization,
+        cnic: user.cnic,
+        address: user.address,
+        rating: 0,
+        reviewCount: 0,
+        numPatients: 0,
+        about: user.about,
+        officeHours: officeHours,
+        education: user.education.map(edu => ({
+          degree: edu.degree,
+          institution: edu.institution,
+          year: edu.startYear
+        })),
+        gender: signupData.gender
+      };
+  
+      registerUser(userData);
+    };
+  
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,42 +161,39 @@ const UserProfileCompletion = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const formData = new FormData();
 
-    Object.keys(user).forEach(key => {
-      if (key === 'clinicHours') {
-        Object.entries(user.clinicHours).forEach(([day, hours]) => {
-          formData.append(`clinicHours[${day}][open]`, hours.open);
-          formData.append(`clinicHours[${day}][close]`, hours.close);
-        });
-      } else if (key === 'education') {
-        user.education.forEach((edu, index) => {
-          Object.entries(edu).forEach(([field, value]) => {
-            formData.append(`education[${index}][${field}]`, value);
-          });
-        });
-      } else if (key === 'degreeFiles') {
-        user.degreeFiles.forEach(file => {
-          formData.append('degreeFiles', file);
-        });
-      } else if (key === 'profileImage' && user.profileImage) {
-        formData.append('profileImage', user.profileImage);
-      } else {
-        formData.append(key, user[key]);
-      }
-    });
+  //   Object.keys(user).forEach(key => {
+  //     if (key === 'clinicHours') {
+  //       Object.entries(user.clinicHours).forEach(([day, hours]) => {
+  //         formData.append(`clinicHours[${day}][open]`, hours.open);
+  //         formData.append(`clinicHours[${day}][close]`, hours.close);
+  //       });
+  //     } else if (key === 'education') {
+  //       user.education.forEach((edu, index) => {
+  //         Object.entries(edu).forEach(([field, value]) => {
+  //           formData.append(`education[${index}][${field}]`, value);
+  //         });
+  //       });
+  //     } else if (key === 'degreeFiles') {
+  //       user.degreeFiles.forEach(file => {
+  //         formData.append('degreeFiles', file);
+  //       });
+  //     } else if (key === 'profileImage' && user.profileImage) {
+  //       formData.append('profileImage', user.profileImage);
+  //     } else {
+  //       formData.append(key, user[key]);
+  //     }
+  //   });
 
-    // Handle form submission without axios
-    console.log('Form data submitted:', formData);
-    // You can implement your own submission logic here
-  };
+  //   // Handle form submission without axios
+  //   console.log('Form data submitted:', formData);
+  //   // You can implement your own submission logic here
+  // };
 
-  useEffect(() => {
-    // Fetch profile data logic can be added here
-    console.log('Component mounted or user data changed');
-  }, []);
+  
 
   const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();

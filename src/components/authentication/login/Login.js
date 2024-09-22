@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axiosInstance from '../../../axiosInstance';
 import './Login.css';
 
 function Login() {
@@ -9,13 +8,19 @@ function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    // Add your fetch logic here
     try {
-      const response = await axiosInstance.post('/auth/login', {
-        email,
-        password,
-      });
-      localStorage.setItem('token', response.data.token);
-      window.location.href = '/dashboard'; // Redirect to dashboard after login
+      // Example placeholder for fetch logic
+      // const response = await fetch('/auth/login', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({ email, password }),
+      // });
+      // const data = await response.json();
+      // localStorage.setItem('token', data.token);
+      // window.location.href = '/dashboard'; // Redirect to dashboard after login
     } catch (err) {
       setError('Invalid email or password');
     }
