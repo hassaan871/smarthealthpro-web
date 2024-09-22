@@ -1,29 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Login.css';
+import { useNavigate } from 'react-router-dom';
+
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    // Add your fetch logic here
-    try {
-      // Example placeholder for fetch logic
-      // const response = await fetch('/auth/login', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ email, password }),
-      // });
-      // const data = await response.json();
-      // localStorage.setItem('token', data.token);
-      // window.location.href = '/dashboard'; // Redirect to dashboard after login
-    } catch (err) {
-      setError('Invalid email or password');
+  
+  const navigate = useNavigate();
+  useEffect(()=>{
+    const auth = localStorage.getItem('user');
+    if(auth){
+      navigate("/doctordashboard");
     }
+  },[])
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    console.warn("email, password", email, password);
+    let result = await fetch('http://localhost:5000/user/login',{
+      method: 'POST',
+      body: JSON.stringify({email, password}),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    result = await result.json();
+    console.warn(result);
+    if(result.email){
+      localStorage.setItem("user", JSON.stringify(result));
+      navigate("/doctordashboard");
+    }else{
+      alert('Please enter correct details')
+    }
+    
   };
 
   return (
@@ -39,7 +50,7 @@ function Login() {
       </div>
       <div className="loginpage-login-section">
         <h2 className="loginpage-login-title">Login</h2>
-        <form onSubmit={handleSubmit} className="loginpage-login-form">
+        <form onSubmit={handleLogin} className="loginpage-login-form">
           <div className="loginpage-form-group">
             <label htmlFor="email">Email:</label>
             <input 
