@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
+import React from 'react';
 import './Appointments.css';
 
 const Appointments = () => {
@@ -60,11 +61,31 @@ const Appointments = () => {
             <p><strong>Location:</strong> {appointment.location}</p>
             <p><strong>Priority:</strong> {appointment.priority}</p>
             <p><strong>Booked On:</strong> {new Date(appointment.bookedOn).toLocaleString()}</p>
+            <div className={`appointment-progress ${getPriorityClass(appointment.priority)}`}>
+              <div className="progress-bar"></div>
+            </div>
           </div>
         </div>
       ))}
     </div>
   );
+};
+
+const getPriorityClass = (priority) => {
+  switch (priority) {
+    case 'low':
+      return 'priority-low';
+    case 'mild':
+      return 'priority-mild';
+    case 'moderate':
+      return 'priority-moderate';
+    case 'high':
+      return 'priority-high';
+    case 'very high':
+      return 'priority-very-high';
+    default:
+      return '';
+  }
 };
 
 export default Appointments;

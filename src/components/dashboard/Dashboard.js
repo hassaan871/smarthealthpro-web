@@ -1,14 +1,31 @@
+import React, { useState } from 'react';
 import Nav from "../Navbar/Nav";
 import Appointments from "./Appointments";
+import Patients from "./Patients";
+import DoctorProfile from '../doctor/DoctorProfile/DoctorProfile';
 
 const Dashboard = () => {
-    return(
-        <div>
+    const [activeSection, setActiveSection] = useState('Appointments');
 
-            <Nav/>
-            <Appointments/>
+    const renderSection = () => {
+        switch(activeSection) {
+            case 'Appointments':
+                return <Appointments />;
+            case 'Patients':
+                return <Patients />;
+            case 'Profile':
+                return <DoctorProfile />;
+            default:
+                return <Appointments />;
+        }
+    };
+
+    return (
+        <div>
+            <Nav setActiveSection={setActiveSection} />
+            {renderSection()}
         </div>
-    )
-}
+    );
+};
 
 export default Dashboard;
