@@ -7,7 +7,6 @@ const DoctorProfile = () => {
         specialization: '',
         cnic: '',
         email: '',
-        contactNumber: '',
         address: '',
         about: '',
         clinicHours: {
@@ -31,19 +30,34 @@ const DoctorProfile = () => {
             const user = JSON.parse(userString);
             const userId = user.id;
 
-            const userResponse = await fetch(`http://localhost:5000/user/getUserInfo/${userId}`);
-            const userData = await userResponse.json();
+            try {
+                const userResponse = await fetch(`http://localhost:5000/user/getUserInfo/${userId}`);
+                const userData = await userResponse.json();
 
-            const doctorsResponse = await fetch('http://localhost:5000/user/getAllDoctors');
-            const doctorsData = await doctorsResponse.json();
+                const doctorsResponse = await fetch('http://localhost:5000/user/getAllDoctors');
+                const doctorsData = await doctorsResponse.json();
 
-            const doctorData = doctorsData.find(doctor => doctor.user === userId);
-            const doctorId = doctorData ? doctorData._id : null;
+                const doctorData = doctorsData.find(doctor => doctor.user === userId);
+                const doctorId = doctorData ? doctorData._id : null;
 
-            if (doctorId) {
-                const doctorResponse = await fetch(`http://localhost:5000/user/getDoctorById/${doctorId}`);
-                const doctorDetails = await doctorResponse.json();
-                setDoctor(doctorDetails);
+                if (doctorId) {
+                    const doctorResponse = await fetch(`http://localhost:5000/user/getDoctorById/${doctorId}`);
+                    const doctorDetails = await doctorResponse.json();
+                    setDoctor(prevDoctor => ({
+                        ...prevDoctor,
+                        ...doctorDetails,
+                        fullName: userData.user.fullName,
+                        email: userData.user.email
+                    }));
+                } else {
+                    setDoctor(prevDoctor => ({
+                        ...prevDoctor,
+                        fullName: userData.user.fullName,
+                        email: userData.user.email
+                    }));
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
             }
         };
 
@@ -56,8 +70,6 @@ const DoctorProfile = () => {
                 return value.length < 3 ? 'Full name must be at least 3 characters long' : '';
             case 'email':
                 return !/\S+@\S+\.\S+/.test(value) ? 'Email address is invalid' : '';
-            case 'contactNumber':
-                return !/^\d{11}$/.test(value) ? 'Contact number must be 11 digits' : '';
             case 'cnic':
                 return !/^\d{5}-\d{7}-\d$/.test(value) ? 'CNIC must be in the format xxxxx-xxxxxxx-x' : '';
             default:
@@ -129,11 +141,10 @@ const DoctorProfile = () => {
         <div className="DoctorProfile-container">
             <div className="DoctorProfile-view">
                 <h2 className="DoctorProfile-header">Doctor Profile</h2>
-                <img src={doctor.profileImage} alt={doctor.fullName} className="DoctorProfile-avatar" />
+                <img src={doctor.profileImage || 'default-image-url'} alt={doctor.fullName} className="DoctorProfile-avatar" />
                 <h2 className="DoctorProfile-name">{doctor.fullName}</h2>
                 <p className="DoctorProfile-detail"><strong>Specialization:</strong> {doctor.specialization}</p>
-                <p className="DoctorProfile-detail"><strong>Email:</strong> {doctor.email}</p>
-                <p className="DoctorProfile-detail"><strong>Contact Number:</strong> {doctor.contactNumber}</p>
+                <p className="DoctorProfile-detail"><strong>Email:</strong> {doctor.email || 'Not provided'}</p>
                 <p className="DoctorProfile-detail"><strong>CNIC:</strong> {doctor.cnic}</p>
                 <p className="DoctorProfile-detail"><strong>Address:</strong> {doctor.address}</p>
                 <p className="DoctorProfile-detail"><strong>About:</strong> {doctor.about}</p>
@@ -145,15 +156,13 @@ const DoctorProfile = () => {
                         </li>
                     ))}
                 </ul>
-                <div className="DoctorProfile-clinicHours">
-                    <strong>Clinic Hours:</strong>
-                    {doctor.clinicHours && Object.entries(doctor.clinicHours).map(([day, hours]) => (
-                        <p key={day} className="DoctorProfile-detail">
-                            <strong>{day.charAt(0).toUpperCase() + day.slice(1)}:</strong> 
-                            {hours.status === 'closed' ? 'Closed' : `${hours.open} - ${hours.close}`}
-                        </p>
-                    ))}
-                </div>
+                <div className="DoctorProfile-detail"><strong>Clinic Hours:</strong></div>
+                {doctor.clinicHours && Object.entries(doctor.clinicHours).map(([day, hours]) => (
+                    <p key={day} className="DoctorProfile-detail">
+                        <strong>{day.charAt(0).toUpperCase() + day.slice(1)}:</strong> 
+                        {hours.status === 'closed' ? 'Closed' : `${hours.open} - ${hours.close}`}
+                    </p>
+                ))}
             </div>
             <div className="DoctorProfile-edit">
                 <h2 className="DoctorProfile-header">Edit Profile</h2>
@@ -195,19 +204,6 @@ const DoctorProfile = () => {
                             required 
                         />
                         {errors.email && <span className="DoctorProfile-error-message">{errors.email}</span>}
-                    </div>
-                    <div className="DoctorProfile-form-group">
-                        <label htmlFor="contactNumber">Contact Number:</label>
-                        <input 
-                            id="contactNumber"
-                            type="tel" 
-                            name="contactNumber" 
-                            value={doctor.contactNumber} 
-                            onChange={handleInputChange} 
-                            className={`DoctorProfile-form-input ${errors.contactNumber ? 'error' : ''}`}
-                            required 
-                        />
-                        {errors.contactNumber && <span className="DoctorProfile-error-message">{errors.contactNumber}</span>}
                     </div>
                     <div className="DoctorProfile-form-group">
                         <label htmlFor="cnic">CNIC:</label>
