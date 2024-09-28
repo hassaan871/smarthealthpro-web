@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import './DoctorChatWithPatientDetails.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Card, Row, Col, ListGroup, Badge } from 'react-bootstrap';
 import DoctorChat from '../DoctorChat/DoctorChat';
 
 function DoctorChatWithPatientDetails() {
@@ -14,19 +15,7 @@ function DoctorChatWithPatientDetails() {
 
   const [newMessage, setNewMessage] = useState('');
 
-  // const patientInfo = {
-  //   fullName: 'John Michael Doe',
-  //   age: 45,
-  //   gender: 'Male',
-  //   email: 'johndoe@example.com',
-  //   medicalHistory: [
-  //     'Diabetes - Diagnosed in 2015',
-  //     'Hypertension - Diagnosed in 2017',
-  //     'Allergic to Penicillin',
-  //   ],
-  //   imageUrl: '/api/placeholder/100/100', // Placeholder image, replace with actual image URL
-  // };
-
+  // Use appointment data if available, otherwise use placeholder data
   const patientInfo = appointment ? {
     fullName: appointment.patient.name,
     age: appointment.patient.age || 'N/A',
@@ -43,13 +32,21 @@ function DoctorChatWithPatientDetails() {
     imageUrl: '/api/placeholder/100/100',
   };
 
-
   const chatSummaries = [
-    { date: '2024-09-01', summary: 'Discussed recurring headaches and sleep patterns.' },
-    { date: '2024-08-15', summary: 'Reviewed medication for hypertension, adjusted dosage.' },
-    { date: '2024-07-30', summary: 'Annual check-up, all vitals normal. Recommended more exercise.' },
-    // Add more summaries as needed
-  ];
+    { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
+    { date: '2024-08-15', summary: 'Reviewed lab results indicating elevated LDL cholesterol, prescribed statins to reduce cardiovascular risk.' },
+    { date: '2024-07-30', summary: 'Follow-up on hypertension management, adjusted ACE inhibitor dosage.' },
+    { date: '2024-06-25', summary: 'Consulted on recurring angina symptoms, recommended stress test for further evaluation.' },
+    { date: '2024-05-18', summary: 'Assessed insulin resistance and adjusted diabetic medication regimen.' },
+    { date: '2024-04-10', summary: 'Evaluated increased blood pressure, suggested low-sodium diet and beta blockers.' },
+    { date: '2024-03-12', summary: 'Reviewed HbA1c levels, modified treatment plan to better control type 2 diabetes.' },
+    { date: '2024-02-28', summary: 'Discussed heart palpitations, ordered EKG and recommended cardiology referral.' },
+    { date: '2024-01-19', summary: 'Addressed hypertension-related headaches, recommended 24-hour blood pressure monitoring.' },
+    { date: '2024-12-05', summary: 'Monitored progress of blood pressure control, altered calcium channel blocker dose.' },
+    { date: '2024-11-20', summary: 'Addressed concerns of diabetic neuropathy, initiated gabapentin for nerve pain.' },
+    { date: '2024-10-15', summary: 'Reviewed post-angioplasty recovery, advised on cardiac rehabilitation exercises.' },
+];
+
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
@@ -64,73 +61,98 @@ function DoctorChatWithPatientDetails() {
     setNewMessage('');
   };
 
+  const getPriorityBadgeVariant = (priority) => {
+    switch (priority.toLowerCase()) {
+      case 'low': return 'info';
+      case 'medium': return 'success';
+      case 'high': return 'warning';
+      case 'very high': return 'danger';
+      default: return 'secondary';
+    }
+  };
+
   return (
-    // <div className="DCWPD-chat-with-details-container">
-    //   <div className="DCWPD-patient-details-container">
-    //     <h2 className="DCWPD-patient-details-title">Patient Details</h2>
-    //     <div className="DCWPD-patient-info">
-    //       <img src={patientInfo.imageUrl} alt={patientInfo.fullName} className="DCWPD-patient-image" />
-    //       <p><strong>Name:</strong> {patientInfo.fullName}</p>
-    //       <p><strong>Age:</strong> {patientInfo.age}</p>
-    //       <p><strong>Gender:</strong> {patientInfo.gender}</p>
-    //       <p><strong>Email:</strong> {patientInfo.email}</p>
-    //     </div>
-    //     <h3 className="DCWPD-medical-history-title">Medical History</h3>
-    //     <ul className="DCWPD-medical-history-list">
-    //       {patientInfo.medicalHistory.map((item, index) => (
-    //         <li key={index} className="DCWPD-medical-history-item">
-    //           {item}
-    //         </li>
-    //       ))}
-    //     </ul>
-    //     <h3 className="DCWPD-chat-summaries-title">Chat Summaries</h3>
-    //     <div className="DCWPD-chat-summaries-list">
-    //       {chatSummaries.map((summary, index) => (
-    //         <div key={index} className="DCWPD-chat-summary-item">
-    //           <div className="DCWPD-chat-summary-date">{summary.date}</div>
-    //           <div>{summary.summary}</div>
-    //         </div>
-    //       ))}
-    //     </div>
-    //   </div>
-    <div className="DCWPD-chat-with-details-container">
-    <div className="DCWPD-patient-details-container">
-      <h2 className="DCWPD-patient-details-title">Patient Details</h2>
-      <div className="DCWPD-patient-info">
-        <img src={patientInfo.imageUrl} alt={patientInfo.fullName} className="DCWPD-patient-image" />
-        <p><strong>Name:</strong> {patientInfo.fullName}</p>
-        <p><strong>Age:</strong> {patientInfo.age}</p>
-        <p><strong>Gender:</strong> {patientInfo.gender}</p>
-        <p><strong>Email:</strong> {patientInfo.email}</p>
-        {appointment && (
-          <>
-            <p><strong>Appointment Date:</strong> {appointment.date}</p>
-            <p><strong>Appointment Time:</strong> {appointment.time}</p>
-            <p><strong>Location:</strong> {appointment.location}</p>
-            <p><strong>Status:</strong> {appointment.appointmentStatus}</p>
-            <p><strong>Priority:</strong> {appointment.priority}</p>
-          </>
-        )}
-      </div>
-      <h3 className="DCWPD-medical-history-title">Previous Prescriptions and Notes</h3>
-      <ul className="DCWPD-medical-history-list">
-        {patientInfo.medicalHistory.map((item, index) => (
-          <li key={index} className="DCWPD-medical-history-item">
-            {item}
-          </li>
-        ))}
-      </ul>
-      <h3 className="DCWPD-chat-summaries-title">Chat Summaries</h3>
-      <div className="DCWPD-chat-summaries-list">
-        {chatSummaries.map((summary, index) => (
-          <div key={index} className="DCWPD-chat-summary-item">
-            <div className="DCWPD-chat-summary-date">{summary.date}</div>
-            <div>{summary.summary}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-    <DoctorChat/>
+    <div className="container-fluid mt-4">
+      <Row>
+        <Col md={3}>
+          <Card className="mb-4">
+            <Card.Header as="h5" className="bg-primary text-white">Patient Details</Card.Header>
+            <Card.Body>
+              <div className="text-center mb-3">
+                {/* <img src={patientInfo.imageUrl} alt={patientInfo.fullName} className="rounded-circle" style={{ width: '100px', height: '100px', objectFit: 'cover' }} /> */}
+                <img
+                  // src={patientInfo.imageUrl || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                  src={ 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                  alt={appointment.patient.name}
+                  className="rounded-circle"
+                  style={{ width: '80px', height: '80px' }}
+                />
+              </div>
+              <ListGroup variant="flush">
+                <ListGroup.Item><strong>Name:</strong> {patientInfo.fullName}</ListGroup.Item>
+                <ListGroup.Item><strong>Age:</strong> {patientInfo.age}</ListGroup.Item>
+                <ListGroup.Item><strong>Gender:</strong> {patientInfo.gender}</ListGroup.Item>
+                <ListGroup.Item><strong>Email:</strong> {patientInfo.email}</ListGroup.Item>
+                {appointment && (
+                  <>
+                    <ListGroup.Item><strong>Appointment Date:</strong> {appointment.date}</ListGroup.Item>
+                    <ListGroup.Item><strong>Appointment Time:</strong> {appointment.time}</ListGroup.Item>
+                    <ListGroup.Item><strong>Location:</strong> {appointment.location}</ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>Status:</strong>{' '}
+                      <Badge bg={appointment.appointmentStatus.toLowerCase() === 'pending' ? 'warning' : 'success'}>
+                        {appointment.appointmentStatus}
+                      </Badge>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>Priority:</strong>{' '}
+                      <Badge bg={getPriorityBadgeVariant(appointment.priority)}>
+                        {appointment.priority}
+                      </Badge>
+                    </ListGroup.Item>
+                  </>
+                )}
+              </ListGroup>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Header as="h5" className="bg-info text-white">Prescription and Notes</Card.Header>
+            <Card.Body>
+              <ListGroup variant="flush">
+                {patientInfo.medicalHistory.map((item, index) => (
+                  <ListGroup.Item key={index}>{item}</ListGroup.Item>
+                ))}
+              </ListGroup>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={3}>
+          <Card>
+            <Card.Header as="h5" className="bg-success text-white">Chat Summaries</Card.Header>
+            <Card.Body style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+              <ListGroup variant="flush">
+                {chatSummaries.map((summary, index) => (
+                  <ListGroup.Item key={index}>
+                    <div className="fw-bold">{summary.date}</div>
+                    <div>{summary.summary}</div>
+                  </ListGroup.Item>
+                ))}
+              </ListGroup>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6}>
+          <Card className="h-100">
+            <Card.Header as="h5" className="bg-primary text-white">Chat with Patient</Card.Header>
+            <Card.Body className="d-flex flex-column" style={{ height: '80vh' }}>
+              <DoctorChat />
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }
