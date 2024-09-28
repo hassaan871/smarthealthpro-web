@@ -37,11 +37,21 @@ function DoctorChatWithPatientDetails() {
         imageUrl: '/api/placeholder/100/100',
       };
 
-  const chatSummaries = [
-    { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
-    { date: '2024-08-15', summary: 'Reviewed lab results indicating elevated LDL cholesterol, prescribed statins to reduce cardiovascular risk.' },
-    // ... (other chat summaries)
-  ];
+      const chatSummaries = [
+        { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
+        { date: '2024-08-15', summary: 'Reviewed lab results indicating elevated LDL cholesterol, prescribed statins to reduce cardiovascular risk.' },
+        { date: '2024-07-30', summary: 'Follow-up on hypertension management, adjusted ACE inhibitor dosage.' },
+        { date: '2024-06-25', summary: 'Consulted on recurring angina symptoms, recommended stress test for further evaluation.' },
+        { date: '2024-05-18', summary: 'Assessed insulin resistance and adjusted diabetic medication regimen.' },
+        { date: '2024-04-10', summary: 'Evaluated increased blood pressure, suggested low-sodium diet and beta blockers.' },
+        { date: '2024-03-12', summary: 'Reviewed HbA1c levels, modified treatment plan to better control type 2 diabetes.' },
+        { date: '2024-02-28', summary: 'Discussed heart palpitations, ordered EKG and recommended cardiology referral.' },
+        { date: '2024-01-19', summary: 'Addressed hypertension-related headaches, recommended 24-hour blood pressure monitoring.' },
+        { date: '2024-12-05', summary: 'Monitored progress of blood pressure control, altered calcium channel blocker dose.' },
+        { date: '2024-11-20', summary: 'Addressed concerns of diabetic neuropathy, initiated gabapentin for nerve pain.' },
+        { date: '2024-10-15', summary: 'Reviewed post-angioplasty recovery, advised on cardiac rehabilitation exercises.' },
+    ];
+    
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;

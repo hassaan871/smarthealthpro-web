@@ -1,95 +1,46 @@
-/* DoctorChat.css */
-
 .chat-container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
-    display: flex;
-    flex-direction: column;
-    height: 80vh;
-  }
-  
-  .chat-title {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #333;
-  }
-  
-  .message-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-  }
-  
-  .message-item {
-    display: flex;
-    margin-bottom: 10px;
-  }
-  
-  .message-item.patient {
-    justify-content: flex-start;
-  }
-  
-  .message-item.doctor {
-    justify-content: flex-end;
-  }
-  
-  .message-bubble {
-    max-width: 70%;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 16px;
-    line-height: 1.4;
-    word-wrap: break-word;
-  }
-  
-  .message-item.patient .message-bubble {
-    background-color: #e0e0e0;
-    color: #333;
-    border-radius: 10px 10px 10px 0;
-  }
-  
-  .message-item.doctor .message-bubble {
-    background-color: #3498DB;
-    color: white;
-    border-radius: 10px 10px 0 10px;
-  }
-  
-  .message-input-container {
-    display: flex;
-    align-items: center;
-  }
-  
-  .message-input {
-    flex: 1;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .send-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    /* background-color: #F1C40F; */
-    background-color: #3498DB;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .send-button:hover {
-    background-color: #F1C40F;
-  }
-  
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.message-item {
+  margin-bottom: 10px;
+}
+
+.message-bubble {
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+}
+
+.patient .message-bubble {
+  background-color: #f0f0f0;
+  align-self: flex-start;
+}
+
+.doctor .message-bubble {
+  background-color: #007bff;
+  color: white;
+  align-self: flex-end;
+}
+
+.message-input-container {
+  display: flex;
+  padding: 10px;
+}
+
+.message-input {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.send-button {
+  width: 80px;
+}

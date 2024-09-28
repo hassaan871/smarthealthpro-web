@@ -22,23 +22,21 @@ const AddNotes = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4">Add a Note/Prescription</h2>
-      <div className="card mb-4">
-        <div className="card-body">
-          <textarea
-            className="form-control mb-3"
-            placeholder="Type your note here..."
-            value={noteText}
-            onChange={handleInputChange}
-            rows="4"
-          />
-          <button onClick={handleAddNote} className="btn btn-primary">
-            Add Note
-          </button>
-        </div>
+    <div className="notes-container d-flex flex-column h-100">
+      <h2 className="mb-3">Add a Note/Prescription</h2>
+      <div className="notes-input-area mb-3">
+        <textarea
+          className="form-control mb-2"
+          placeholder="Type your note here..."
+          value={noteText}
+          onChange={handleInputChange}
+          rows="3"
+        />
+        <button onClick={handleAddNote} className="btn btn-primary">
+          Add Note
+        </button>
       </div>
-      <div className="notes-list">
+      <div className="notes-list flex-grow-1 overflow-auto">
         {notes.length > 0 ? (
           <ul className="list-group">
             {notes.map((note, index) => (

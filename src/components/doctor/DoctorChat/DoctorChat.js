@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './DoctorChat.css';
 
 function DoctorChat() {
@@ -8,13 +8,20 @@ function DoctorChat() {
   ]);
 
   const [newMessage, setNewMessage] = useState('');
+  const messageListRef = useRef(null);
+
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
 
     const newMsg = {
       id: messages.length + 1,
-      sender: 'doctor', // Assuming the doctor is the one sending the message
+      sender: 'doctor',
       text: newMessage,
     };
 
@@ -23,10 +30,8 @@ function DoctorChat() {
   };
 
   return (
-    <div className="chat-container">
-      <h1 className="chat-title">Chat with Patient</h1>
-
-      <div className="message-list">
+    <div className="chat-container d-flex flex-column h-100">
+      <div className="message-list flex-grow-1 overflow-auto" ref={messageListRef}>
         {messages.map((message) => (
           <div key={message.id} className={`message-item ${message.sender}`}>
             <div className="message-bubble">{message.text}</div>
@@ -34,15 +39,15 @@ function DoctorChat() {
         ))}
       </div>
 
-      <div className="message-input-container">
+      <div className="message-input-container mt-3">
         <input
           type="text"
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="message-input"
+          className="message-input form-control"
         />
-        <button onClick={handleSendMessage} className="send-button">Send</button>
+        <button onClick={handleSendMessage} className="send-button btn btn-primary ml-2">Send</button>
       </div>
     </div>
   );
