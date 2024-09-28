@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const AppointmentProgressWidget = ({ style }) => {
   const [appointments, setAppointments] = useState([]);
   const [activeTab, setActiveTab] = useState('today');
   const [error, setError] = useState(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -67,7 +69,7 @@ const AppointmentProgressWidget = ({ style }) => {
 
   const handleViewClick = (appointment) => {
     console.log('Viewing appointment:', appointment);
-    // Placeholder for the detailed view action
+    navigate('/doctorchatwithpatientdetail', { state: { appointment } }); // Redirect with state
   };
 
   if (error) {
