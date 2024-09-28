@@ -13,6 +13,7 @@ const Dashboard = () => {
             case 'Appointments':
                 // return <Appointments />;
                 return <AppointmentProgressWidget />;
+                // return <AppointmentProgressWidget style={{ width: '100%' }} />;
             case 'Patients':
                 return <Patients />;
             case 'Profile':

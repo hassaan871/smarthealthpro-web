@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const AppointmentProgressWidget = () => {
+const AppointmentProgressWidget = ({ style }) => {
   const [appointments, setAppointments] = useState([]);
   const [activeTab, setActiveTab] = useState('today');
   const [error, setError] = useState(null);
@@ -67,6 +67,7 @@ const AppointmentProgressWidget = () => {
 
   const handleViewClick = (appointment) => {
     console.log('Viewing appointment:', appointment);
+    // Placeholder for the detailed view action
   };
 
   if (error) {
@@ -78,7 +79,7 @@ const AppointmentProgressWidget = () => {
   }
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ ...style, width: '80vw', margin: '100px auto 0 auto' }}>
       <div className="card shadow-sm">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h3 className="card-title">Comprehensive Appointment Progress</h3>
@@ -103,14 +104,14 @@ const AppointmentProgressWidget = () => {
                   <div className="row">
                     <div className="col-md-2 d-flex align-items-center justify-content-center">
                       <img
-                        src={appointment.patient.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // Default avatar if not present
-                        alt={appointment.patient.name}
+                        src={appointment.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                        alt={appointment.name}
                         className="rounded-circle"
                         style={{ width: '80px', height: '80px' }}
                       />
                     </div>
                     <div className="col-md-10">
-                      <h5 className="card-title">{appointment.patient.name}</h5> {/* Updated to use patient.name */}
+                      <h5 className="card-title">{appointment.name}</h5>
                       <p className="card-text">{appointment.description}</p>
                       <div className="row mb-3">
                         <div className="col-md-4">
