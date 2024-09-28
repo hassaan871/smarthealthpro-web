@@ -105,13 +105,13 @@ const AppointmentProgressWidget = ({ style }) => {
                     <div className="col-md-2 d-flex align-items-center justify-content-center">
                       <img
                         src={appointment.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
-                        alt={appointment.name}
+                        alt={appointment.patient.name}
                         className="rounded-circle"
                         style={{ width: '80px', height: '80px' }}
                       />
                     </div>
                     <div className="col-md-10">
-                      <h5 className="card-title">{appointment.name}</h5>
+                      <h5 className="card-title">{appointment.patient.name}</h5>
                       <p className="card-text">{appointment.description}</p>
                       <div className="row mb-3">
                         <div className="col-md-4">
