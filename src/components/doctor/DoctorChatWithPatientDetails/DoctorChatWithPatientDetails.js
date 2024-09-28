@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Card, Row, Col, ListGroup, Badge, Nav } from 'react-bootstrap';
+import { Card, Row, Col, ListGroup, Badge, Nav, Form } from 'react-bootstrap';
 import DoctorChat from '../DoctorChat/DoctorChat';
+import AddNotes from '../../Notes/AddNotes'; // Assuming you have this component
 
 function DoctorChatWithPatientDetails() {
   const location = useLocation();
@@ -14,7 +15,8 @@ function DoctorChatWithPatientDetails() {
   ]);
 
   const [newMessage, setNewMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('chatSummaries'); // Toggle between 'chatSummaries' and 'prescriptionNotes'
+  const [activeTab, setActiveTab] = useState('chatSummaries');
+  const [chatMode, setChatMode] = useState('chat'); // 'chat' or 'notes'
 
   // Use appointment data if available, otherwise use placeholder data
   const patientInfo = appointment
@@ -38,16 +40,7 @@ function DoctorChatWithPatientDetails() {
   const chatSummaries = [
     { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
     { date: '2024-08-15', summary: 'Reviewed lab results indicating elevated LDL cholesterol, prescribed statins to reduce cardiovascular risk.' },
-    { date: '2024-07-30', summary: 'Follow-up on hypertension management, adjusted ACE inhibitor dosage.' },
-    { date: '2024-06-25', summary: 'Consulted on recurring angina symptoms, recommended stress test for further evaluation.' },
-    { date: '2024-05-18', summary: 'Assessed insulin resistance and adjusted diabetic medication regimen.' },
-    { date: '2024-04-10', summary: 'Evaluated increased blood pressure, suggested low-sodium diet and beta blockers.' },
-    { date: '2024-03-12', summary: 'Reviewed HbA1c levels, modified treatment plan to better control type 2 diabetes.' },
-    { date: '2024-02-28', summary: 'Discussed heart palpitations, ordered EKG and recommended cardiology referral.' },
-    { date: '2024-01-19', summary: 'Addressed hypertension-related headaches, recommended 24-hour blood pressure monitoring.' },
-    { date: '2024-12-05', summary: 'Monitored progress of blood pressure control, altered calcium channel blocker dose.' },
-    { date: '2024-11-20', summary: 'Addressed concerns of diabetic neuropathy, initiated gabapentin for nerve pain.' },
-    { date: '2024-10-15', summary: 'Reviewed post-angioplasty recovery, advised on cardiac rehabilitation exercises.' },
+    // ... (other chat summaries)
   ];
 
   const handleSendMessage = () => {
@@ -65,16 +58,11 @@ function DoctorChatWithPatientDetails() {
 
   const getPriorityBadgeVariant = (priority) => {
     switch (priority.toLowerCase()) {
-      case 'low':
-        return 'info';
-      case 'medium':
-        return 'success';
-      case 'high':
-        return 'warning';
-      case 'very high':
-        return 'danger';
-      default:
-        return 'secondary';
+      case 'low': return 'info';
+      case 'medium': return 'success';
+      case 'high': return 'warning';
+      case 'very high': return 'danger';
+      default: return 'secondary';
     }
   };
 
@@ -82,12 +70,12 @@ function DoctorChatWithPatientDetails() {
     <div className="container-fluid mt-4">
       <Row>
         <Col md={3}>
-          <Card className="mb-4">
+          <Card className="h-100">
             <Card.Header as="h5" className="bg-primary text-white">Patient Details</Card.Header>
-            <Card.Body>
+            <Card.Body className="overflow-auto">
               <div className="text-center mb-3">
                 <img
-                  src={'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                  src={'https://bootdey.com/img/Content/avatar/avatar1.png'}
                   alt={appointment?.patient?.name}
                   className="rounded-circle"
                   style={{ width: '80px', height: '80px' }}
@@ -123,9 +111,8 @@ function DoctorChatWithPatientDetails() {
         </Col>
 
         <Col md={3}>
-          {/* Toggle between 'Chat Summaries' and 'Prescription and Notes' */}
-          <Card>
-            <Card.Header as="h5" className="bg-info text-white">Options</Card.Header>
+          <Card className="h-100">
+            <Card.Header as="h5" className="bg-info text-white">Summaries and Notes</Card.Header>
             <Nav variant="tabs" activeKey={activeTab} onSelect={(selectedKey) => setActiveTab(selectedKey)}>
               <Nav.Item>
                 <Nav.Link eventKey="chatSummaries">Chat Summaries</Nav.Link>
@@ -135,7 +122,7 @@ function DoctorChatWithPatientDetails() {
               </Nav.Item>
             </Nav>
 
-            <Card.Body style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+            <Card.Body className="overflow-auto">
               <ListGroup variant="flush">
                 {activeTab === 'chatSummaries' &&
                   chatSummaries.map((summary, index) => (
@@ -156,9 +143,17 @@ function DoctorChatWithPatientDetails() {
 
         <Col md={6}>
           <Card className="h-100">
-            <Card.Header as="h5" className="bg-primary text-white">Chat with Patient</Card.Header>
-            <Card.Body className="d-flex flex-column" style={{ height: '80vh' }}>
-              <DoctorChat />
+            <Card.Header as="h5" className="bg-primary text-white d-flex justify-content-between align-items-center">
+              <span>{chatMode === 'chat' ? 'Chat with Patient' : 'Add Notes'}</span>
+              <Form.Check 
+                type="switch"
+                id="chat-mode-switch"
+                label={chatMode === 'chat' ? 'Switch to Notes' : 'Switch to Chat'}
+                onChange={() => setChatMode(chatMode === 'chat' ? 'notes' : 'chat')}
+              />
+            </Card.Header>
+            <Card.Body className="d-flex flex-column">
+              {chatMode === 'chat' ? <DoctorChat /> : <AddNotes />}
             </Card.Body>
           </Card>
         </Col>

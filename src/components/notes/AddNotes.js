@@ -1,6 +1,5 @@
-// AddNotes.js
 import React, { useState } from 'react';
-import './AddNotes.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const AddNotes = () => {
   const [notes, setNotes] = useState([]);
@@ -23,32 +22,39 @@ const AddNotes = () => {
   };
 
   return (
-    <div className="add-notes-container">
-      <h2>Add a Note</h2>
-      <div className="note-input-container">
-        <textarea
-          placeholder="Type your note here..."
-          value={noteText}
-          onChange={handleInputChange}
-          rows="6"
-          className="note-input"
-        />
-        <button onClick={handleAddNote} className="add-note-button">Add Note</button>
+    <div className="container mt-5">
+      <h2 className="mb-4">Add a Note/Prescription</h2>
+      <div className="card mb-4">
+        <div className="card-body">
+          <textarea
+            className="form-control mb-3"
+            placeholder="Type your note here..."
+            value={noteText}
+            onChange={handleInputChange}
+            rows="4"
+          />
+          <button onClick={handleAddNote} className="btn btn-primary">
+            Add Note
+          </button>
+        </div>
       </div>
-      <div className="notes-list-container">
+      <div className="notes-list">
         {notes.length > 0 ? (
-          <ul className="notes-list">
+          <ul className="list-group">
             {notes.map((note, index) => (
-              <li key={index} className="note-item">
-                <p className="note-text">{note}</p>
-                <button onClick={() => handleDeleteNote(index)} className="delete-note-button">
+              <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
+                <span className="note-text">{note}</span>
+                <button
+                  onClick={() => handleDeleteNote(index)}
+                  className="btn btn-danger btn-sm"
+                >
                   &times;
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="no-notes">No notes added yet.</p>
+          <p className="text-muted">No notes added yet.</p>
         )}
       </div>
     </div>
