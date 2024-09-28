@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Card, Row, Col, ListGroup, Badge } from 'react-bootstrap';
+import { Card, Row, Col, ListGroup, Badge, Nav } from 'react-bootstrap';
 import DoctorChat from '../DoctorChat/DoctorChat';
 
 function DoctorChatWithPatientDetails() {
@@ -14,23 +14,26 @@ function DoctorChatWithPatientDetails() {
   ]);
 
   const [newMessage, setNewMessage] = useState('');
+  const [activeTab, setActiveTab] = useState('chatSummaries'); // Toggle between 'chatSummaries' and 'prescriptionNotes'
 
   // Use appointment data if available, otherwise use placeholder data
-  const patientInfo = appointment ? {
-    fullName: appointment.patient.name,
-    age: appointment.patient.age || 'N/A',
-    gender: appointment.patient.gender || 'N/A',
-    email: appointment.patient.email || 'N/A',
-    medicalHistory: appointment.patient.medicalHistory || [],
-    imageUrl: appointment.avatar || '/api/placeholder/100/100',
-  } : {
-    fullName: 'Patient Name Not Available',
-    age: 'N/A',
-    gender: 'N/A',
-    email: 'N/A',
-    medicalHistory: [],
-    imageUrl: '/api/placeholder/100/100',
-  };
+  const patientInfo = appointment
+    ? {
+        fullName: appointment.patient.name,
+        age: appointment.patient.age || 'N/A',
+        gender: appointment.patient.gender || 'N/A',
+        email: appointment.patient.email || 'N/A',
+        medicalHistory: appointment.patient.medicalHistory || [],
+        imageUrl: appointment.avatar || '/api/placeholder/100/100',
+      }
+    : {
+        fullName: 'Patient Name Not Available',
+        age: 'N/A',
+        gender: 'N/A',
+        email: 'N/A',
+        medicalHistory: [],
+        imageUrl: '/api/placeholder/100/100',
+      };
 
   const chatSummaries = [
     { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
@@ -45,8 +48,7 @@ function DoctorChatWithPatientDetails() {
     { date: '2024-12-05', summary: 'Monitored progress of blood pressure control, altered calcium channel blocker dose.' },
     { date: '2024-11-20', summary: 'Addressed concerns of diabetic neuropathy, initiated gabapentin for nerve pain.' },
     { date: '2024-10-15', summary: 'Reviewed post-angioplasty recovery, advised on cardiac rehabilitation exercises.' },
-];
-
+  ];
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
@@ -63,11 +65,16 @@ function DoctorChatWithPatientDetails() {
 
   const getPriorityBadgeVariant = (priority) => {
     switch (priority.toLowerCase()) {
-      case 'low': return 'info';
-      case 'medium': return 'success';
-      case 'high': return 'warning';
-      case 'very high': return 'danger';
-      default: return 'secondary';
+      case 'low':
+        return 'info';
+      case 'medium':
+        return 'success';
+      case 'high':
+        return 'warning';
+      case 'very high':
+        return 'danger';
+      default:
+        return 'secondary';
     }
   };
 
@@ -79,11 +86,9 @@ function DoctorChatWithPatientDetails() {
             <Card.Header as="h5" className="bg-primary text-white">Patient Details</Card.Header>
             <Card.Body>
               <div className="text-center mb-3">
-                {/* <img src={patientInfo.imageUrl} alt={patientInfo.fullName} className="rounded-circle" style={{ width: '100px', height: '100px', objectFit: 'cover' }} /> */}
                 <img
-                  // src={patientInfo.imageUrl || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
-                  src={ 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
-                  alt={appointment.patient.name}
+                  src={'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                  alt={appointment?.patient?.name}
                   className="rounded-circle"
                   style={{ width: '80px', height: '80px' }}
                 />
@@ -115,30 +120,35 @@ function DoctorChatWithPatientDetails() {
               </ListGroup>
             </Card.Body>
           </Card>
-
-          <Card>
-            <Card.Header as="h5" className="bg-info text-white">Prescription and Notes</Card.Header>
-            <Card.Body>
-              <ListGroup variant="flush">
-                {patientInfo.medicalHistory.map((item, index) => (
-                  <ListGroup.Item key={index}>{item}</ListGroup.Item>
-                ))}
-              </ListGroup>
-            </Card.Body>
-          </Card>
         </Col>
 
         <Col md={3}>
+          {/* Toggle between 'Chat Summaries' and 'Prescription and Notes' */}
           <Card>
-            <Card.Header as="h5" className="bg-success text-white">Chat Summaries</Card.Header>
+            <Card.Header as="h5" className="bg-info text-white">Options</Card.Header>
+            <Nav variant="tabs" activeKey={activeTab} onSelect={(selectedKey) => setActiveTab(selectedKey)}>
+              <Nav.Item>
+                <Nav.Link eventKey="chatSummaries">Chat Summaries</Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link eventKey="prescriptionNotes">Prescription and Notes</Nav.Link>
+              </Nav.Item>
+            </Nav>
+
             <Card.Body style={{ maxHeight: '80vh', overflowY: 'auto' }}>
               <ListGroup variant="flush">
-                {chatSummaries.map((summary, index) => (
-                  <ListGroup.Item key={index}>
-                    <div className="fw-bold">{summary.date}</div>
-                    <div>{summary.summary}</div>
-                  </ListGroup.Item>
-                ))}
+                {activeTab === 'chatSummaries' &&
+                  chatSummaries.map((summary, index) => (
+                    <ListGroup.Item key={index}>
+                      <div className="fw-bold">{summary.date}</div>
+                      <div>{summary.summary}</div>
+                    </ListGroup.Item>
+                  ))}
+
+                {activeTab === 'prescriptionNotes' &&
+                  patientInfo.medicalHistory.map((item, index) => (
+                    <ListGroup.Item key={index}>{item}</ListGroup.Item>
+                  ))}
               </ListGroup>
             </Card.Body>
           </Card>
