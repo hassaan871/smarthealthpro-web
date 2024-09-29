@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './Appointments.css'; // Ensure your CSS styles are available
 
 const Patients = ({ style }) => {
   const [appointments, setAppointments] = useState([]);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -68,7 +70,7 @@ const Patients = ({ style }) => {
 
   const handleViewClick = (appointment) => {
     console.log('Viewing appointment:', appointment);
-    // Placeholder for the detailed view action
+    navigate('/doctorchatwithpatientdetail', { state: { appointment } });
   };
 
   if (error) {
@@ -94,7 +96,7 @@ const Patients = ({ style }) => {
                   <div className="row">
                     <div className="col-md-2 d-flex align-items-center justify-content-center">
                       <img
-                        src={appointment.patient.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'} // default avatar if not present
+                        src={appointment.patient.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'}
                         alt={appointment.patient.name}
                         className="rounded-circle"
                         style={{ width: '80px', height: '80px' }}
