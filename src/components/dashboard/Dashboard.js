@@ -4,12 +4,15 @@ import Appointments from "./Appointments";
 import AppointmentProgressWidget from "./AppointmentProgressWidget"
 import Patients from "./Patients";
 import DoctorProfile from '../doctor/DoctorProfile/DoctorProfile';
+import Overview from './Overview';
 
 const Dashboard = () => {
     const [activeSection, setActiveSection] = useState('Appointments');
 
     const renderSection = () => {
         switch(activeSection) {
+            case 'Overview':
+                return <Overview />
             case 'Appointments':
                 // return <Appointments />;
                 return <AppointmentProgressWidget />;

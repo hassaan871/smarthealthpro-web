@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUser, FiCalendar, FiUsers, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiCalendar, FiUsers, FiSettings, FiLogOut, FiGrid } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import './Nav.css';
 
@@ -8,6 +8,7 @@ const Nav = ({ setActiveSection }) => {
   const navigate = useNavigate();
 
   const navItems = [
+    {name: 'Overview', icon: FiGrid},
     { name: 'Appointments', icon: FiCalendar },
     { name: 'Patients', icon: FiUsers },
     { name: 'Profile', icon: FiSettings },
