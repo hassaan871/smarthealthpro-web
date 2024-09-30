@@ -22,7 +22,7 @@ const Overview = () => {
     { name: 'Aftab Gul', updated: '2024-09-9' },
     { name: 'Rita', updated: '2024-09-8' },
     { name: 'John Doe', updated: '2024-09-7' },
-    { name: 'Ali', updated: '2024-09-6' },
+    // { name: 'Ali', updated: '2024-09-6' },
   ];
 
   const appointments = [
@@ -31,11 +31,6 @@ const Overview = () => {
     { priority: 'high', patient: 'Walter White', date: '2024-09-12', status: 'Pending' },
     { priority: 'low', patient: 'Ali', date: '2024-09-13', status: 'Pending' },
     { priority: 'low', patient: 'John Doe', date: '2024-09-14', status: 'Pending' },
-    // { id: 'ORD-006', customer: 'Cao Yu', date: 'Mar 8, 2024', status: 'Delivered' },
-    // { id: 'ORD-004', customer: 'Alexa Richardson', date: 'Mar 8, 2024', status: 'Refunded' },
-    // { id: 'ORD-003', customer: 'Anje Keizer', date: 'Mar 8, 2024', status: 'Pending' },
-    // { id: 'ORD-002', customer: 'Clarke Gillebert', date: 'Mar 8, 2024', status: 'Delivered' },
-    // { id: 'ORD-001', customer: 'Adam Denisov', date: 'Mar 8, 2024', status: 'Delivered' },
   ];
 
   const COLORS = ['#3498DB', '#2ECC71', '#F1C40F'];
