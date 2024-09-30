@@ -17,21 +17,25 @@ const Overview = () => {
     { name: 'Phone', value: 22 },
   ];
 
-  const products = [
-    { name: 'Soja & Co. Eucalyptus', updated: 'Mar 8, 2024' },
-    { name: 'Necessaire Body Lotion', updated: 'Mar 8, 2024' },
-    { name: 'Ritual of Sakura', updated: 'Mar 8, 2024' },
-    { name: 'Lancome Rouge', updated: 'Mar 8, 2024' },
-    { name: 'Erbology Aloe Vera', updated: 'Mar 8, 2024' },
+  const patients = [
+    { name: 'Soniya Ahmad', updated: '2024-09-10' },
+    { name: 'Aftab Gul', updated: '2024-09-9' },
+    { name: 'Rita', updated: '2024-09-8' },
+    { name: 'John Doe', updated: '2024-09-7' },
+    { name: 'Ali', updated: '2024-09-6' },
   ];
 
-  const orders = [
-    { id: 'ORD-007', customer: 'Ekaterina Tankova', date: 'Mar 8, 2024', status: 'Pending' },
-    { id: 'ORD-006', customer: 'Cao Yu', date: 'Mar 8, 2024', status: 'Delivered' },
-    { id: 'ORD-004', customer: 'Alexa Richardson', date: 'Mar 8, 2024', status: 'Refunded' },
-    { id: 'ORD-003', customer: 'Anje Keizer', date: 'Mar 8, 2024', status: 'Pending' },
-    { id: 'ORD-002', customer: 'Clarke Gillebert', date: 'Mar 8, 2024', status: 'Delivered' },
-    { id: 'ORD-001', customer: 'Adam Denisov', date: 'Mar 8, 2024', status: 'Delivered' },
+  const appointments = [
+    { priority: 'high', patient: 'Taylor Johnson', date: '2024-09-10', status: 'Pending' },
+    { priority: 'high', patient: 'Alex Walker', date: '2024-09-11', status: 'Pending' },
+    { priority: 'high', patient: 'Walter White', date: '2024-09-12', status: 'Pending' },
+    { priority: 'low', patient: 'Ali', date: '2024-09-13', status: 'Pending' },
+    { priority: 'low', patient: 'John Doe', date: '2024-09-14', status: 'Pending' },
+    // { id: 'ORD-006', customer: 'Cao Yu', date: 'Mar 8, 2024', status: 'Delivered' },
+    // { id: 'ORD-004', customer: 'Alexa Richardson', date: 'Mar 8, 2024', status: 'Refunded' },
+    // { id: 'ORD-003', customer: 'Anje Keizer', date: 'Mar 8, 2024', status: 'Pending' },
+    // { id: 'ORD-002', customer: 'Clarke Gillebert', date: 'Mar 8, 2024', status: 'Delivered' },
+    // { id: 'ORD-001', customer: 'Adam Denisov', date: 'Mar 8, 2024', status: 'Delivered' },
   ];
 
   const COLORS = ['#3498DB', '#2ECC71', '#F1C40F'];
@@ -43,10 +47,11 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="card-subtitle text-muted">BUDGET</h6>
-                <div className="bg-primary rounded-circle p-2 text-white">$</div>
+                <h6 className="card-subtitle text-muted">Total Patients</h6>
+                {/* <div className="bg-primary rounded-circle p-2 text-white">$</div> */}
+                <div className="bg-warning rounded-circle p-2 text-white">👥</div>
               </div>
-              <h2 className="card-title mb-0">$24k</h2>
+              <h2 className="card-title mb-0">24</h2>
               <small className="text-success">↑ 12% Since last month</small>
             </div>
           </div>
@@ -55,10 +60,11 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="card-subtitle text-muted">TOTAL CUSTOMERS</h6>
-                <div className="bg-success rounded-circle p-2 text-white">👥</div>
+                <h6 className="card-subtitle text-muted">TOTAL Appointments</h6>
+                {/* <div className="bg-success rounded-circle p-2 text-white">👥</div> */}
+                <div className="bg-info rounded-circle p-2 text-white">💼</div>
               </div>
-              <h2 className="card-title mb-0">1.6k</h2>
+              <h2 className="card-title mb-0">16</h2>
               <small className="text-danger">↓ 16% Since last month</small>
             </div>
           </div>
@@ -67,10 +73,10 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="card-subtitle text-muted">TASK PROGRESS</h6>
-                <div className="bg-warning rounded-circle p-2 text-white">≡</div>
+                <h6 className="card-subtitle text-muted">Pending Appointments</h6>
+                <div className="bg-primary rounded-circle p-2 text-white">📌</div>
               </div>
-              <h2 className="card-title mb-0">75.5%</h2>
+              <h2 className="card-title mb-0">10</h2>
               <div className="progress">
                 <div className="progress-bar" role="progressbar" style={{width: '75.5%'}} aria-valuenow="75.5" aria-valuemin="0" aria-valuemax="100"></div>
               </div>
@@ -81,10 +87,10 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h6 className="card-subtitle text-muted">TOTAL PROFIT</h6>
-                <div className="bg-info rounded-circle p-2 text-white">💼</div>
+                <h6 className="card-subtitle text-muted">TBD Appointments</h6>
+                <div className="bg-success rounded-circle p-2 text-white">🕒</div>
               </div>
-              <h2 className="card-title">$15k</h2>
+              <h2 className="card-title">6</h2>
             </div>
           </div>
         </div>
@@ -95,7 +101,7 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h5 className="card-title">Sales</h5>
+                <h5 className="card-title">Appointments</h5>
                 <button className="btn btn-sm btn-outline-secondary">↻ Sync</button>
               </div>
               <ResponsiveContainer width="100%" height={300}>
@@ -109,7 +115,7 @@ const Overview = () => {
         <div className="col-md-4">
           <div className="card">
             <div className="card-body">
-              <h5 className="card-title mb-4">Traffic source</h5>
+              <h5 className="card-title mb-4">Appointment Status: October</h5>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -128,9 +134,9 @@ const Overview = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="d-flex justify-content-around mt-3">
-                <small>💻 Desktop: 63%</small>
-                <small>📱 Tablet: 15%</small>
-                <small>📱 Phone: 22%</small>
+                <small>✅ Completed: 63%</small>
+                <small>📌 Pending: 15%</small>
+                <small>🕒 TBD: 22%</small>
               </div>
             </div>
           </div>
@@ -142,11 +148,11 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h5 className="card-title">Latest products</h5>
+                <h5 className="card-title">Latest Patients</h5>
                 <a href="#" className="text-decoration-none">View all →</a>
               </div>
               <ul className="list-group list-group-flush">
-                {products.map((product, index) => (
+                {patients.map((product, index) => (
                   <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                       <h6 className="mb-0">{product.name}</h6>
@@ -163,28 +169,28 @@ const Overview = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <h5 className="card-title">Latest orders</h5>
+                <h5 className="card-title">Latest Appointments</h5>
                 <a href="#" className="text-decoration-none">View all →</a>
               </div>
               <div className="table-responsive">
                 <table className="table table-hover">
                   <thead>
                     <tr>
-                      <th>Order</th>
-                      <th>Customer</th>
+                      <th>Priority</th>
+                      <th>Patient</th>
                       <th>Date</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order, index) => (
+                    {appointments.map((appointment, index) => (
                       <tr key={index}>
-                        <td>{order.id}</td>
-                        <td>{order.customer}</td>
-                        <td>{order.date}</td>
+                        <td>{appointment.priority}</td>
+                        <td>{appointment.patient}</td>
+                        <td>{appointment.date}</td>
                         <td>
-                          <span className={`badge ${order.status === 'Pending' ? 'bg-warning' : order.status === 'Delivered' ? 'bg-success' : 'bg-danger'}`}>
-                            {order.status}
+                          <span className={`badge ${appointment.status === 'Pending' ? 'bg-warning' : appointment.status === 'Delivered' ? 'bg-success' : 'bg-danger'}`}>
+                            {appointment.status}
                           </span>
                         </td>
                       </tr>
