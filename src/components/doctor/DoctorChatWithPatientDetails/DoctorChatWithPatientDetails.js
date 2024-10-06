@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Card, Row, Col, ListGroup, Badge, Nav, Form } from 'react-bootstrap';
+import { Card, Row, Col, ListGroup, Badge, Nav, Form, Button, Alert } from 'react-bootstrap';
 import DoctorChat from '../DoctorChat/DoctorChat';
-import AddNotes from '../../Notes/AddNotes'; // Assuming you have this component
+import AddNotes from '../../Notes/AddNotes';
 
 function DoctorChatWithPatientDetails() {
   const location = useLocation();
@@ -16,9 +16,10 @@ function DoctorChatWithPatientDetails() {
 
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('chatSummaries');
-  const [chatMode, setChatMode] = useState('chat'); // 'chat' or 'notes'
+  const [chatMode, setChatMode] = useState('chat');
+  const [newPriority, setNewPriority] = useState('');
+  const [updateStatus, setUpdateStatus] = useState(null);
 
-  // Use appointment data if available, otherwise use placeholder data
   const patientInfo = appointment
     ? {
         fullName: appointment.patient.name,
@@ -40,16 +41,7 @@ function DoctorChatWithPatientDetails() {
   const chatSummaries = [
     { date: '2024-09-01', summary: 'Discussed management strategies for fluctuating blood glucose levels in diabetes.' },
     { date: '2024-08-15', summary: 'Reviewed lab results indicating elevated LDL cholesterol, prescribed statins to reduce cardiovascular risk.' },
-    { date: '2024-07-30', summary: 'Follow-up on hypertension management, adjusted ACE inhibitor dosage.' },
-    { date: '2024-06-25', summary: 'Consulted on recurring angina symptoms, recommended stress test for further evaluation.' },
-    { date: '2024-05-18', summary: 'Assessed insulin resistance and adjusted diabetic medication regimen.' },
-    { date: '2024-04-10', summary: 'Evaluated increased blood pressure, suggested low-sodium diet and beta blockers.' },
-    { date: '2024-03-12', summary: 'Reviewed HbA1c levels, modified treatment plan to better control type 2 diabetes.' },
-    { date: '2024-02-28', summary: 'Discussed heart palpitations, ordered EKG and recommended cardiology referral.' },
-    { date: '2024-01-19', summary: 'Addressed hypertension-related headaches, recommended 24-hour blood pressure monitoring.' },
-    { date: '2024-12-05', summary: 'Monitored progress of blood pressure control, altered calcium channel blocker dose.' },
-    { date: '2024-11-20', summary: 'Addressed concerns of diabetic neuropathy, initiated gabapentin for nerve pain.' },
-    { date: '2024-10-15', summary: 'Reviewed post-angioplasty recovery, advised on cardiac rehabilitation exercises.' },
+    // ... (rest of the chat summaries)
   ];
 
   const handleSendMessage = () => {
@@ -68,15 +60,51 @@ function DoctorChatWithPatientDetails() {
   const getPriorityBadgeVariant = (priority) => {
     switch (priority.toLowerCase()) {
       case 'low': return 'info';
-      case 'medium': return 'success';
-      case 'high': return 'warning';
-      case 'very high': return 'danger';
+      case 'mild': return 'success';
+      case 'moderate': return 'warning';
+      case 'high': return 'danger';
+      case 'very high': return 'dark';
       default: return 'secondary';
     }
   };
 
+  const handleUpdatePriority = async () => {
+    console.warn('this is appointment id ',appointment._id);
+    console.warn('this is new priority ',newPriority);
+    if (!appointment || !appointment._id || !newPriority) {
+      setUpdateStatus({ type: 'error', message: 'Invalid appointment data or priority' });
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/appointment/updateAppointment/${appointment._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priority: newPriority }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update priority');
+      }
+
+      const updatedAppointment = await response.json();
+      setUpdateStatus({
+        type: 'success',
+        message: `${patientInfo.fullName}'s priority updated from ${appointment.priority} to ${newPriority}`,
+      });
+      // Update the appointment state here if you're keeping it in state
+    } catch (error) {
+      setUpdateStatus({
+        type: 'error',
+        message: `Error updating priority: ${error.message}`,
+      });
+    }
+  };
+
   return (
-    <div className="container-fluid mt-4" style={{ height: '100vh' }}> {/* Full viewport height */}
+    <div className="container-fluid mt-4" style={{ height: '100vh' }}>
       <Row className="h-100">
         <Col md={3} className="h-100">
           <Card className="h-100">
@@ -112,9 +140,39 @@ function DoctorChatWithPatientDetails() {
                         {appointment.priority}
                       </Badge>
                     </ListGroup.Item>
+                    <ListGroup.Item>
+                      <Form.Group>
+                        <Form.Label><strong>Update Priority:</strong></Form.Label>
+                        <Form.Control
+                          as="select"
+                          value={newPriority}
+                          onChange={(e) => setNewPriority(e.target.value)}
+                        >
+                          <option value="">Select Priority</option>
+                          <option value="Low">Low</option>
+                          <option value="Mild">Mild</option>
+                          <option value="Moderate">Moderate</option>
+                          <option value="High">High</option>
+                          <option value="Very High">Very High</option>
+                        </Form.Control>
+                      </Form.Group>
+                      <Button 
+                        variant="primary" 
+                        className="mt-2" 
+                        onClick={handleUpdatePriority}
+                        disabled={!newPriority}
+                      >
+                        Update Priority
+                      </Button>
+                    </ListGroup.Item>
                   </>
                 )}
               </ListGroup>
+              {updateStatus && (
+                <Alert variant={updateStatus.type === 'success' ? 'success' : 'danger'} className="mt-3">
+                  {updateStatus.message}
+                </Alert>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -131,7 +189,7 @@ function DoctorChatWithPatientDetails() {
               </Nav.Item>
             </Nav>
 
-            <Card.Body className="overflow-auto" style={{ height: '85vh' }}> {/* Adjusted to 85vh */}
+            <Card.Body className="overflow-auto" style={{ height: '85vh' }}>
               <ListGroup variant="flush">
                 {activeTab === 'chatSummaries' &&
                   chatSummaries.map((summary, index) => (
