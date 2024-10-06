@@ -7,7 +7,6 @@ import UserProfileCompletion from "./components/authentication/signup/UserProfil
 import DoctorDashboard from "./components/doctor/DoctorDashboard/DoctorDashboard";
 import DoctorChat from "./components/doctor/DoctorChat/DoctorChat";
 import DoctorChatWithPatientDetails from "./components/doctor/DoctorChatWithPatientDetails/DoctorChatWithPatientDetails";
-import DoctorPanel from "./components/doctor/DoctorPanel/DoctorPanel";
 import PatientDetails from "./components/doctor/PatientDetails/PatientDetails";
 import AllPatients from './components/doctor/DoctorDashboard/AllPatients';
 import DoctorProfile from './components/doctor/DoctorProfile/DoctorProfile';
@@ -29,7 +28,6 @@ function App() {
         <Route path="/patientdetails" element={<PatientDetails/>} />
         <Route path="/doctorchatwithpatientdetail" element={<DoctorChatWithPatientDetails/>} />
         <Route path="/doctorprofile" element={<DoctorProfile/>} />
-        <Route path="/doctorpanel" element={<DoctorPanel/>} />
       </Routes>
     </Router>
     // <>
