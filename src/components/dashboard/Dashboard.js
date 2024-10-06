@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Nav from "../Navbar/Nav";
-import Appointments from "./Appointments";
 import AppointmentProgressWidget from "./AppointmentProgressWidget"
 import Patients from "./Patients";
 import DoctorProfile from '../doctor/DoctorProfile/DoctorProfile';
@@ -21,7 +20,7 @@ const Dashboard = () => {
             case 'Profile':
                 return <DoctorProfile />;
             default:
-                return <Appointments />;
+                return <Overview />;
         }
     };
 

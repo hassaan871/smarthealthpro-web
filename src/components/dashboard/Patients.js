@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './Appointments.css'; // Ensure your CSS styles are available
 
 const Patients = ({ style }) => {
   const [appointments, setAppointments] = useState([]);
