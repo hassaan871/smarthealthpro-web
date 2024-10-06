@@ -87,7 +87,7 @@ function Login() {
               <hr className="w-50 mx-auto" />
             </div>
 
-            <button type="button" className="btn btn-secondary w-100" onClick={() => window.location.href = '/signup'}>
+            <button type="button" className="btn btn-secondary w-100" onClick={() => navigate('/signup')}>
               Sign up
             </button>
           </form>
