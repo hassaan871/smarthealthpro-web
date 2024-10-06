@@ -14,7 +14,6 @@ const Dashboard = () => {
             case 'Overview':
                 return <Overview />
             case 'Appointments':
-                // return <Appointments />;
                 return <AppointmentProgressWidget />;
                 // return <AppointmentProgressWidget style={{ width: '100%' }} />;
             case 'Patients':
