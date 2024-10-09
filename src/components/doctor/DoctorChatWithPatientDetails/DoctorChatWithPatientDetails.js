@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, Row, Col, ListGroup, Badge, Nav, Form, Button, Alert } from 'react-bootstrap';
 import DoctorChat from '../DoctorChat/DoctorChat';
-import AddNotes from '../../Notes/AddNotes';
+import AddNotes from '../../notes/AddNotes';
+
 
 function DoctorChatWithPatientDetails() {
   const location = useLocation();

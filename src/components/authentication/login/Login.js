@@ -77,9 +77,10 @@ function Login() {
             {error && <p className="text-danger">{error}</p>}
             <button type="submit" className="btn btn-primary w-100">Login</button>
 
-            <div className="text-center mt-3">
-              <a href="#" className="text-primary">Forgot Password?</a>
+            <div className="mt-3 text-end">
+              <a href="/forgot-password" className="text-primary">Forgot Password?</a>
             </div>
+
 
             <div className="text-center my-3">
               <hr className="w-50 mx-auto" />
