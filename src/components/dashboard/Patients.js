@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const Patients = ({ style }) => {
   const [appointments, setAppointments] = useState([]);
@@ -10,21 +10,22 @@ const Patients = ({ style }) => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const userString = localStorage.getItem('user');
+        const userString = localStorage.getItem("userToken");
         if (!userString) {
-          throw new Error('User data not found in local storage');
+          throw new Error("User data not found in local storage");
         }
 
-        const user = JSON.parse(userString);
-        const doctorId = user.id;
+        const doctorId = userString;
 
         if (!doctorId) {
-          throw new Error('Doctor ID not found in user data');
+          throw new Error("Doctor ID not found in user data");
         }
 
-        const response = await fetch(`http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`);
+        const response = await fetch(
+          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch appointments');
+          throw new Error("Failed to fetch appointments");
         }
 
         const data = await response.json();
@@ -39,37 +40,37 @@ const Patients = ({ style }) => {
 
   const getPriorityInfo = (priority) => {
     switch (priority.toLowerCase()) {
-      case 'low':
-        return { percentage: 20, color: 'bg-info' };
-      case 'medium':
-        return { percentage: 40, color: 'bg-success' };
-      case 'moderate':
-        return { percentage: 60, color: 'bg-warning' };
-      case 'high':
-        return { percentage: 80, color: 'bg-danger' };
-      case 'very high':
-        return { percentage: 100, color: 'bg-danger' };
+      case "low":
+        return { percentage: 20, color: "bg-info" };
+      case "medium":
+        return { percentage: 40, color: "bg-success" };
+      case "moderate":
+        return { percentage: 60, color: "bg-warning" };
+      case "high":
+        return { percentage: 80, color: "bg-danger" };
+      case "very high":
+        return { percentage: 100, color: "bg-danger" };
       default:
-        return { percentage: 0, color: 'bg-secondary' };
+        return { percentage: 0, color: "bg-secondary" };
     }
   };
 
   const getStatusBadgeColor = (status) => {
     switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-success';
-      case 'pending':
-        return 'bg-warning';
-      case 'canceled':
-        return 'bg-danger';
+      case "completed":
+        return "bg-success";
+      case "pending":
+        return "bg-warning";
+      case "canceled":
+        return "bg-danger";
       default:
-        return 'bg-secondary';
+        return "bg-secondary";
     }
   };
 
   const handleViewClick = (appointment) => {
-    console.log('Viewing appointment:', appointment);
-    navigate('/doctorchatwithpatientdetail', { state: { appointment } });
+    console.log("Viewing appointment:", appointment);
+    navigate("/doctorchatwithpatientdetail", { state: { appointment } });
   };
 
   if (error) {
@@ -81,7 +82,10 @@ const Patients = ({ style }) => {
   }
 
   return (
-    <div className="container" style={{ ...style, width: '80vw', margin: '100px auto 0 auto' }}>
+    <div
+      className="container"
+      style={{ ...style, width: "80vw", margin: "100px auto 0 auto" }}
+    >
       <div className="card shadow-sm">
         <div className="card-header">
           <h3 className="card-title">Patients</h3>
@@ -95,10 +99,13 @@ const Patients = ({ style }) => {
                   <div className="row">
                     <div className="col-md-2 d-flex align-items-center justify-content-center">
                       <img
-                        src={appointment.patient.avatar || 'https://bootdey.com/img/Content/avatar/avatar1.png'}
+                        src={
+                          appointment.patient.avatar ||
+                          "https://bootdey.com/img/Content/avatar/avatar1.png"
+                        }
                         alt={appointment.patient.name}
                         className="rounded-circle"
-                        style={{ width: '80px', height: '80px' }}
+                        style={{ width: "80px", height: "80px" }}
                       />
                     </div>
                     <div className="col-md-10">
@@ -117,20 +124,27 @@ const Patients = ({ style }) => {
                       </div>
                       <div className="row mb-3">
                         <div className="col-md-4">
-                          <strong>Status:</strong>{' '}
-                          <span className={`badge ${getStatusBadgeColor(appointment.appointmentStatus)}`}>
+                          <strong>Status:</strong>{" "}
+                          <span
+                            className={`badge ${getStatusBadgeColor(
+                              appointment.appointmentStatus
+                            )}`}
+                          >
                             {appointment.appointmentStatus}
                           </span>
                         </div>
                         <div className="col-md-4">
-                          <strong>Priority:</strong>{' '}
-                          <span className={`badge ${priorityInfo.color}`}>{appointment.priority}</span>
+                          <strong>Priority:</strong>{" "}
+                          <span className={`badge ${priorityInfo.color}`}>
+                            {appointment.priority}
+                          </span>
                         </div>
                         <div className="col-md-4">
-                          <strong>Booked On:</strong> {new Date(appointment.bookedOn).toLocaleString()}
+                          <strong>Booked On:</strong>{" "}
+                          {new Date(appointment.bookedOn).toLocaleString()}
                         </div>
                       </div>
-                      <div className="progress mb-3" style={{ height: '20px' }}>
+                      <div className="progress mb-3" style={{ height: "20px" }}>
                         <div
                           className={`progress-bar ${priorityInfo.color}`}
                           role="progressbar"
@@ -143,7 +157,10 @@ const Patients = ({ style }) => {
                         </div>
                       </div>
                       <div className="d-flex justify-content-end">
-                        <button className="btn btn-primary" onClick={() => handleViewClick(appointment)}>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => handleViewClick(appointment)}
+                        >
                           View
                         </button>
                       </div>

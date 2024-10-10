@@ -27,9 +27,8 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     const fetchDoctorData = async () => {
-      const userString = localStorage.getItem("user");
-      const user = JSON.parse(userString);
-      const userId = user.id;
+      const userString = localStorage.getItem("userToken");
+      const userId = userString;
 
       try {
         const userResponse = await fetch(
@@ -62,7 +61,6 @@ const DoctorProfile = () => {
         } else {
           setDoctor((prevDoctor) => ({
             ...prevDoctor,
-            user: user,
           }));
         }
       } catch (error) {
