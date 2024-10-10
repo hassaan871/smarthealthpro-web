@@ -88,7 +88,7 @@ function Login() {
               <hr className="w-50 mx-auto" />
             </div>
 
-            <button type="button" className="btn btn-secondary w-100" onClick={() => navigate('/signup')}>
+            <button type="button" className="btn btn-secondary w-100" onClick={() => navigate('/SignUpStep1')}>
               Sign up
             </button>
           </form>
