@@ -3,7 +3,7 @@ import { User, Mail, Lock, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 function SignUpStep1() {
-  const [name, setName] = useState('');
+  const [ fullName, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,7 +21,7 @@ function SignUpStep1() {
 
     // Clear error and save the basic data
     setError('');
-    const basicData = { name, email, password};
+    const basicData = {  fullName, email, password};
     localStorage.setItem('basicData', JSON.stringify(basicData));
 
     // Navigate to the next step
@@ -50,7 +50,7 @@ function SignUpStep1() {
               <input 
                 type="text" 
                 className="form-control" 
-                value={name} 
+                value={ fullName} 
                 onChange={(e) => setName(e.target.value)} 
                 placeholder="Name" 
                 required 
