@@ -1,14 +1,20 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
-import { UserContext } from "../../components/context/UserContext";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useContext,
+} from "react";
+import Context from "../context/context";
 import { useSocketContext } from "../../components/context/SocketContext";
 import axios from "axios";
 import { FiSearch, FiSend, FiPaperclip } from "react-icons/fi";
 import "./ChatScreen.css";
 import { encrypt, decrypt } from "../encrypt/Encrypt";
+import { debounce } from "lodash";
 
 const ChatScreen = () => {
-  const { setUserInfo, userInfo } = useContext(UserContext);
-  const { socket, connectSocket } = useSocketContext();
+  const { setUserInfo, userInfo } = useContext(Context);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -17,8 +23,9 @@ const ChatScreen = () => {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const messagesEndRef = useRef(null);
+  const { socket, connectSocket } = useSocketContext();
 
-  const decryptMessage = (msg) => {
+  const decryptMessage = useCallback((msg) => {
     try {
       return {
         ...msg,
@@ -48,35 +55,9 @@ const ChatScreen = () => {
           : null,
       };
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    fetchConversations();
-    if (socket) {
-      socket.on("newMessage", handleNewMessage);
-      return () => socket.off("newMessage", handleNewMessage);
-    } else {
-      connectSocket();
-    }
-  }, [socket, connectSocket]);
-
-  useEffect(() => {
-    if (selectedConversation) {
-      fetchMessages(selectedConversation._id);
-    }
-  }, [selectedConversation]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    const userString = localStorage.getItem("userToken");
-    setUserInfo(userString);
-    console.log("userInfo: ", userInfo);
-  }, [userInfo]);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       const userId = userInfo || localStorage.getItem("userToken");
       if (!userId) {
@@ -91,48 +72,144 @@ const ChatScreen = () => {
       console.error("Error fetching conversations:", error);
       setFetchError("Failed to load conversations. Please try again later.");
     }
-  };
+  }, [userInfo]);
 
-  const fetchMessages = async (conversationId) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `http://localhost:5000/conversations/getMessages/${conversationId}`
+  const fetchMessages = useCallback(
+    async (conversationId) => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `http://localhost:5000/conversations/getMessages/${conversationId}`
+        );
+        const decryptedMessages = response.data.map(decryptMessage);
+        setMessages(decryptedMessages);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setFetchError("Failed to load messages. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [decryptMessage]
+  );
+
+  const handleNewMessage = useCallback(
+    (newMessage) => {
+      console.log("Received new message:", newMessage);
+      const decryptedMessage = decryptMessage(newMessage);
+
+      setMessages((prevMessages) => {
+        if (prevMessages.some((msg) => msg._id === decryptedMessage._id)) {
+          return prevMessages;
+        }
+        return [...prevMessages, decryptedMessage];
+      });
+
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) =>
+          conv._id === decryptedMessage.conversationId
+            ? {
+                ...conv,
+                lastMessage: decryptedMessage.content,
+                updatedAt: decryptedMessage.timestamp,
+              }
+            : conv
+        )
       );
-      const decryptedMessages = response.data.map(decryptMessage);
-      setMessages(decryptedMessages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      setFetchError("Failed to load messages. Please try again later.");
-    } finally {
-      setLoading(false);
-      scrollToBottom();
-    }
-  };
+    },
+    [decryptMessage]
+  );
 
-  const handleNewMessage = (newMessage) => {
-    console.log("Received message:", newMessage);
-    const decryptedMessage = decryptMessage(newMessage);
-    if (
-      selectedConversation &&
-      decryptedMessage.conversationId === selectedConversation._id
-    ) {
-      setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
+  useEffect(() => {
+    if (!socket || !socket.connected) {
+      console.log("Initializing socket connection...");
+      connectSocket();
     }
-    updateLastMessage(
-      decryptedMessage.conversationId,
-      decryptedMessage.content
-    );
-    scrollToBottom();
-  };
 
-  const updateLastMessage = (conversationId, lastMessage) => {
-    setConversations((prevConversations) =>
-      prevConversations.map((conv) =>
-        conv._id === conversationId ? { ...conv, lastMessage } : conv
-      )
-    );
-  };
+    if (socket) {
+      console.log("Setting up newMessage event listener");
+      socket.on("newMessage", handleNewMessage);
+    }
+
+    return () => {
+      if (socket) {
+        console.log("Cleaning up newMessage event listener");
+        socket.off("newMessage", handleNewMessage);
+      }
+    };
+  }, [socket, connectSocket, handleNewMessage]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      fetchMessages(selectedConversation._id);
+    }
+  }, [selectedConversation, fetchMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const userString = localStorage.getItem("userToken");
+    setUserInfo(userString);
+  }, [setUserInfo]);
+
+  useEffect(() => {
+    if (!socket || !socket.connected) {
+      console.log("Initializing socket connection...");
+      connectSocket();
+    }
+
+    const handleDisconnect = (reason) => {
+      console.log("Socket disconnected:", reason);
+      if (reason === "io server disconnect") {
+        connectSocket();
+      }
+    };
+
+    if (socket) {
+      socket.on("disconnect", handleDisconnect);
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("disconnect", handleDisconnect);
+      }
+    };
+  }, [socket, connectSocket]);
+
+  useEffect(() => {
+    if (socket) {
+      const handleConversationUpdate = (updatedConversation) => {
+        setConversations((prevConversations) => {
+          const index = prevConversations.findIndex(
+            (c) => c._id === updatedConversation._id
+          );
+          if (index !== -1) {
+            // Update existing conversation
+            return [
+              ...prevConversations.slice(0, index),
+              updatedConversation,
+              ...prevConversations.slice(index + 1),
+            ];
+          } else {
+            // Add new conversation
+            return [updatedConversation, ...prevConversations];
+          }
+        });
+      };
+
+      socket.on("conversationUpdate", handleConversationUpdate);
+
+      return () => {
+        socket.off("conversationUpdate", handleConversationUpdate);
+      };
+    }
+  }, [socket]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !socket) return;
@@ -146,33 +223,55 @@ const ChatScreen = () => {
     };
 
     try {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { ...messageData, content: newMessage },
-      ]);
-      setNewMessage("");
-      scrollToBottom();
+      console.log("Sending message:", messageData);
 
       const response = await axios.post(
         `http://localhost:5000/conversations/${selectedConversation._id}/messages`,
         messageData
       );
+      console.log("Message sent successfully:", response.data);
 
       await axios.put(
         `http://localhost:5000/conversations/${selectedConversation._id}/lastMessage`,
-        {
-          lastMessage: newMessage,
-        }
+        { lastMessage: newMessage }
       );
 
-      updateLastMessage(selectedConversation._id, newMessage);
+      // setConversations((prevConversations) =>
+      //   prevConversations.map((conv) =>
+      //     conv._id === selectedConversation._id
+      //       ? { ...conv, lastMessage: newMessage }
+      //       : conv
+      //   )
+      // );
 
       socket.emit("sendMessage", { newMessage: response.data });
+      console.log("Message emitted to socket");
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send the message. Please try again.");
     }
   };
+
+  const debouncedSendMessage = useCallback(
+    debounce(() => sendMessage(), 300, { leading: true, trailing: false }),
+    [sendMessage]
+  );
+
+  const joinConversationRoom = useCallback(
+    (conversationId) => {
+      if (socket && conversationId) {
+        socket.emit("joinRoom", conversationId);
+        console.log(`Joined room: ${conversationId}`);
+      }
+    },
+    [socket]
+  );
+
+  useEffect(() => {
+    if (selectedConversation) {
+      joinConversationRoom(selectedConversation._id);
+    }
+  }, [selectedConversation, joinConversationRoom]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -210,12 +309,6 @@ const ChatScreen = () => {
         messageData
       );
 
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        decryptMessage(response.data),
-      ]);
-      scrollToBottom();
-
       await axios.put(
         `http://localhost:5000/conversations/${selectedConversation._id}/lastMessage`,
         {
@@ -223,7 +316,13 @@ const ChatScreen = () => {
         }
       );
 
-      updateLastMessage(selectedConversation._id, "File shared");
+      // setConversations((prevConversations) =>
+      //   prevConversations.map((conv) =>
+      //     conv._id === selectedConversation._id
+      //       ? { ...conv, lastMessage: "File shared" }
+      //       : conv
+      //   )
+      // );
 
       socket.emit("sendMessage", { newMessage: response.data });
     } catch (error) {
@@ -232,33 +331,42 @@ const ChatScreen = () => {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const formatTime = (time) => {
     const options = { hour: "numeric", minute: "numeric", hour12: true };
     return new Date(time).toLocaleString("en-US", options);
   };
 
-  const filteredConversations = conversations.filter((conv) =>
-    (conv.name[1] || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getOtherUserName = (conversation) => {
+    if (!conversation || !conversation.name || !userInfo) return "Unknown";
+    const otherUserIndex = conversation.participants.findIndex(
+      (id) => id !== userInfo
+    );
+    return conversation.name[otherUserIndex] || "Unknown";
+  };
 
+  const getOtherUserAvatar = (conversation) => {
+    if (!conversation || !conversation.avatar || !userInfo)
+      return "default-avatar.png";
+    const otherUserIndex = conversation.participants.findIndex(
+      (id) => id !== userInfo
+    );
+
+    return conversation.avatar[otherUserIndex]?.url?.length > 0
+      ? conversation.avatar[otherUserIndex].url
+      : conversation.avatar[otherUserIndex];
+  };
+
+  const filteredConversations = conversations.filter((conv) =>
+    getOtherUserName(conv).toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const handleFileClick = (fileInfo) => {
-    console.log("file info from handle file: ", fileInfo);
-    console.log("file info url: ", fileInfo.url);
     if (fileInfo && fileInfo.url) {
       const decodedUrl = fileInfo.url;
       const decodedFileName = fileInfo.originalName;
 
-      // For PDF files, open in a new tab
       if (fileInfo.mimetype === "application/pdf") {
-        console.log("decodedUrl: ", decodedUrl);
         window.open(decodedUrl, "_blank");
       } else {
-        console.log("file is not a pdf");
-        // For other file types, trigger a download
         const link = document.createElement("a");
         link.href = decodedUrl;
         link.download = decodedFileName;
@@ -266,8 +374,6 @@ const ChatScreen = () => {
         link.click();
         document.body.removeChild(link);
       }
-    } else {
-      console.log("file doesnt exist");
     }
   };
 
@@ -296,12 +402,12 @@ const ChatScreen = () => {
                 onClick={() => setSelectedConversation(conv)}
               >
                 <img
-                  src={conv.avatar[1] || "default-avatar.png"}
-                  alt={conv.name[1] || "Unknown"}
+                  src={getOtherUserAvatar(conv)}
+                  alt={getOtherUserName(conv)}
                   className="conversation-avatar"
                 />
                 <div className="conversation-info">
-                  <h4>{conv.name[1] || "Unknown"}</h4>
+                  <h4>{getOtherUserName(conv)}</h4>
                   <p>{conv.lastMessage || "No messages yet"}</p>
                 </div>
                 <span className="conversation-time">
@@ -316,7 +422,7 @@ const ChatScreen = () => {
         {selectedConversation ? (
           <>
             <div className="chat-header">
-              <h3>{selectedConversation.name[1] || "Unknown"}</h3>
+              <h3>{getOtherUserName(selectedConversation)}</h3>
             </div>
             <div className="chat-messages">
               {loading ? (
@@ -366,7 +472,7 @@ const ChatScreen = () => {
               <label htmlFor="file-upload" className="file-upload-label">
                 <FiPaperclip />
               </label>
-              <button onClick={sendMessage}>
+              <button onClick={debouncedSendMessage}>
                 <FiSend />
               </button>
             </div>

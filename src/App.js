@@ -8,7 +8,7 @@ import {
 import Login from "./components/authentication/login/Login";
 import SignUpStep1 from "./components/authentication/signup/SignUpStep1";
 import UserProfileCompletion from "./components/authentication/signup/UserProfileCompletion";
-import { UserContextProvider } from "../src/components/context/UserContext";
+import { MyContextProvider } from "./components/context/context";
 import { SocketContextProvider } from "./components/context/SocketContext";
 import ChatScreen from "./components/Chat/ChatScreen"; // Import the ChatScreen component
 import DoctorChatWithPatientDetails from "./components/doctor/DoctorChatWithPatientDetails/DoctorChatWithPatientDetails";
@@ -20,7 +20,7 @@ import SignUpStep3 from "./components/authentication/signup/SignUpStep3";
 
 function App() {
   return (
-    <UserContextProvider>
+    <MyContextProvider>
       <SocketContextProvider>
         <Router>
           <Routes>
@@ -48,7 +48,7 @@ function App() {
           </Routes>
         </Router>
       </SocketContextProvider>
-    </UserContextProvider>
+    </MyContextProvider>
   );
 }
 

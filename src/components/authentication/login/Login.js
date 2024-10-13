@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "../../context/UserContext";
+import Context from "../../context/context";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -10,7 +10,7 @@ function Login() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const { setUserInfo, setToken } = useContext(UserContext);
+  const { setUserInfo, setToken } = useContext(Context);
 
   useEffect(() => {
     const auth = localStorage.getItem("userToken");

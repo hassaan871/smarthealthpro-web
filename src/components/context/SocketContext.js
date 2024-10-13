@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import io from "socket.io-client";
 
@@ -16,8 +17,15 @@ export const useSocketContext = () => {
 export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [error, setError] = useState(null);
+  const socketRef = useRef(null);
+  const socketInitialized = useRef(false);
 
   const connectSocket = useCallback(async () => {
+    if (socketRef.current) {
+      console.log("Socket already exists, not creating a new one.");
+      return;
+    }
+
     try {
       const userId = await localStorage.getItem("userToken");
       if (userId) {
@@ -46,11 +54,10 @@ export const SocketContextProvider = ({ children }) => {
           console.log("Attempting to reconnect...");
         });
 
-        // Add more socket event listeners here as needed
-
         setSocket(newSocket);
+        socketRef.current = newSocket;
       } else {
-        console.warn("No userToken found in AsyncStorage");
+        console.warn("No userToken found in localStorage");
         setError("No user token found. Unable to connect to the server.");
       }
     } catch (err) {
@@ -60,12 +67,17 @@ export const SocketContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    connectSocket();
+    if (!socketInitialized.current) {
+      connectSocket();
+      socketInitialized.current = true;
+    }
 
     return () => {
-      if (socket) {
+      if (socketRef.current) {
         console.log("Socket connection closed");
-        socket.close();
+        socketRef.current.close();
+        socketRef.current = null;
+        socketInitialized.current = false;
       }
     };
   }, [connectSocket]);

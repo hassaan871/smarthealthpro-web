@@ -1,8 +1,7 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useEffect, useState } from "react";
+const Context = createContext();
 
-export const UserContext = createContext();
-
-export const UserContextProvider = ({ children }) => {
+export const MyContextProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [userName, setUserName] = useState(null);
   const [emailGlobal, setEmailGlobal] = useState("");
@@ -13,23 +12,8 @@ export const UserContextProvider = ({ children }) => {
   const [popularDoctors, setPopularDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
 
-  useEffect(() => {
-    // Load user data from localStorage when the component mounts
-    const loadUserData = () => {
-      const storedToken = localStorage.getItem("userToken");
-
-      if (storedToken) setToken(storedToken);
-    };
-    loadUserData();
-  }, []);
-
-  // Save user data to localStorage whenever it changes
-  useEffect(() => {
-    if (token) localStorage.setItem("userToken", token);
-  }, [token, userInfo]);
-
   return (
-    <UserContext.Provider
+    <Context.Provider
       value={{
         token,
         setToken,
@@ -52,6 +36,7 @@ export const UserContextProvider = ({ children }) => {
       }}
     >
       {children}
-    </UserContext.Provider>
+    </Context.Provider>
   );
 };
+export default Context;
