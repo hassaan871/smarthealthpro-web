@@ -11,17 +11,17 @@ import {
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const Nav = ({ setActiveSection, userInfo }) => {
-  const [activeItem, setActiveItem] = useState("Appointments");
+const Nav = ({ setActiveSection, activeSection }) => {
   const navigate = useNavigate();
+  const [activeItem, setActiveItem] = useState("Appointments");
 
   const navItems = [
-    { name: "Overview", icon: FiGrid },
-    { name: "Appointments", icon: FiCalendar },
-    { name: "Patients", icon: FiUsers },
-    { name: "Chat", icon: FiMessageSquare },
-    { name: "Profile", icon: FiSettings },
-    { name: "Log out", icon: FiLogOut },
+    { name: "Overview", icon: FiGrid, path: "/dashboard/overview" },
+    { name: "Appointments", icon: FiCalendar, path: "/dashboard/appointments" },
+    { name: "Patients", icon: FiUsers, path: "/dashboard/patients" },
+    { name: "Chat", icon: FiMessageSquare, path: "/dashboard/chat" },
+    { name: "Profile", icon: FiSettings, path: "/dashboard/profile" },
+    { name: "Log out", icon: FiLogOut, path: "/login" },
   ];
 
   const logoutHandler = () => {
@@ -29,10 +29,19 @@ const Nav = ({ setActiveSection, userInfo }) => {
     navigate("/login");
   };
 
+  const handleNavigation = (item) => {
+    if (item.name === "Log out") {
+      localStorage.clear();
+      navigate("/login");
+    } else {
+      setActiveSection(item.name);
+      navigate(item.path);
+    }
+  };
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <div className="container-fluid">
-        <a className="navbar-brand" href="#">
+        <a className="navbar-brand" href="#" onClick={() => navigate("/")}>
           SmartHealthPro
         </a>
         <button
@@ -52,7 +61,7 @@ const Nav = ({ setActiveSection, userInfo }) => {
               <li
                 key={item.name}
                 className={`nav-item ${
-                  activeItem === item.name ? "active" : ""
+                  activeSection === item.name ? "active" : ""
                 }`}
               >
                 <a
@@ -60,12 +69,7 @@ const Nav = ({ setActiveSection, userInfo }) => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setActiveItem(item.name);
-                    if (item.name === "Log out") {
-                      logoutHandler();
-                    } else {
-                      setActiveSection(item.name);
-                    }
+                    handleNavigation(item);
                   }}
                 >
                   <item.icon className="me-2" />

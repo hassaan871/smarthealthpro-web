@@ -30,11 +30,9 @@ function Login() {
 
       if (result.token) {
         console.log("userToken: ", result.token);
-        localStorage.setItem("userToken", result.id);
-
+        localStorage.setItem("userToken", result.id); // Changed from "userToken" to "token"
         setToken(result.id);
-
-        navigate("/dashboard");
+        navigate("/dashboard/overview"); // Navigate directly to overview
       } else {
         setError("Invalid credentials. Please try again.");
       }

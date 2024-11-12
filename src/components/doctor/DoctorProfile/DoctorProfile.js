@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const DoctorProfile = () => {
   const [doctor, setDoctor] = useState({
@@ -9,13 +9,13 @@ const DoctorProfile = () => {
     address: "",
     about: "",
     officeHours: {
-      monday: { status: "closed" },
-      tuesday: { status: "closed" },
-      wednesday: { status: "closed" },
-      thursday: { status: "closed" },
-      friday: { status: "closed" },
-      saturday: { status: "closed" },
-      sunday: { status: "closed" },
+      monday: { status: "closed", time: "Closed" },
+      tuesday: { status: "closed", time: "Closed" },
+      wednesday: { status: "closed", time: "Closed" },
+      thursday: { status: "closed", time: "Closed" },
+      friday: { status: "closed", time: "Closed" },
+      saturday: { status: "closed", time: "Closed" },
+      sunday: { status: "closed", time: "Closed" },
     },
     education: [],
     user: {
@@ -27,32 +27,61 @@ const DoctorProfile = () => {
       "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png",
   });
 
+  // Track original data for comparison
+  const [originalData, setOriginalData] = useState(null);
+  // Track changed fields
+  const [changedFields, setChangedFields] = useState(new Set());
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
+
   useEffect(() => {
     const fetchDoctorData = async () => {
       const userString = localStorage.getItem("userToken");
       const userId = userString;
 
       try {
-        const userResponse = await axios.get(`http://localhost:5000/user/getUserInfo/${userId}`);
+        const userResponse = await axios.get(
+          `http://localhost:5000/user/getUserInfo/${userId}`
+        );
         const userData = userResponse.data.user;
 
-        const doctorsResponse = await axios.get("http://localhost:5000/user/getAllDoctors");
+        const doctorsResponse = await axios.get(
+          "http://localhost:5000/user/getAllDoctors"
+        );
         const doctorsData = doctorsResponse.data;
 
         const doctorData = doctorsData.find((doctor) => doctor.user === userId);
         const doctorId = doctorData ? doctorData._id : null;
 
         if (doctorId) {
-          const doctorResponse = await axios.get(`http://localhost:5000/user/getDoctorById/${doctorId}`);
+          const doctorResponse = await axios.get(
+            `http://localhost:5000/user/getDoctorById/${doctorId}`
+          );
           const doctorDetails = doctorResponse.data;
+
+          // Convert the fetched office hours to our internal format
+          const formattedOfficeHours = {};
+          Object.entries(doctorDetails.officeHours || {}).forEach(
+            ([day, hours]) => {
+              formattedOfficeHours[day] = {
+                status: hours === "Closed" ? "closed" : "open",
+                time: hours,
+              };
+            }
+          );
+
           setDoctor((prevDoctor) => ({
             ...prevDoctor,
             ...doctorDetails,
-            email: doctorDetails.user.email, 
+            email: doctorDetails.user.email,
+            officeHours: formattedOfficeHours,
           }));
+
+          setOriginalData({
+            ...doctorDetails,
+            officeHours: formattedOfficeHours,
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -62,16 +91,43 @@ const DoctorProfile = () => {
     fetchDoctorData();
   }, []);
 
+  const convertTo24Hour = (timeStr) => {
+    if (!timeStr) return "";
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":");
+
+    hours = parseInt(hours, 10);
+    if (modifier === "PM" && hours < 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes}`;
+  };
+
+  const convertTo12Hour = (timeStr) => {
+    if (!timeStr) return "";
+    const [hours, minutes] = timeStr.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   const validateField = (name, value) => {
     switch (name) {
       case "fullName":
-        return value.length < 3 ? "Full name must be at least 3 characters long" : "";
-        case "email":
-          console.log("sd", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          console.log("v",value)
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Email address is invalid";
+        return value.length < 3
+          ? "Full name must be at least 3 characters long"
+          : "";
+      case "email":
+        console.log("sd", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+        console.log("v", value);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+          ? ""
+          : "Email address is invalid";
       case "cnic":
-        return !/^\d{5}-\d{7}-\d$/.test(value) ? "CNIC must be in the format xxxxx-xxxxxxx-x" : "";
+        return !/^\d{5}-\d{7}-\d$/.test(value)
+          ? "CNIC must be in the format xxxxx-xxxxxxx-x"
+          : "";
       default:
         return "";
     }
@@ -79,34 +135,126 @@ const DoctorProfile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'email' || name === 'fullName') {
-      setDoctor(prev => ({
+    if (name === "email" || name === "fullName") {
+      setDoctor((prev) => ({
         ...prev,
-        user: { ...prev.user, [name]: value }
+        user: { ...prev.user, [name]: value },
       }));
+      if (originalData?.user[name] !== value) {
+        setChangedFields((prev) => new Set(prev.add(name)));
+      } else {
+        setChangedFields((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(name);
+          return newSet;
+        });
+      }
     } else {
-      setDoctor(prev => ({ ...prev, [name]: value }));
+      setDoctor((prev) => ({ ...prev, [name]: value }));
+      // Add visual indicators for these fields too
+      if (originalData?.[name] !== value) {
+        setChangedFields((prev) => new Set(prev.add(name)));
+      } else {
+        setChangedFields((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(name);
+          return newSet;
+        });
+      }
     }
-  
+
     const error = validateField(name, value);
-    setErrors(prevErrors => ({
+    setErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: error
+      [name]: error,
     }));
   };
 
+  const formatTimeForAPI = (time) => {
+    if (!time) return "";
+    try {
+      const [hours, minutes] = time.split(":");
+      const formattedHours = hours.padStart(2, "0");
+      const formattedMinutes = minutes.padStart(2, "0");
+      return `${formattedHours}:${formattedMinutes}`;
+    } catch (e) {
+      return "";
+    }
+  };
+  const formatTimeForDisplay = (time) => {
+    if (!time) return "";
+    try {
+      const timeObj = new Date(`2000-01-01T${time}`);
+      return timeObj.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (e) {
+      return time;
+    }
+  };
+
   const handleOfficeHoursChange = (day, type, value) => {
-    setDoctor((prevDoctor) => ({
-      ...prevDoctor,
-      officeHours: {
-        ...prevDoctor.officeHours,
-        [day]: {
-          ...prevDoctor.officeHours[day],
-          [type]: value,
-          status: type === "status" ? value : prevDoctor.officeHours[day].status,
-        },
-      },
-    }));
+    setDoctor((prevDoctor) => {
+      const updatedHours = { ...prevDoctor.officeHours };
+
+      if (type === "status") {
+        updatedHours[day] = {
+          status: value,
+          time: value === "closed" ? "Closed" : updatedHours[day].time || "",
+        };
+      } else if (type === "times") {
+        const [openTime, closeTime] = value;
+        // Only update if we have both times
+        if (openTime && closeTime) {
+          updatedHours[day] = {
+            status: "open",
+            time: `${convertTo12Hour(openTime)} - ${convertTo12Hour(
+              closeTime
+            )}`,
+          };
+        } else if (openTime) {
+          // If we only have start time, keep the existing end time if any
+          const currentEndTime = getDefaultTimes(updatedHours[day]).end;
+          updatedHours[day] = {
+            status: "open",
+            time: `${convertTo12Hour(openTime)} - ${
+              currentEndTime ? convertTo12Hour(currentEndTime) : ""
+            }`,
+          };
+        } else if (closeTime) {
+          // If we only have end time, keep the existing start time if any
+          const currentStartTime = getDefaultTimes(updatedHours[day]).start;
+          updatedHours[day] = {
+            status: "open",
+            time: `${
+              currentStartTime ? convertTo12Hour(currentStartTime) : ""
+            } - ${convertTo12Hour(closeTime)}`,
+          };
+        }
+      }
+
+      setChangedFields((prev) => new Set(prev.add("officeHours")));
+
+      return {
+        ...prevDoctor,
+        officeHours: updatedHours,
+      };
+    });
+  };
+  const getChangedData = () => {
+    const changes = {};
+    changedFields.forEach((field) => {
+      if (field === "fullName" || field === "email") {
+        changes[field] = doctor.user[field];
+      } else if (field === "officeHours") {
+        changes.officeHours = formatOfficeHoursForAPI(doctor.officeHours);
+      } else {
+        changes[field] = doctor[field];
+      }
+    });
+    return changes;
   };
 
   const handleSubmit = async (e) => {
@@ -123,29 +271,22 @@ const DoctorProfile = () => {
       setIsLoading(true);
       try {
         const userId = localStorage.getItem("userToken");
-        const updateData = {
-          specialization: doctor.specialization,
-          cnic: doctor.cnic,
-          address: doctor.address,
-          about: doctor.about,
-          officeHours: doctor.officeHours,
-          education: doctor.education,
-        };
+        const changedData = getChangedData();
 
-        const userUpdateData = {
-          fullName: doctor.user.fullName,
-          email: doctor.user.email,
-          role:"doctor"
-        };
-
-        console.log("user upd dete ",userUpdateData)
-
-        const doctorResponse = await axios.put(`http://localhost:5000/user/updateDoctorInfo/${userId}`, updateData);
-        const userResponse = await axios.put(`http://localhost:5000/user/updateUser/${userId}`, userUpdateData);
-
-        setUpdateMessage("Profile updated successfully!");
-        console.log("Doctor update response:", doctorResponse.data);
-        console.log("User update response:", userResponse.data);
+        console.log("changedData: ", changedData);
+        console.log("userid: ", userId);
+        const link = `http://localhost:5000/user/updateUser/${userId}`;
+        console.log("link: ", link);
+        if (Object.keys(changedData).length > 0) {
+          const userResponse = await axios.put(link, changedData);
+          setUpdateMessage("Profile updated successfully!");
+          // Update original data with new values
+          setOriginalData(doctor);
+          // Clear changed fields
+          setChangedFields(new Set());
+        } else {
+          setUpdateMessage("No changes to update!");
+        }
       } catch (error) {
         console.error("Error updating profile:", error);
         setUpdateMessage("Failed to update profile. Please try again.");
@@ -155,16 +296,49 @@ const DoctorProfile = () => {
     } else {
       setErrors(newErrors);
     }
+  };
 
+  // Helper function to determine if a field has changed
+  const hasFieldChanged = (fieldName) => changedFields.has(fieldName);
+
+  const getDefaultTimes = (hours) => {
+    if (hours.status === "closed" || !hours.time || hours.time === "Closed") {
+      return { start: "", end: "" };
+    }
+
+    try {
+      const [startTime, endTime] = hours.time.split(" - ");
+      return {
+        start: convertTo24Hour(startTime.trim()),
+        end: convertTo24Hour(endTime.trim()),
+      };
+    } catch (error) {
+      return { start: "", end: "" };
+    }
+  };
+
+  const formatOfficeHoursForAPI = (officeHours) => {
+    const formattedHours = {};
+    Object.entries(officeHours).forEach(([day, hours]) => {
+      formattedHours[day] = hours.status === "closed" ? "Closed" : hours.time;
+    });
+    return formattedHours;
   };
 
   return (
-    <div className="container-fluid" style={{ marginTop: "75px", width: "90vw" }}>
+    <div
+      className="container-fluid"
+      style={{ marginTop: "75px", width: "90vw" }}
+    >
       <div className="row">
         <div className="col-md-6">
           <div className="card mt-4">
             <img
-              src={doctor.user?.avatar?.url?.length > 0 ? doctor.user.avatar.url : doctor.user.avatar}
+              src={
+                doctor.user?.avatar?.url?.length > 0
+                  ? doctor.user.avatar.url
+                  : doctor.user.avatar
+              }
               alt={doctor.user.fullName}
               className="card-img-top rounded-circle mx-auto mt-3"
               style={{ width: "150px", height: "150px", objectFit: "cover" }}
@@ -213,8 +387,10 @@ const DoctorProfile = () => {
                 {doctor.officeHours &&
                   Object.entries(doctor.officeHours).map(([day, hours]) => (
                     <li key={day} className="mb-2">
-                      <strong>{day.charAt(0).toUpperCase() + day.slice(1)}:</strong>{" "}
-                      {hours.status === "closed" ? "Closed" : `${hours.open} - ${hours.close}`}
+                      <strong>
+                        {day.charAt(0).toUpperCase() + day.slice(1)}:
+                      </strong>{" "}
+                      {hours.time}
                     </li>
                   ))}
               </ul>
@@ -224,24 +400,40 @@ const DoctorProfile = () => {
         <div className="col-md-6">
           <h2 className="mb-4 mt-4">Edit Profile</h2>
           <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="fullName" className="form-label">Full Name</label>
-            <input
-              type="text"
-              className={`form-control ${errors.fullName ? "is-invalid" : ""}`}
-              id="fullName"
-              name="fullName"
-              value={doctor.user.fullName}
-              onChange={handleInputChange}
-              required
-            />
-            {errors.fullName && <div className="invalid-feedback">{errors.fullName}</div>}
-          </div>
             <div className="mb-3">
-              <label htmlFor="specialization" className="form-label">Specialization</label>
+              <label htmlFor="fullName" className="form-label">
+                Full Name{" "}
+                {hasFieldChanged("fullName") && (
+                  <span className="text-primary">*</span>
+                )}
+              </label>
               <input
                 type="text"
-                className="form-control"
+                className={`form-control ${
+                  errors.fullName ? "is-invalid" : ""
+                } ${hasFieldChanged("fullName") ? "border-primary" : ""}`}
+                id="fullName"
+                name="fullName"
+                value={doctor.user.fullName}
+                onChange={handleInputChange}
+                required
+              />
+              {errors.fullName && (
+                <div className="invalid-feedback">{errors.fullName}</div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label htmlFor="specialization" className="form-label">
+                Specialization{" "}
+                {hasFieldChanged("specialization") && (
+                  <span className="text-primary">*</span>
+                )}
+              </label>
+              <input
+                type="text"
+                className={`form-control ${
+                  hasFieldChanged("specialization") ? "border-primary" : ""
+                }`}
                 id="specialization"
                 name="specialization"
                 value={doctor.specialization}
@@ -262,32 +454,47 @@ const DoctorProfile = () => {
               />
             </div>
             <div className="mb-3">
-                <label htmlFor="email" className="form-label">Email</label>
-                <input
-                  type="email"
-                  className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                  id="email"
-                  name="email"
-                  value={doctor.user.email}
-                  onChange={handleInputChange}
-                />
-                {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-              </div>
+              <label htmlFor="email" className="form-label">
+                Email
+              </label>
+              <input
+                type="email"
+                className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                id="email"
+                name="email"
+                value={doctor.user.email}
+                onChange={handleInputChange}
+              />
+              {errors.email && (
+                <div className="invalid-feedback">{errors.email}</div>
+              )}
+            </div>
             <div className="mb-3">
-              <label htmlFor="cnic" className="form-label">CNIC</label>
+              <label htmlFor="cnic" className="form-label">
+                CNIC{" "}
+                {hasFieldChanged("cnic") && (
+                  <span className="text-primary">*</span>
+                )}
+              </label>
               <input
                 type="text"
-                className={`form-control ${errors.cnic ? "is-invalid" : ""}`}
+                className={`form-control ${errors.cnic ? "is-invalid" : ""} ${
+                  hasFieldChanged("cnic") ? "border-primary" : ""
+                }`}
                 id="cnic"
                 name="cnic"
                 value={doctor.cnic}
                 onChange={handleInputChange}
                 required
               />
-              {errors.cnic && <div className="invalid-feedback">{errors.cnic}</div>}
+              {errors.cnic && (
+                <div className="invalid-feedback">{errors.cnic}</div>
+              )}
             </div>
             <div className="mb-3">
-              <label htmlFor="address" className="form-label">Address</label>
+              <label htmlFor="address" className="form-label">
+                Address
+              </label>
               <textarea
                 className="form-control"
                 id="address"
@@ -298,7 +505,9 @@ const DoctorProfile = () => {
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="about" className="form-label">About</label>
+              <label htmlFor="about" className="form-label">
+                About
+              </label>
               <textarea
                 className="form-control"
                 id="about"
@@ -308,60 +517,93 @@ const DoctorProfile = () => {
               />
             </div>
             <div className="mb-3">
-              <label className="form-label">Clinic Hours</label>
-              {doctor.officeHours &&
-                Object.entries(doctor.officeHours).map(([day, hours]) => (
-                  <div key={day} className="mb-2">
-                    <div className="row align-items-center">
-                      <div className="col-md-3">
-                        <label className="form-label">
-                          {day.charAt(0).toUpperCase() + day.slice(1)}:
-                        </label>
-                      </div>
-                      <div className="col-md-3">
-                        <select
-                          value={hours.status}
-                          onChange={(e) => handleOfficeHoursChange(day, "status", e.target.value)}
-                          className="form-select"
-                        >
-                          <option value="open">Open</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </div>
-                      {hours.status === "open" && (
-                        <>
-                          <div className="col-md-3">
-                            <input
-                              type="time"
-                              value={hours.open}
-                              onChange={(e) => handleOfficeHoursChange(day, "open", e.target.value)}
-                              className="form-control"
-                            />
-                          </div>
-                          <div className="col-md-3">
-                            <input
-                              type="time"
-                              value={hours.close}
-                              onChange={(e) => handleOfficeHoursChange(day, "close", e.target.value)}
-                              className="form-control"
-                            />
-                          </div>
-                        </>
-                      )}
+              <label className="form-label">
+                Clinic Hours{" "}
+                {hasFieldChanged("officeHours") && (
+                  <span className="text-primary">*</span>
+                )}
+              </label>
+              {Object.entries(doctor.officeHours).map(([day, hours]) => (
+                <div key={day} className="mb-2">
+                  <div className="row align-items-center">
+                    <div className="col-md-3">
+                      <label className="form-label">
+                        {day.charAt(0).toUpperCase() + day.slice(1)}:
+                      </label>
                     </div>
+                    <div className="col-md-3">
+                      <select
+                        value={hours.status}
+                        onChange={(e) =>
+                          handleOfficeHoursChange(day, "status", e.target.value)
+                        }
+                        className={`form-select ${
+                          hasFieldChanged("officeHours") ? "border-primary" : ""
+                        }`}
+                      >
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                    </div>
+                    {hours.status === "open" && (
+                      <div className="col-md-6">
+                        <div className="input-group">
+                          <input
+                            type="time"
+                            value={getDefaultTimes(hours).start}
+                            onChange={(e) =>
+                              handleOfficeHoursChange(day, "times", [
+                                e.target.value,
+                                getDefaultTimes(hours).end,
+                              ])
+                            }
+                            className={`form-control ${
+                              hasFieldChanged("officeHours")
+                                ? "border-primary"
+                                : ""
+                            }`}
+                          />
+                          <span className="input-group-text">to</span>
+                          <input
+                            type="time"
+                            value={getDefaultTimes(hours).end}
+                            onChange={(e) =>
+                              handleOfficeHoursChange(day, "times", [
+                                getDefaultTimes(hours).start,
+                                e.target.value,
+                              ])
+                            }
+                            className={`form-control ${
+                              hasFieldChanged("officeHours")
+                                ? "border-primary"
+                                : ""
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
             <button
               type="submit"
               className="btn btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? "Updating..." : "Save Changes"}
+              {isLoading
+                ? "Updating..."
+                : `Save Changes (${changedFields.size} modified)`}
             </button>
           </form>
           {updateMessage && (
-            <div className={`alert ${updateMessage.includes("Failed") ? "alert-danger" : "alert-success"} mt-3`}>
+            <div
+              className={`alert ${
+                updateMessage.includes("Failed")
+                  ? "alert-danger"
+                  : "alert-success"
+              } mt-3`}
+            >
               {updateMessage}
             </div>
           )}
