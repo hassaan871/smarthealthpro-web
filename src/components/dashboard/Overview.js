@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -20,8 +20,44 @@ import {
   Clock,
   PinIcon,
 } from "lucide-react";
+import Context from "../context/context";
 
 const Overview = () => {
+  const { appointments, setAppointments } = useContext(Context);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const userString = localStorage.getItem("userToken");
+        if (!userString) {
+          throw new Error("User data not found in local storage");
+        }
+        const doctorId = userString;
+
+        if (!doctorId) {
+          throw new Error("Doctor ID not found in user data");
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch appointments");
+        }
+
+        const data = await response.json();
+        const pendingAppointments = data.filter(
+          (apt) => apt.appointmentStatus === "pending"
+        );
+        setAppointments(pendingAppointments);
+      } catch (err) {
+        console.error(err.message);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
+
   const salesData = [
     { name: "Jan", value: 18 },
     { name: "Feb", value: 16 },
@@ -42,42 +78,6 @@ const Overview = () => {
     { name: "Pending", value: 15 },
     { name: "TBD", value: 22 },
   ];
-
-  const patients = [
-    { name: "Soniya Ahmad", updated: "2024-09-10" },
-    { name: "Aftab Gul", updated: "2024-09-9" },
-    { name: "Rita", updated: "2024-09-8" },
-    { name: "John Doe", updated: "2024-09-7" },
-  ];
-
-  const appointments = [
-    {
-      priority: "high",
-      patient: "Taylor Johnson",
-      date: "2024-09-10",
-      status: "Pending",
-    },
-    {
-      priority: "high",
-      patient: "Alex Walker",
-      date: "2024-09-11",
-      status: "Pending",
-    },
-    {
-      priority: "high",
-      patient: "Walter White",
-      date: "2024-09-12",
-      status: "Pending",
-    },
-    { priority: "low", patient: "Ali", date: "2024-09-13", status: "Pending" },
-    {
-      priority: "low",
-      patient: "John Doe",
-      date: "2024-09-14",
-      status: "Pending",
-    },
-  ];
-
   const COLORS = ["#60A5FA", "#F59E0B", "#10B981"];
 
   const StatCard = ({
@@ -132,32 +132,16 @@ const Overview = () => {
     </div>
   );
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          style={{
-            backgroundColor: "#1F2937",
-            padding: "10px",
-            border: "1px solid #374151",
-            borderRadius: "4px",
-          }}
-        >
-          <p style={{ color: "#F3F4F6", margin: "0" }}>
-            {`${label} : ${payload[0].value}`}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div
-      className="container-fluid p-4 bg-gray-900"
-      style={{ marginTop: "75px", width: "90vw" }}
+      className="container-fluid bg-gray-900"
+      style={{
+        width: "99vw",
+        minHeight: "100vh", // Ensures minimum full viewport height
+        paddingBottom: "2rem", // Adds bottom padding
+      }}
     >
-      <div className="row mb-4 g-3">
+      <div className="row mb-4 g-3" style={{ paddingTop: "25px" }}>
         <div className="col-md-3">
           <StatCard
             title="Total Patients"
@@ -301,16 +285,30 @@ const Overview = () => {
                 </a>
               </div>
               <ul className="list-group list-group-flush bg-transparent">
-                {patients.map((product, index) => (
+                {appointments.map((appointment, index) => (
                   <li
                     key={index}
                     className="list-group-item bg-transparent border-gray-700 d-flex justify-content-between align-items-center"
                   >
-                    <div>
-                      <h6 className="mb-0 text-white">{product.name}</h6>
-                      <small className="text-gray-400">
-                        Updated {product.updated}
-                      </small>
+                    <div className="d-flex align-items-center gap-3">
+                      <img
+                        src={
+                          appointment?.patient?.avatar?.url?.length > 0
+                            ? appointment?.patient?.avatar?.url
+                            : appointment?.patient?.avatar
+                        }
+                        alt={
+                          "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
+                        }
+                        className="rounded-circle"
+                        width="40"
+                        height="40"
+                      />
+                      <div>
+                        <h6 className="mb-0 text-white">
+                          {appointment.patient.name}
+                        </h6>
+                      </div>
                     </div>
                     <button className="btn btn-sm btn-gray-700">
                       <MoreVertical size={16} className="text-gray-400" />
@@ -355,13 +353,15 @@ const Overview = () => {
                           </span>
                         </td>
                         <td style={{ color: "#ffffff" }}>
-                          {appointment.patient}
+                          {appointment.patient.name}
                         </td>{" "}
                         {/* Change color here for patient name */}
-                        <td style={{ color: "#9ca3af" }}>{appointment.date}</td>
+                        <td style={{ color: "#9ca3af" }}>
+                          {appointment.date + " " + appointment.time}
+                        </td>
                         <td>
                           <span className="badge bg-yellow-900 text-yellow-300">
-                            {appointment.status}
+                            {appointment.appointmentStatus}
                           </span>
                         </td>
                       </tr>
@@ -392,6 +392,10 @@ const Overview = () => {
         }
         .border-gray-700 {
           border-color: #374151 !important;
+        }
+
+        .container-fluid {
+          background-color: #111827 !important;
         }
 
         .card {

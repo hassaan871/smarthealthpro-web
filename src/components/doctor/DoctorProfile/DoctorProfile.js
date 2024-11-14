@@ -324,15 +324,19 @@ const DoctorProfile = () => {
     });
     return formattedHours;
   };
-
   return (
     <div
-      className="container-fluid"
-      style={{ marginTop: "75px", width: "90vw" }}
+      className="container-fluid bg-gray-900"
+      style={{
+        width: "100vw",
+        margin: "0",
+        minHeight: "100vh",
+        padding: "80px 5vw 0 5vw",
+      }}
     >
       <div className="row">
         <div className="col-md-6">
-          <div className="card mt-4">
+          <div className="card bg-gray-800 border-0 shadow-lg mt-4">
             <img
               src={
                 doctor.user?.avatar?.url?.length > 0
@@ -344,35 +348,38 @@ const DoctorProfile = () => {
               style={{ width: "150px", height: "150px", objectFit: "cover" }}
             />
             <div className="card-body text-center">
-              <h2 className="card-title">{doctor.user.fullName}</h2>
-              <p className="card-text text-muted">{doctor.specialization}</p>
+              <h2 className="card-title text-white">{doctor.user.fullName}</h2>
+              <p className="card-text text-gray-400">{doctor.specialization}</p>
             </div>
-            <ul className="list-group list-group-flush">
-              <li className="list-group-item">
-                <strong>Email:</strong> {doctor.user.email || "Not provided"}
+            <ul className="list-group list-group-flush bg-gray-800">
+              <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
+                <strong className="text-white">Email:</strong>{" "}
+                {doctor.user.email || "Not provided"}
               </li>
-              <li className="list-group-item">
-                <strong>CNIC:</strong> {doctor.cnic}
+              <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
+                <strong className="text-white">CNIC:</strong> {doctor.cnic}
               </li>
-              <li className="list-group-item">
-                <strong>Address:</strong> {doctor.address}
+              <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
+                <strong className="text-white">Address:</strong>{" "}
+                {doctor.address}
               </li>
             </ul>
           </div>
-          <div className="card mt-4">
+          <div className="card bg-gray-800 border-0 shadow-lg mt-4">
             <div className="card-body">
-              <h5 className="card-title">About</h5>
-              <p className="card-text">{doctor.about}</p>
+              <h5 className="card-title text-white">About</h5>
+              <p className="card-text text-gray-400">{doctor.about}</p>
             </div>
           </div>
-          <div className="card mt-4">
+
+          <div className="card bg-gray-800 border-0 shadow-lg mt-4">
             <div className="card-body">
-              <h5 className="card-title">Education</h5>
+              <h5 className="card-title text-white">Education</h5>
               <ul className="list-unstyled">
                 {doctor.education &&
                   doctor.education.map((edu, index) => (
-                    <li key={index} className="mb-2">
-                      <strong>{edu.degree}</strong>
+                    <li key={index} className="mb-2 text-gray-400">
+                      <strong className="text-white">{edu.degree}</strong>
                       <br />
                       {edu.institution} ({edu.year})
                     </li>
@@ -380,14 +387,15 @@ const DoctorProfile = () => {
               </ul>
             </div>
           </div>
-          <div className="card mt-4">
+
+          <div className="card bg-gray-800 border-0 shadow-lg mt-4 mb-4">
             <div className="card-body">
-              <h5 className="card-title">Clinic Hours</h5>
+              <h5 className="card-title text-white">Clinic Hours</h5>
               <ul className="list-unstyled">
                 {doctor.officeHours &&
                   Object.entries(doctor.officeHours).map(([day, hours]) => (
-                    <li key={day} className="mb-2">
-                      <strong>
+                    <li key={day} className="mb-2 text-gray-400">
+                      <strong className="text-white">
                         {day.charAt(0).toUpperCase() + day.slice(1)}:
                       </strong>{" "}
                       {hours.time}
@@ -397,11 +405,12 @@ const DoctorProfile = () => {
             </div>
           </div>
         </div>
+
         <div className="col-md-6">
-          <h2 className="mb-4 mt-4">Edit Profile</h2>
+          <h2 className="mb-4 mt-4 text-white">Edit Profile</h2>
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label htmlFor="fullName" className="form-label">
+              <label htmlFor="fullName" className="form-label text-gray-400">
                 Full Name{" "}
                 {hasFieldChanged("fullName") && (
                   <span className="text-primary">*</span>
@@ -409,7 +418,7 @@ const DoctorProfile = () => {
               </label>
               <input
                 type="text"
-                className={`form-control ${
+                className={`form-control bg-gray-700 border-0 text-white ${
                   errors.fullName ? "is-invalid" : ""
                 } ${hasFieldChanged("fullName") ? "border-primary" : ""}`}
                 id="fullName"
@@ -422,8 +431,12 @@ const DoctorProfile = () => {
                 <div className="invalid-feedback">{errors.fullName}</div>
               )}
             </div>
+
             <div className="mb-3">
-              <label htmlFor="specialization" className="form-label">
+              <label
+                htmlFor="specialization"
+                className="form-label text-gray-400"
+              >
                 Specialization{" "}
                 {hasFieldChanged("specialization") && (
                   <span className="text-primary">*</span>
@@ -431,7 +444,7 @@ const DoctorProfile = () => {
               </label>
               <input
                 type="text"
-                className={`form-control ${
+                className={`form-control bg-gray-700 border-0 text-white ${
                   hasFieldChanged("specialization") ? "border-primary" : ""
                 }`}
                 id="specialization"
@@ -441,25 +454,30 @@ const DoctorProfile = () => {
                 required
               />
             </div>
+
             <div className="mb-3">
-              <label htmlFor="profileImage" className="form-label">
+              <label
+                htmlFor="profileImage"
+                className="form-label text-gray-400"
+              >
                 Profile Picture
               </label>
               <input
                 type="file"
-                className="form-control"
+                className="form-control bg-gray-700 border-0 text-white"
                 id="profileImage"
-                // onChange={handleImageChange}
                 accept="image/*"
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="email" className="form-label">
+              <label htmlFor="email" className="form-label text-gray-400">
                 Email
               </label>
               <input
                 type="email"
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                className={`form-control bg-gray-700 border-0 text-white ${
+                  errors.email ? "is-invalid" : ""
+                }`}
                 id="email"
                 name="email"
                 value={doctor.user.email}
@@ -469,8 +487,9 @@ const DoctorProfile = () => {
                 <div className="invalid-feedback">{errors.email}</div>
               )}
             </div>
+
             <div className="mb-3">
-              <label htmlFor="cnic" className="form-label">
+              <label htmlFor="cnic" className="form-label text-gray-400">
                 CNIC{" "}
                 {hasFieldChanged("cnic") && (
                   <span className="text-primary">*</span>
@@ -478,9 +497,9 @@ const DoctorProfile = () => {
               </label>
               <input
                 type="text"
-                className={`form-control ${errors.cnic ? "is-invalid" : ""} ${
-                  hasFieldChanged("cnic") ? "border-primary" : ""
-                }`}
+                className={`form-control bg-gray-700 border-0 text-white ${
+                  errors.cnic ? "is-invalid" : ""
+                } ${hasFieldChanged("cnic") ? "border-primary" : ""}`}
                 id="cnic"
                 name="cnic"
                 value={doctor.cnic}
@@ -491,12 +510,13 @@ const DoctorProfile = () => {
                 <div className="invalid-feedback">{errors.cnic}</div>
               )}
             </div>
+
             <div className="mb-3">
-              <label htmlFor="address" className="form-label">
+              <label htmlFor="address" className="form-label text-gray-400">
                 Address
               </label>
               <textarea
-                className="form-control"
+                className="form-control bg-gray-700 border-0 text-white"
                 id="address"
                 name="address"
                 value={doctor.address}
@@ -504,20 +524,22 @@ const DoctorProfile = () => {
                 required
               />
             </div>
+
             <div className="mb-3">
-              <label htmlFor="about" className="form-label">
+              <label htmlFor="about" className="form-label text-gray-400">
                 About
               </label>
               <textarea
-                className="form-control"
+                className="form-control bg-gray-700 border-0 text-white"
                 id="about"
                 name="about"
                 value={doctor.about}
                 onChange={handleInputChange}
               />
             </div>
+
             <div className="mb-3">
-              <label className="form-label">
+              <label className="form-label text-gray-400">
                 Clinic Hours{" "}
                 {hasFieldChanged("officeHours") && (
                   <span className="text-primary">*</span>
@@ -527,7 +549,7 @@ const DoctorProfile = () => {
                 <div key={day} className="mb-2">
                   <div className="row align-items-center">
                     <div className="col-md-3">
-                      <label className="form-label">
+                      <label className="form-label text-gray-400">
                         {day.charAt(0).toUpperCase() + day.slice(1)}:
                       </label>
                     </div>
@@ -537,7 +559,7 @@ const DoctorProfile = () => {
                         onChange={(e) =>
                           handleOfficeHoursChange(day, "status", e.target.value)
                         }
-                        className={`form-select ${
+                        className={`form-select bg-gray-700 border-0 text-white ${
                           hasFieldChanged("officeHours") ? "border-primary" : ""
                         }`}
                       >
@@ -557,13 +579,15 @@ const DoctorProfile = () => {
                                 getDefaultTimes(hours).end,
                               ])
                             }
-                            className={`form-control ${
+                            className={`form-control bg-gray-700 border-0 text-white ${
                               hasFieldChanged("officeHours")
                                 ? "border-primary"
                                 : ""
                             }`}
                           />
-                          <span className="input-group-text">to</span>
+                          <span className="input-group-text bg-gray-600 border-0 text-gray-400">
+                            to
+                          </span>
                           <input
                             type="time"
                             value={getDefaultTimes(hours).end}
@@ -573,7 +597,7 @@ const DoctorProfile = () => {
                                 e.target.value,
                               ])
                             }
-                            className={`form-control ${
+                            className={`form-control bg-gray-700 border-0 text-white ${
                               hasFieldChanged("officeHours")
                                 ? "border-primary"
                                 : ""
@@ -586,6 +610,7 @@ const DoctorProfile = () => {
                 </div>
               ))}
             </div>
+
             <button
               type="submit"
               className="btn btn-primary"
@@ -609,6 +634,162 @@ const DoctorProfile = () => {
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        .bg-gray-900 {
+          background-color: #111827;
+        }
+        .bg-gray-800 {
+          background-color: #1f2937;
+        }
+        .bg-gray-700 {
+          background-color: #374151;
+        }
+        .bg-gray-600 {
+          background-color: #4b5563;
+        }
+        .text-gray-400 {
+          color: #9ca3af;
+        }
+        .text-gray-300 {
+          color: #d1d5db;
+        }
+        .border-gray-700 {
+          border-color: #374151 !important;
+        }
+
+        .btn-gray-600 {
+          background-color: #4b5563;
+          border: none;
+          color: #d1d5db;
+        }
+
+        .btn-gray-600:hover {
+          background-color: #6b7280;
+          color: #f3f4f6;
+        }
+
+        .form-control,
+        .form-select,
+        .input-group-text {
+          background-color: #374151;
+          border: none;
+          color: #fff;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+          background-color: #4b5563;
+          border-color: #6b7280;
+          color: #f3f4f6;
+          box-shadow: none;
+        }
+        .form-control::placeholder {
+          color: #9ca3af;
+        }
+
+        .card {
+          transition: transform 0.2s ease-in-out;
+        }
+
+        .card:hover {
+          transform: translateY(-2px);
+        }
+
+        .invalid-feedback {
+          color: #ef4444;
+        }
+
+        .alert-success {
+          background-color: #065f46;
+          color: #fff;
+          border: none;
+        }
+
+        .alert-danger {
+          background-color: #7f1d1d;
+          color: #fff;
+          border: none;
+        }
+
+        .form-label {
+          margin-bottom: 0.5rem;
+        }
+
+        /* Custom styling for file input */
+        input[type="file"] {
+          color: #9ca3af;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+          background-color: #4b5563;
+          border: none;
+          color: #fff;
+          padding: 0.375rem 0.75rem;
+          margin-right: 1rem;
+          border-radius: 0.25rem;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+          background-color: #6b7280;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        body {
+          background-color: #111827 !important;
+          margin: 0;
+          padding: 0;
+        }
+
+        #root {
+          background-color: #111827;
+          min-height: 100vh;
+        }
+
+        .container-fluid {
+          background-color: #111827 !important;
+        }
+
+        /* Override Bootstrap's default white backgrounds */
+        .card,
+        .card-header,
+        .card-body {
+          background-color: inherit;
+        }
+
+        /* Override Bootstrap's default borders */
+        .card,
+        .btn,
+        .form-control {
+          border: none;
+        }
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: #1f2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: #4b5563;
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: #6b7280;
+        }
+
+        /* Override select dropdown styles */
+        select option {
+          background-color: #374151;
+          color: #fff;
+        }
+      `}</style>
     </div>
   );
 };

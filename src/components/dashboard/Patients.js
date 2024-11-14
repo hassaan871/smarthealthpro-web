@@ -6,14 +6,13 @@ import {
   Clock,
   MapPin,
   AlertCircle,
-  Flag,
   Calendar as CalendarIcon,
   Search,
   Filter,
   MessageSquare,
 } from "lucide-react";
 
-const Patients = ({ style }) => {
+const Patients = () => {
   const [appointments, setAppointments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -127,7 +126,7 @@ const Patients = ({ style }) => {
 
   if (error) {
     return (
-      <div className="container mt-5">
+      <div className="container-fluid bg-gray-900 min-vh-100 d-flex align-items-center justify-content-center">
         <div className="alert alert-danger d-flex align-items-center">
           <AlertCircle className="me-2" />
           {error}
@@ -137,12 +136,9 @@ const Patients = ({ style }) => {
   }
 
   return (
-    <div
-      className="container-fluid bg-gray-900"
-      style={{ ...style, width: "90vw", margin: "80px auto 0 auto" }}
-    >
+    <div className="container-fluid bg-gray-900 min-vh-100">
       {/* Filters Section */}
-      <div className="card bg-gray-800 border-0 shadow-lg mb-4">
+      <div className="card bg-gray-800 border-0 shadow-lg mb-4 mx-5 mt-5">
         <div className="card-body">
           <div className="row g-3">
             <div className="col-md-6">
@@ -189,171 +185,86 @@ const Patients = ({ style }) => {
       </div>
 
       {/* Main Content */}
-      <div className="card bg-gray-800 border-0 shadow-lg">
-        <div className="card-header bg-gray-800 border-bottom border-gray-700">
-          <div className="d-flex justify-content-between align-items-center">
-            <h3 className="card-title text-white mb-0">
-              Patients ({filteredAppointments.length})
-            </h3>
-            <div className="d-flex gap-2">
-              <button className="btn btn-gray-700 d-flex align-items-center gap-2">
-                <Filter size={16} /> Filter
-              </button>
-              <button className="btn btn-primary d-flex align-items-center gap-2">
-                <CalendarIcon size={16} /> New Appointment
-              </button>
+      <div className="row row-cols-4 g-3 mx-5 mb-5">
+        {loading ? (
+          <div className="col d-flex justify-content-center align-items-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
           </div>
-        </div>
-
-        <div className="card-body">
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : filteredAppointments.length === 0 ? (
-            <div className="text-center py-5 text-gray-400">
-              <img
-                src="/api/placeholder/200/200"
-                alt="No appointments"
-                className="mb-3"
-              />
+        ) : filteredAppointments.length === 0 ? (
+          <div className="col d-flex justify-content-center align-items-center text-gray-400">
+            <div>
               <h5>No Appointments Found</h5>
               <p>Try adjusting your filters or search terms</p>
             </div>
-          ) : (
-            filteredAppointments.map((appointment, index) => {
-              const priorityInfo = getPriorityInfo(appointment.priority);
-              return (
-                <div
-                  key={index}
-                  className="card bg-gray-700 border-0 shadow-sm mb-4"
-                >
-                  <div className="card-body">
-                    <div className="row">
-                      <div className="col-md-2 d-flex align-items-center justify-content-center">
-                        <div className="position-relative">
-                          <img
-                            src={
-                              appointment.patient.avatar ||
-                              "/api/placeholder/80/80"
-                            }
-                            alt={appointment.patient.name}
-                            className="rounded-circle"
-                            style={{
-                              width: "80px",
-                              height: "80px",
-                              objectFit: "cover",
-                            }}
-                          />
-                          <span
-                            className={`position-absolute bottom-0 end-0 p-1 rounded-circle ${
-                              appointment.appointmentStatus.toLowerCase() ===
-                              "completed"
-                                ? "bg-success"
-                                : appointment.appointmentStatus.toLowerCase() ===
-                                  "pending"
-                                ? "bg-warning"
-                                : "bg-danger"
-                            }`}
-                            style={{ width: "12px", height: "12px" }}
-                          ></span>
-                        </div>
-                      </div>
-
-                      <div className="col-md-10">
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                          <div>
-                            <h5 className="card-title text-white mb-1">
-                              {appointment.patient.name}
-                            </h5>
-                            <p className="card-text text-gray-400 mb-0">
-                              {appointment.description}
-                            </p>
-                          </div>
-                          <span
-                            className={`badge ${getStatusBadgeColor(
-                              appointment.appointmentStatus
-                            )}`}
-                          >
-                            {appointment.appointmentStatus}
-                          </span>
-                        </div>
-
-                        <div className="row mb-3">
-                          <div className="col-md-4">
-                            <div className="d-flex align-items-center text-gray-400">
-                              <Calendar size={16} className="me-2" />
-                              {appointment.date}
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="d-flex align-items-center text-gray-400">
-                              <Clock size={16} className="me-2" />
-                              {appointment.time}
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="d-flex align-items-center text-gray-400">
-                              <MapPin size={16} className="me-2" />
-                              {appointment.location}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          className="progress mb-3"
-                          style={{ height: "6px" }}
-                        >
-                          <div
-                            className={`progress-bar ${priorityInfo.color}`}
-                            role="progressbar"
-                            style={{ width: `${priorityInfo.percentage}%` }}
-                            aria-valuenow={priorityInfo.percentage}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          />
-                        </div>
-
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div className="d-flex align-items-center gap-3">
-                            <span className={`badge ${priorityInfo.color}`}>
-                              {appointment.priority} Priority
-                            </span>
-                            <small className="text-gray-400">
-                              Booked:{" "}
-                              {new Date(
-                                appointment.bookedOn
-                              ).toLocaleDateString()}
-                            </small>
-                          </div>
-
-                          <div className="d-flex gap-2">
-                            <button
-                              className="btn btn-gray-600 d-flex align-items-center gap-2"
-                              onClick={() => handleViewClick(appointment)}
-                            >
-                              <MessageSquare size={16} />
-                              Chat
-                            </button>
-                            <button
-                              className="btn btn-primary d-flex align-items-center gap-2"
-                              onClick={() => handleViewClick(appointment)}
-                            >
-                              View Details
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+          </div>
+        ) : (
+          filteredAppointments.map((appointment, index) => (
+            <div
+              key={index}
+              className="col"
+              onClick={() => handleViewClick(appointment)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="card bg-gray-700 border-0 shadow-sm h-100">
+                <div className="card-body p-3 d-flex flex-column justify-content-center align-items-center">
+                  <div className="position-relative mb-2">
+                    <img
+                      src={
+                        appointment?.patient?.avatar?.url?.length > 0
+                          ? appointment?.patient?.avatar?.url
+                          : appointment?.patient?.avatar
+                      }
+                      alt="Patient Avatar"
+                      className="rounded-circle"
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <span
+                      className={`position-absolute bottom-0 end-0 p-1 rounded-circle ${getStatusBadgeColor(
+                        appointment.appointmentStatus
+                      )}`}
+                      style={{ width: "10px", height: "10px" }}
+                    ></span>
                   </div>
+                  <h6
+                    className="text-white mb-1 text-center"
+                    style={{
+                      fontSize: "0.8rem",
+                      maxWidth: "100px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {appointment.patient.name}
+                  </h6>
+                  <span
+                    className={`badge ${
+                      getPriorityInfo(appointment.priority).color
+                    }`}
+                    style={{ fontSize: "0.7rem" }}
+                  >
+                    {appointment.priority} Priority
+                  </span>
+                  <button
+                    className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm mt-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewClick(appointment);
+                    }}
+                  >
+                    <MessageSquare size={12} />
+                    Chat
+                  </button>
                 </div>
-              );
-            })
-          )}
-        </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <style jsx>{`

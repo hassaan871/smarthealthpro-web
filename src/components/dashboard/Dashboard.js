@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Nav from "../Navbar/Nav";
 import AppointmentProgressWidget from "./AppointmentProgressWidget";
@@ -7,8 +7,10 @@ import DoctorProfile from "../doctor/DoctorProfile/DoctorProfile";
 import Overview from "./Overview";
 import ChatScreen from "../Chat/ChatScreen";
 import { AlertCircle } from "lucide-react";
+import Context from "../context/context";
 
 const Dashboard = () => {
+  const { setAppointments } = useContext(Context);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const [activeSection, setActiveSection] = useState(() => {
@@ -16,6 +18,39 @@ const Dashboard = () => {
     const path = location.pathname.split("/").pop();
     return path ? path.charAt(0).toUpperCase() + path.slice(1) : "Overview";
   });
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const userString = localStorage.getItem("userToken");
+        if (!userString) {
+          throw new Error("User data not found in local storage");
+        }
+        const doctorId = userString;
+
+        if (!doctorId) {
+          throw new Error("Doctor ID not found in user data");
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch appointments");
+        }
+
+        const data = await response.json();
+        const pendingAppointments = data.filter(
+          (apt) => apt.appointmentStatus === "pending"
+        );
+        setAppointments(pendingAppointments);
+      } catch (err) {
+        console.error(err.message);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   // Add effect to handle route changes
   useEffect(() => {
