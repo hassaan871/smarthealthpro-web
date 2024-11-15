@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -37,6 +38,56 @@ const AppointmentProgressWidget = () => {
     };
     fetchAppointments();
   }, []);
+
+  const handleChat = async (appointment) => {
+    try {
+      const userId = localStorage.getItem("userToken");
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      const conversationsResponse = await axios.get(
+        `http://localhost:5000/conversations/${userId}`
+      );
+
+      const conversations = conversationsResponse.data;
+      const existingConversation = conversations.find(
+        (conv) =>
+          conv.participants.includes(userId) &&
+          conv.participants.includes(appointment.patient.id)
+      );
+
+      const navigationState = {
+        conversation: existingConversation
+          ? {
+              ...existingConversation,
+              _id: existingConversation._id,
+            }
+          : null,
+        patient: !existingConversation ? appointment.patient : null,
+        doctorInfo: {
+          id: userId,
+          avatar: appointment?.doctor?.avatar,
+          name: appointment?.doctor?.name,
+        },
+      };
+
+      navigate("/dashboard/chat", {
+        state: navigationState,
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error handling chat:", error);
+      alert("Failed to open chat. Please try again.");
+    }
+  };
+
+  const handleViewDetails = (appointment) => {
+    navigate("/dashboard/doctorchatwithpatientdetail", {
+      state: { appointment },
+      replace: true,
+    });
+  };
 
   const getPriorityInfo = (priority) =>
     ({
@@ -226,14 +277,20 @@ const AppointmentProgressWidget = () => {
                         <div className="d-flex gap-2">
                           <button
                             className="btn btn-gray-600 d-flex align-items-center gap-2"
-                            onClick={() => handleViewClick(apt)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleChat(apt);
+                            }}
                           >
                             <MessageSquare size={16} />
                             Chat
                           </button>
                           <button
                             className="btn btn-primary d-flex align-items-center gap-2"
-                            onClick={() => handleViewClick(apt)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(apt);
+                            }}
                           >
                             View Details
                           </button>

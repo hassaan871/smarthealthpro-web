@@ -29,7 +29,7 @@ export const SocketContextProvider = ({ children }) => {
     try {
       const userId = await localStorage.getItem("userToken");
       if (userId) {
-        const newSocket = io("http://192.168.72.155:5000", {
+        const newSocket = io("http://192.168.18.124:5000", {
           query: { userId: userId },
           reconnection: true,
           reconnectionAttempts: 5,

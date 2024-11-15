@@ -12,6 +12,7 @@ import { FiSearch, FiSend, FiPaperclip } from "react-icons/fi";
 import "./ChatScreen.css";
 import { encrypt, decrypt } from "../encrypt/Encrypt";
 import { debounce } from "lodash";
+import { useLocation } from "react-router-dom";
 
 const ChatScreen = () => {
   const { setUserInfo, userInfo } = useContext(Context);
@@ -24,6 +25,122 @@ const ChatScreen = () => {
   const [fetchError, setFetchError] = useState(null);
   const messagesEndRef = useRef(null);
   const { socket, connectSocket } = useSocketContext();
+  const location = useLocation();
+  // console.log("Full location object:", location); // Debug full location object
+  const incomingConversation = location.state?.conversation;
+  // console.log("Incoming conversation:", incomingConversation);
+  // console.log("Received conversation in ChatScreen:", incomingConversation);
+  const incomingPatient = location.state?.patient;
+  const doctorInfo = location.state?.doctorInfo;
+
+  // 1. Consolidate socket event handlers into one place, outside of useEffect
+  const socketHandlers = {
+    handleDisconnect: (socket, connectSocket) => (reason) => {
+      console.log("Socket disconnected:", reason);
+      if (reason === "io server disconnect") {
+        connectSocket();
+      }
+    },
+
+    handleConversationUpdate: (setConversations) => (updatedConversation) => {
+      setConversations((prevConversations) => {
+        const index = prevConversations.findIndex(
+          (c) => c._id === updatedConversation._id
+        );
+        if (index !== -1) {
+          return [
+            ...prevConversations.slice(0, index),
+            updatedConversation,
+            ...prevConversations.slice(index + 1),
+          ];
+        }
+        return [updatedConversation, ...prevConversations];
+      });
+    },
+  };
+
+  // 2. Replace your current socket useEffect with this optimized version
+
+  // 3. Remove the standalone userInfo useEffect and combine it with socket initialization
+  useEffect(() => {
+    const userString = localStorage.getItem("userToken");
+    setUserInfo(userString);
+  }, [setUserInfo]);
+
+  // Function to create a new conversation
+  const createNewConversation = async (firstMessage) => {
+    try {
+      console.log("Creating new conversation...");
+
+      const newConversationResponse = await axios.post(
+        "http://localhost:5000/conversations",
+        {
+          currentUserId: doctorInfo.id,
+          otherUserId: incomingPatient.id,
+          currentUserObjectIdAvatar: doctorInfo.avatar,
+          otherUserObjectIdAvatar: incomingPatient.avatar,
+          currentUserObjectIdName: doctorInfo.name,
+          otherUserObjectIdName: incomingPatient.name,
+        }
+      );
+
+      const newConversation = newConversationResponse.data;
+      console.log("New conversation created:", newConversation);
+
+      // Set the selected conversation
+      setSelectedConversation(newConversation);
+
+      // Important: Join the socket room for the new conversation
+      if (socket?.connected && newConversation._id) {
+        socket.emit("joinRoom", newConversation._id);
+        console.log("Joined room:", newConversation._id);
+      }
+
+      // Wait for room join to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const encryptedContent = encrypt(firstMessage);
+      const messageData = {
+        conversationId: newConversation._id,
+        sender: userInfo,
+        content: encryptedContent,
+        timestamp: new Date(),
+      };
+
+      console.log("Sending first message with data:", messageData);
+
+      const messageResponse = await axios.post(
+        `http://localhost:5000/conversations/${newConversation._id}/messages`,
+        messageData
+      );
+
+      await axios.put(
+        `http://localhost:5000/conversations/${newConversation._id}/lastMessage`,
+        { lastMessage: firstMessage }
+      );
+
+      // Emit the message with conversation ID
+      if (socket?.connected) {
+        socket.emit("sendMessage", {
+          newMessage: messageResponse.data,
+          conversationId: newConversation._id, // Add this line
+        });
+        console.log(
+          "Message emitted to socket with conversationId:",
+          newConversation._id
+        );
+      }
+
+      // Update conversations list
+      setConversations((prev) => [newConversation, ...prev]);
+      setNewMessage("");
+
+      return newConversation;
+    } catch (error) {
+      console.error("Error in createNewConversation:", error);
+      throw error;
+    }
+  };
 
   const decryptMessage = useCallback((msg) => {
     try {
@@ -76,11 +193,18 @@ const ChatScreen = () => {
 
   const fetchMessages = useCallback(
     async (conversationId) => {
+      if (!conversationId) return;
+
       try {
         setLoading(true);
+        console.log("Fetching messages for conversation:", conversationId);
+
         const response = await axios.get(
-          `http://localhost:5000/conversations/getMessages/${conversationId}`
+          `http://localhost:5000/conversations/${conversationId}/messages`
         );
+
+        console.log("Fetched messages:", response.data);
+
         const decryptedMessages = response.data.map(decryptMessage);
         setMessages(decryptedMessages);
       } catch (error) {
@@ -121,23 +245,71 @@ const ChatScreen = () => {
   );
 
   useEffect(() => {
-    if (!socket || !socket.connected) {
-      console.log("Initializing socket connection...");
-      connectSocket();
-    }
+    let isSubscribed = true;
 
-    if (socket) {
-      console.log("Setting up newMessage event listener");
-      socket.on("newMessage", handleNewMessage);
-    }
+    const initializeSocket = async () => {
+      if (!socket || !socket.connected) {
+        console.log("Initializing socket connection...");
+        await connectSocket();
+      }
 
-    return () => {
-      if (socket) {
-        console.log("Cleaning up newMessage event listener");
-        socket.off("newMessage", handleNewMessage);
+      // Add connection status logging
+      console.log("Socket connection status:", {
+        socketExists: !!socket,
+        isConnected: socket?.connected,
+        socketId: socket?.id,
+      });
+
+      if (socket && isSubscribed) {
+        socket.on("connect", () => {
+          console.log("Socket connected successfully:", socket.id);
+        });
+
+        socket.on("disconnect", (reason) => {
+          console.log("Socket disconnected:", reason);
+          if (reason === "io server disconnect") {
+            connectSocket();
+          }
+        });
+
+        socket.on("newMessage", (data) => {
+          console.log("Received new message:", data);
+          if (data.conversationId) {
+            handleNewMessage(data);
+          } else {
+            console.warn("Received message without conversationId:", data);
+          }
+        });
+
+        // Add error handling
+        socket.on("connect_error", (error) => {
+          console.error("Socket connection error:", error);
+        });
+
+        socket.on("error", (error) => {
+          console.error("Socket error:", error);
+        });
+
+        if (selectedConversation?._id) {
+          socket.emit("joinRoom", selectedConversation._id);
+          console.log("Joined room:", selectedConversation._id);
+        }
       }
     };
-  }, [socket, connectSocket, handleNewMessage]);
+
+    initializeSocket();
+
+    return () => {
+      isSubscribed = false;
+      if (socket) {
+        socket.off("newMessage");
+        socket.off("disconnect");
+        socket.off("connect");
+        socket.off("connect_error");
+        socket.off("error");
+      }
+    };
+  }, [socket, connectSocket, selectedConversation]);
 
   useEffect(() => {
     fetchConversations();
@@ -150,102 +322,79 @@ const ChatScreen = () => {
   }, [selectedConversation, fetchMessages]);
 
   useEffect(() => {
+    console.log(
+      "useEffect triggered with incomingConversation:",
+      incomingConversation
+    );
+    // If we have an incoming conversation from navigation, select it
+    if (incomingConversation) {
+      console.log("Setting selected conversation:", incomingConversation);
+      setSelectedConversation(incomingConversation);
+      // Fetch messages for existing conversation
+      if (incomingConversation._id) {
+        console.log(
+          "Fetching messages for conversation ID:",
+          incomingConversation._id
+        );
+        fetchMessages(incomingConversation._id);
+      }
+    }
+  }, [incomingConversation, fetchMessages]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    const userString = localStorage.getItem("userToken");
-    setUserInfo(userString);
-  }, [setUserInfo]);
-
-  useEffect(() => {
-    if (!socket || !socket.connected) {
-      console.log("Initializing socket connection...");
-      connectSocket();
-    }
-
-    const handleDisconnect = (reason) => {
-      console.log("Socket disconnected:", reason);
-      if (reason === "io server disconnect") {
-        connectSocket();
-      }
-    };
-
-    if (socket) {
-      socket.on("disconnect", handleDisconnect);
-    }
-
-    return () => {
-      if (socket) {
-        socket.off("disconnect", handleDisconnect);
-      }
-    };
-  }, [socket, connectSocket]);
-
-  useEffect(() => {
-    if (socket) {
-      const handleConversationUpdate = (updatedConversation) => {
-        setConversations((prevConversations) => {
-          const index = prevConversations.findIndex(
-            (c) => c._id === updatedConversation._id
-          );
-          if (index !== -1) {
-            // Update existing conversation
-            return [
-              ...prevConversations.slice(0, index),
-              updatedConversation,
-              ...prevConversations.slice(index + 1),
-            ];
-          } else {
-            // Add new conversation
-            return [updatedConversation, ...prevConversations];
-          }
-        });
-      };
-
-      socket.on("conversationUpdate", handleConversationUpdate);
-
-      return () => {
-        socket.off("conversationUpdate", handleConversationUpdate);
-      };
-    }
-  }, [socket]);
+  // Modified send message function
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !socket) return;
-
-    const encryptedContent = encrypt(newMessage);
-    const messageData = {
-      conversationId: selectedConversation._id,
-      sender: userInfo,
-      content: encryptedContent,
-      timestamp: new Date(),
-    };
+    if (!newMessage.trim() || !socket?.connected) return;
 
     try {
-      console.log("Sending message:", messageData);
+      let conversationToUse = selectedConversation;
+
+      if (!conversationToUse && incomingPatient) {
+        try {
+          conversationToUse = await createNewConversation(newMessage);
+          return; // createNewConversation handles everything
+        } catch (error) {
+          console.error("Error creating new conversation:", error);
+          alert("Failed to create conversation. Please try again.");
+          return;
+        }
+      }
+
+      const encryptedContent = encrypt(newMessage);
+      const messageData = {
+        conversationId: conversationToUse._id,
+        sender: userInfo,
+        content: encryptedContent,
+        timestamp: new Date(),
+      };
 
       const response = await axios.post(
-        `http://localhost:5000/conversations/${selectedConversation._id}/messages`,
+        `http://localhost:5000/conversations/${conversationToUse._id}/messages`,
         messageData
       );
-      console.log("Message sent successfully:", response.data);
 
       await axios.put(
-        `http://localhost:5000/conversations/${selectedConversation._id}/lastMessage`,
+        `http://localhost:5000/conversations/${conversationToUse._id}/lastMessage`,
         { lastMessage: newMessage }
       );
 
-      // setConversations((prevConversations) =>
-      //   prevConversations.map((conv) =>
-      //     conv._id === selectedConversation._id
-      //       ? { ...conv, lastMessage: newMessage }
-      //       : conv
-      //   )
-      // );
+      // Include conversationId in socket emission
+      if (socket?.connected) {
+        socket.emit("sendMessage", {
+          newMessage: response.data,
+          conversationId: conversationToUse._id, // Add this line
+        });
+        console.log(
+          "Message emitted to socket with conversationId:",
+          conversationToUse._id
+        );
+      }
 
-      socket.emit("sendMessage", { newMessage: response.data });
-      console.log("Message emitted to socket");
+      setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send the message. Please try again.");
@@ -259,23 +408,25 @@ const ChatScreen = () => {
 
   const joinConversationRoom = useCallback(
     (conversationId) => {
-      if (socket && conversationId) {
-        socket.emit("joinRoom", conversationId);
-        console.log(`Joined room: ${conversationId}`);
-      }
+      if (!socket?.connected || !conversationId) return;
+
+      console.log("Attempting to join room:", conversationId);
+      socket.emit("joinRoom", conversationId);
     },
     [socket]
   );
 
   useEffect(() => {
-    if (selectedConversation) {
+    if (selectedConversation?._id) {
+      console.log("Selected conversation changed:", selectedConversation._id);
       joinConversationRoom(selectedConversation._id);
+      fetchMessages(selectedConversation._id);
     }
-  }, [selectedConversation, joinConversationRoom]);
+  }, [selectedConversation, joinConversationRoom, fetchMessages]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (!file || !selectedConversation || !socket) return;
+    if (!file || !selectedConversation || !socket?.connected) return;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -311,20 +462,15 @@ const ChatScreen = () => {
 
       await axios.put(
         `http://localhost:5000/conversations/${selectedConversation._id}/lastMessage`,
-        {
-          lastMessage: "File shared",
-        }
+        { lastMessage: "File shared" }
       );
 
-      // setConversations((prevConversations) =>
-      //   prevConversations.map((conv) =>
-      //     conv._id === selectedConversation._id
-      //       ? { ...conv, lastMessage: "File shared" }
-      //       : conv
-      //   )
-      // );
-
-      socket.emit("sendMessage", { newMessage: response.data });
+      if (socket.connected) {
+        socket.emit("sendMessage", {
+          newMessage: response.data,
+          conversationId: selectedConversation._id, // Add conversationId here
+        });
+      }
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Failed to upload file. Please try again.");
@@ -376,6 +522,65 @@ const ChatScreen = () => {
       }
     }
   };
+
+  // Modified conversation item rendering
+  const renderConversationItem = (conv) => (
+    <div
+      key={conv._id}
+      className={`conversation-item bg-gray-800 hover:bg-gray-700 ${
+        selectedConversation?._id === conv._id ? "bg-gray-700" : ""
+      }`}
+      onClick={() => setSelectedConversation(conv)}
+    >
+      <img
+        src={getOtherUserAvatar(conv)}
+        alt={getOtherUserName(conv)}
+        className="conversation-avatar"
+      />
+      <div className="conversation-info">
+        <h4 className="text-white">{getOtherUserName(conv)}</h4>
+        <p className="text-gray-400">{conv.lastMessage || "No messages yet"}</p>
+      </div>
+      <span className="conversation-time text-gray-500">
+        {formatTime(conv.updatedAt)}
+      </span>
+    </div>
+  );
+
+  // Render the active chat header
+  const renderChatHeader = () => {
+    if (selectedConversation) {
+      return (
+        <div className="header-content2">
+          <img
+            src={getOtherUserAvatar(selectedConversation)}
+            alt={getOtherUserName(selectedConversation)}
+            className="conversation-avatar2"
+          />
+          <div className="header-text2">
+            <h3 className="text-white">
+              {getOtherUserName(selectedConversation)}
+            </h3>
+          </div>
+        </div>
+      );
+    } else if (incomingPatient) {
+      return (
+        <div className="header-content2">
+          <img
+            src={incomingPatient.avatar}
+            alt={incomingPatient.name}
+            className="conversation-avatar2"
+          />
+          <div className="header-text2">
+            <h3 className="text-white">{incomingPatient.name}</h3>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div
       className="container-fluid bg-gray-900"
@@ -405,50 +610,16 @@ const ChatScreen = () => {
             {fetchError ? (
               <div className="error-message text-red-500 p-4">{fetchError}</div>
             ) : (
-              filteredConversations.map((conv) => (
-                <div
-                  key={conv._id}
-                  className={`conversation-item bg-gray-800 hover:bg-gray-700 ${
-                    selectedConversation?._id === conv._id ? "bg-gray-700" : ""
-                  }`}
-                  onClick={() => setSelectedConversation(conv)}
-                >
-                  <img
-                    src={getOtherUserAvatar(conv)}
-                    alt={getOtherUserName(conv)}
-                    className="conversation-avatar"
-                  />
-                  <div className="conversation-info">
-                    <h4 className="text-white">{getOtherUserName(conv)}</h4>
-                    <p className="text-gray-400">
-                      {conv.lastMessage || "No messages yet"}
-                    </p>
-                  </div>
-                  <span className="conversation-time text-gray-500">
-                    {formatTime(conv.updatedAt)}
-                  </span>
-                </div>
-              ))
+              filteredConversations.map(renderConversationItem)
             )}
           </div>
         </div>
 
         <div className="chat-main bg-gray-900">
-          {selectedConversation ? (
+          {selectedConversation || incomingConversation || incomingPatient ? (
             <>
               <div className="chat-header2 bg-gray-800 border-b border-gray-700">
-                <div className="header-content2">
-                  <img
-                    src={getOtherUserAvatar(selectedConversation)}
-                    alt={getOtherUserName(selectedConversation)}
-                    className="conversation-avatar2"
-                  />
-                  <div className="header-text2">
-                    <h3 className="text-white">
-                      {getOtherUserName(selectedConversation)}
-                    </h3>
-                  </div>
-                </div>
+                {renderChatHeader()}
               </div>
               <div className="chat-messages bg-gray-900">
                 {loading ? (
@@ -518,7 +689,9 @@ const ChatScreen = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .chat-screen {
           display: flex;
           height: calc(100vh - 60px);
@@ -792,9 +965,13 @@ const ChatScreen = () => {
         ::-webkit-scrollbar-thumb:hover {
           background: #475569;
         }
-      `}</style>
+     `,
+        }}
+      />
 
-      <style jsx global>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         body {
           background-color: #0f172a !important;
           margin: 0;
@@ -898,7 +1075,9 @@ const ChatScreen = () => {
           color: #64748b;
           font-size: 0.75rem;
         }
-      `}</style>
+      `,
+        }}
+      />
     </div>
   );
 };

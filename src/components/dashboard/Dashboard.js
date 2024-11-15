@@ -97,7 +97,9 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <style jsx>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .fade-in {
           animation: fadeIn 0.3s ease-in-out;
         }
@@ -124,7 +126,9 @@ const Dashboard = () => {
         :global(.card) {
           margin-bottom: 1rem;
         }
-      `}</style>
+        `,
+        }}
+      />
     </div>
   );
 };

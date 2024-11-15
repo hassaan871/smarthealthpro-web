@@ -81,23 +81,15 @@ function App() {
               <Route path="overview" element={<DashboardOverview />} />
               <Route path="appointments" element={<DashboardAppointments />} />
               <Route path="patients" element={<DashboardPatients />} />
+              <Route path="chat" element={<ChatScreen />} />
               <Route path="chat" element={<DashboardChat />} />
+              <Route path="chat/:conversationId" element={<ChatScreen />} />
               <Route path="profile" element={<DashboardProfile />} />
               <Route
                 path="doctorchatwithpatientdetail"
                 element={<DoctorChatWithPatientDetails />}
               />
             </Route>
-
-            {/* Standalone Chat Route (if needed) */}
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <ChatScreen />
-                </ProtectedRoute>
-              }
-            />
 
             {/* Catch all route - 404 */}
             <Route path="*" element={<Navigate to="/login" replace />} />

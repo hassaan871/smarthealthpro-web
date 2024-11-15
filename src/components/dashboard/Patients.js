@@ -11,6 +11,7 @@ import {
   Filter,
   MessageSquare,
 } from "lucide-react";
+import axios from "axios";
 
 const Patients = () => {
   const [appointments, setAppointments] = useState([]);
@@ -101,8 +102,59 @@ const Patients = () => {
     }
   };
 
-  const handleViewClick = (appointment) => {
-    navigate("/doctorchatwithpatientdetail", { state: { appointment } });
+  const handleViewClick = async (appointment) => {
+    try {
+      const userId = localStorage.getItem("userToken");
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      // Get all conversations for the current user
+      const conversationsResponse = await axios.get(
+        `http://localhost:5000/conversations/${userId}`
+      );
+
+      const conversations = conversationsResponse.data;
+      console.log("All conversations:", conversations);
+      console.log("Current userId:", userId);
+      console.log("Patient ID to match:", appointment.patient.id);
+
+      // Modified conversation finding logic
+      const existingConversation = conversations.find((conv) => {
+        // The participants array contains the direct IDs, so this comparison should work
+        return (
+          conv.participants.includes(userId) &&
+          conv.participants.includes(appointment.patient.id)
+        );
+      });
+
+      console.log("Found existing conversation:", existingConversation);
+
+      const navigationState = {
+        conversation: existingConversation
+          ? {
+              ...existingConversation,
+              _id: existingConversation._id, // Convert _id to string format if needed
+            }
+          : null,
+        patient: !existingConversation ? appointment.patient : null,
+        doctorInfo: {
+          id: userId,
+          avatar: appointment?.doctor?.avatar,
+          name: appointment?.doctor?.name,
+        },
+      };
+
+      console.log("Navigation state being passed:", navigationState);
+
+      navigate("/dashboard/chat", {
+        state: navigationState,
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error handling chat:", error);
+      alert("Failed to open chat. Please try again.");
+    }
   };
 
   const filteredAppointments = appointments.filter((appointment) => {
