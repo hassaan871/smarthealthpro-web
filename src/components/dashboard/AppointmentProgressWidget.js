@@ -7,6 +7,8 @@ import {
   MapPin,
   AlertCircle,
   MessageSquare,
+  PlusSquare,
+  ClipboardList,
 } from "lucide-react";
 import Context from "../context/context";
 
@@ -14,7 +16,73 @@ const AppointmentProgressWidget = () => {
   const { appointments, setAppointments } = useContext(Context);
   const [activeTab, setActiveTab] = useState("today");
   const [error, setError] = useState(null);
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [prescriptions, setPrescriptions] = useState({});
+  const [prescriptionData, setPrescriptionData] = useState({
+    medicines: [
+      {
+        medication: "",
+        dosage: "",
+        frequency: "",
+        duration: "",
+        instructions: "",
+      },
+    ],
+  });
+
+  // State to store prescriptions and notes
+  const [medicalRecords, setMedicalRecords] = useState({});
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Demo data for prescriptions
+    const demoMedicalRecords = {
+      apt1: {
+        prescriptions: [
+          {
+            id: "1",
+            medication: "Amoxicillin",
+            dosage: "500mg",
+            frequency: "Twice daily",
+            duration: "7 days",
+            instructions: "Take with food",
+            date: "2024-03-15T10:30:00.000Z",
+          },
+          {
+            id: "2",
+            medication: "Ibuprofen",
+            dosage: "400mg",
+            frequency: "Every 6 hours as needed",
+            duration: "5 days",
+            instructions: "Take with food. Do not exceed 4 doses in 24 hours",
+            date: "2024-03-15T10:35:00.000Z",
+          },
+        ],
+      },
+      apt2: {
+        prescriptions: [
+          {
+            id: "3",
+            medication: "Ciprofloxacin",
+            dosage: "250mg",
+            frequency: "Once daily",
+            duration: "10 days",
+            instructions: "Complete full course of antibiotics",
+            date: "2024-03-14T15:20:00.000Z",
+          },
+        ],
+      },
+    };
+
+    // Merge demo data with any existing records
+    setMedicalRecords((prev) => ({
+      ...demoMedicalRecords,
+      ...prev,
+    }));
+  }, []); // Empty dependency array means this runs once on component mount
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -23,6 +91,8 @@ const AppointmentProgressWidget = () => {
         if (!userString) throw new Error("User data not found");
         const doctorId = userString;
         if (!doctorId) throw new Error("Doctor ID not found");
+
+        // Fetch appointments
         const response = await fetch(
           `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
         );
@@ -32,12 +102,134 @@ const AppointmentProgressWidget = () => {
           (apt) => apt.appointmentStatus === "pending"
         );
         setAppointments(pendingAppointments);
+
+        // Fetch prescriptions for each appointment
+        const prescriptionsData = {};
+        for (const apt of pendingAppointments) {
+          try {
+            const presResponse = await fetch(
+              `http://localhost:5000/appointment/${apt._id}/medicines`
+            );
+            if (presResponse.ok) {
+              const presData = await presResponse.json();
+              prescriptionsData[apt._id] = presData;
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching prescriptions for appointment ${apt._id}:`,
+              error
+            );
+            prescriptionsData[apt._id] = []; // Initialize with empty array if fetch fails
+          }
+        }
+        setPrescriptions(prescriptionsData);
       } catch (err) {
         setError(err.message);
       }
     };
     fetchAppointments();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("medicalRecords", JSON.stringify(medicalRecords));
+  }, [medicalRecords]);
+
+  const handleAddPrescription = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowPrescriptionModal(true);
+  };
+
+  // Update the handleViewRecords function
+  const handleViewRecords = (appointment) => {
+    console.log("Selected appointment for view:", appointment);
+    setSelectedAppointment(appointment);
+    setShowViewModal(true);
+
+    // Fetch prescriptions for this appointment
+    fetch(`http://localhost:5000/appointment/${appointment._id}/medicines`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Raw API Response:", data);
+        console.log("Medicines from API:", data.data.medicines);
+        setPrescriptions((prev) => ({
+          ...prev,
+          [appointment._id]: data.data.medicines, // Store the medicines array directly
+        }));
+      })
+      .catch((error) => {
+        console.error("Error fetching prescriptions:", error);
+      });
+  };
+
+  const savePrescription = async () => {
+    if (!selectedAppointment) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/appointment/${selectedAppointment._id}/medicines`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            medicines: prescriptionData.medicines.map((medicine) => ({
+              medication: medicine.medication,
+              dosage: medicine.dosage,
+              frequency: medicine.frequency,
+              duration: medicine.duration,
+              instructions: medicine.instructions,
+            })),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to save prescription");
+      }
+
+      const savedResponse = await response.json();
+      console.log("Save Response:", savedResponse);
+
+      // Fetch updated prescriptions after saving
+      const updatedPresResponse = await fetch(
+        `http://localhost:5000/appointment/${selectedAppointment._id}/medicines`
+      );
+
+      if (!updatedPresResponse.ok) {
+        throw new Error("Failed to fetch updated prescriptions");
+      }
+
+      const updatedData = await updatedPresResponse.json();
+      console.log("Updated Prescriptions Response:", updatedData);
+
+      // Update local state with new prescriptions
+      setPrescriptions((prev) => ({
+        ...prev,
+        [selectedAppointment._id]: updatedData.data.medicines, // Store the medicines array directly
+      }));
+
+      // Reset form and close modal
+      setPrescriptionData({
+        medicines: [
+          {
+            medication: "",
+            dosage: "",
+            frequency: "",
+            duration: "",
+            instructions: "",
+          },
+        ],
+      });
+      setShowPrescriptionModal(false);
+
+      // Show success message
+      alert("Prescription saved successfully");
+    } catch (error) {
+      console.error("Error saving prescription:", error);
+      alert("Failed to save prescription. Please try again.");
+    }
+  };
 
   const handleChat = async (appointment) => {
     try {
@@ -135,6 +327,264 @@ const AppointmentProgressWidget = () => {
       </div>
     );
   }
+
+  const renderPrescriptionModal = () => (
+    <div
+      className={`modal ${showPrescriptionModal ? "show d-block" : ""}`}
+      tabIndex="-1"
+    >
+      <div className="modal-dialog modal-dialog-centered modal-lg">
+        <div className="modal-content bg-gray-800 text-white">
+          <div className="modal-header border-gray-700">
+            <h5 className="modal-title">Add Prescription</h5>
+            <button
+              type="button"
+              className="btn-close btn-close-white"
+              onClick={() => setShowPrescriptionModal(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            {prescriptionData.medicines.map((medicine, index) => (
+              <div
+                key={index}
+                className="mb-4 p-3 border border-gray-700 rounded"
+              >
+                <div className="d-flex justify-content-between mb-3">
+                  <h6 className="text-white">Medicine {index + 1}</h6>
+                  {index > 0 && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => {
+                        setPrescriptionData((prev) => ({
+                          medicines: prev.medicines.filter(
+                            (_, i) => i !== index
+                          ),
+                        }));
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Medication</label>
+                  <input
+                    type="text"
+                    className="form-control bg-gray-700 border-gray-600 text-white"
+                    value={medicine.medication}
+                    onChange={(e) => {
+                      setPrescriptionData((prev) => ({
+                        medicines: prev.medicines.map((m, i) =>
+                          i === index ? { ...m, medication: e.target.value } : m
+                        ),
+                      }));
+                    }}
+                    placeholder="Enter medication name"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Dosage</label>
+                  <input
+                    type="text"
+                    className="form-control bg-gray-700 border-gray-600 text-white"
+                    value={medicine.dosage}
+                    onChange={(e) => {
+                      setPrescriptionData((prev) => ({
+                        medicines: prev.medicines.map((m, i) =>
+                          i === index ? { ...m, dosage: e.target.value } : m
+                        ),
+                      }));
+                    }}
+                    placeholder="Enter dosage"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Frequency</label>
+                  <input
+                    type="text"
+                    className="form-control bg-gray-700 border-gray-600 text-white"
+                    value={medicine.frequency}
+                    onChange={(e) => {
+                      setPrescriptionData((prev) => ({
+                        medicines: prev.medicines.map((m, i) =>
+                          i === index ? { ...m, frequency: e.target.value } : m
+                        ),
+                      }));
+                    }}
+                    placeholder="Enter frequency"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Duration</label>
+                  <input
+                    type="text"
+                    className="form-control bg-gray-700 border-gray-600 text-white"
+                    value={medicine.duration}
+                    onChange={(e) => {
+                      setPrescriptionData((prev) => ({
+                        medicines: prev.medicines.map((m, i) =>
+                          i === index ? { ...m, duration: e.target.value } : m
+                        ),
+                      }));
+                    }}
+                    placeholder="Enter duration"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Instructions</label>
+                  <textarea
+                    className="form-control bg-gray-700 border-gray-600 text-white"
+                    value={medicine.instructions}
+                    onChange={(e) => {
+                      setPrescriptionData((prev) => ({
+                        medicines: prev.medicines.map((m, i) =>
+                          i === index
+                            ? { ...m, instructions: e.target.value }
+                            : m
+                        ),
+                      }));
+                    }}
+                    placeholder="Enter special instructions"
+                    rows="3"
+                  ></textarea>
+                </div>
+              </div>
+            ))}
+
+            <button
+              className="btn btn-secondary w-100"
+              onClick={() => {
+                setPrescriptionData((prev) => ({
+                  medicines: [
+                    ...prev.medicines,
+                    {
+                      medication: "",
+                      dosage: "",
+                      frequency: "",
+                      duration: "",
+                      instructions: "",
+                    },
+                  ],
+                }));
+              }}
+            >
+              Add Another Medicine
+            </button>
+          </div>
+          <div className="modal-footer border-gray-700">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowPrescriptionModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={savePrescription}
+            >
+              Save Prescription
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Update the renderViewModal function
+  const renderViewModal = () => {
+    console.log("Selected Appointment in modal:", selectedAppointment);
+    console.log("All Prescriptions:", prescriptions);
+
+    const appointmentPrescriptions =
+      selectedAppointment && selectedAppointment._id
+        ? prescriptions[selectedAppointment._id] || []
+        : [];
+
+    console.log("Final Prescriptions to render:", appointmentPrescriptions);
+
+    return (
+      <div
+        className={`modal ${showViewModal ? "show d-block" : ""}`}
+        tabIndex="-1"
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content bg-gray-800 text-white">
+            <div className="modal-header border-gray-700">
+              <h5 className="modal-title">Medical Records</h5>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                onClick={() => setShowViewModal(false)}
+              ></button>
+            </div>
+            <div className="modal-body">
+              <div className="mb-4">
+                <h6 className="text-lg font-semibold mb-3">Prescriptions</h6>
+                {Array.isArray(appointmentPrescriptions) &&
+                appointmentPrescriptions.length > 0 ? (
+                  <div className="space-y-4">
+                    {appointmentPrescriptions.map((prescription, index) => {
+                      console.log("Rendering prescription:", prescription);
+                      return (
+                        <div key={index} className="bg-gray-700 p-4 rounded">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <h6 className="font-medium mb-0">
+                              {prescription.medication || prescription.medicine}
+                            </h6>
+                            <span className="text-sm text-gray-400">
+                              {new Date(
+                                prescription.createdAt || new Date()
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="row mb-2">
+                            <div className="col-md-4">
+                              <span className="text-gray-400">Dosage:</span>{" "}
+                              {prescription.dosage}
+                            </div>
+                            <div className="col-md-4">
+                              <span className="text-gray-400">Frequency:</span>{" "}
+                              {prescription.frequency}
+                            </div>
+                            <div className="col-md-4">
+                              <span className="text-gray-400">Duration:</span>{" "}
+                              {prescription.duration}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-300 mb-0">
+                            {prescription.instructions}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-400">
+                    {selectedAppointment
+                      ? "No prescriptions added yet."
+                      : "Loading prescriptions..."}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer border-gray-700">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Update the savePrescription function
 
   return (
     <div className="container-fluid bg-gray-900 p-5">
@@ -276,6 +726,26 @@ const AppointmentProgressWidget = () => {
                         </div>
                         <div className="d-flex gap-2">
                           <button
+                            className="btn btn-indigo d-flex align-items-center gap-2" // New custom class
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddPrescription(apt);
+                            }}
+                          >
+                            <PlusSquare size={16} />
+                            Add Prescription
+                          </button>
+                          <button
+                            className="btn btn-primary d-flex align-items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewRecords(apt);
+                            }}
+                          >
+                            <ClipboardList size={16} />
+                            View Records
+                          </button>
+                          <button
                             className="btn btn-gray-600 d-flex align-items-center gap-2"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -284,15 +754,6 @@ const AppointmentProgressWidget = () => {
                           >
                             <MessageSquare size={16} />
                             Chat
-                          </button>
-                          <button
-                            className="btn btn-primary d-flex align-items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewDetails(apt);
-                            }}
-                          >
-                            View Details
                           </button>
                         </div>
                       </div>
@@ -303,6 +764,8 @@ const AppointmentProgressWidget = () => {
             ))
           )}
         </div>
+        {renderPrescriptionModal()}
+        {renderViewModal()}
       </div>
 
       <style jsx>{`
@@ -397,6 +860,26 @@ const AppointmentProgressWidget = () => {
         /* Invalid Feedback */
         .invalid-feedback {
           color: #ef4444;
+        }
+        .btn-indigo {
+          background-color: #6366f1; /* Indigo color that matches the dark theme */
+          border: none;
+          color: #ffffff;
+        }
+
+        .btn-indigo:hover {
+          background-color: #4f46e5; /* Slightly darker indigo on hover */
+          color: #ffffff;
+        }
+
+        /* Update primary button to be more vibrant */
+        .btn-primary {
+          background-color: #3b82f6; /* Bright blue */
+          border: none;
+        }
+
+        .btn-primary:hover {
+          background-color: #2563eb; /* Darker blue on hover */
         }
       `}</style>
 
