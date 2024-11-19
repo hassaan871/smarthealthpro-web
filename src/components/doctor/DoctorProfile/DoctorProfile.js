@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
+import Context from "../../context/context";
 
 const DoctorProfile = () => {
+  const { setUserInfo } = useContext(Context);
   const [doctor, setDoctor] = useState({
     specialization: "",
     cnic: "",
@@ -71,6 +73,12 @@ const DoctorProfile = () => {
             }
           );
 
+          const User = {
+            userData,
+            doctor: doctorDetails,
+          };
+
+          console.log("User from setting: ", User);
           setDoctor((prevDoctor) => ({
             ...prevDoctor,
             ...doctorDetails,

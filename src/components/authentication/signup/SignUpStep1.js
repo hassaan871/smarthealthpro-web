@@ -1,134 +1,201 @@
-import React, { useState } from 'react';
-import { User, Mail, Lock, Phone } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { User, Mail, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-function SignUpStep1() {
-  const [ fullName, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  // const [gender, setGender] = useState('');
-  // const [contactNumber, setContactNumber] = useState('');
-  const [error, setError] = useState('');
+function SignUpStep1({ formData, updateFormData, onNext }) {
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleNextStep = (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
-    if (password !== confirmPassword) {
-      setError('Password and confirm password do not match');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Password and confirm password do not match");
       return;
     }
 
-    // Clear error and save the basic data
-    setError('');
-    const basicData = {  fullName, email, password};
-    localStorage.setItem('basicData', JSON.stringify(basicData));
-
-    // Navigate to the next step
-    navigate('/SignUpStep2');
+    setError("");
+    onNext();
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="row w-100">
-        {/* Left Side - Welcome Message */}
-        <div className="col-md-6 d-none d-md-flex flex-column justify-content-center align-items-center bg-primary text-white text-center">
-          <h2>Welcome Back!</h2>
-          <p>
-            Welcome, Doctor! To stay connected and manage your appointments with ease, 
-            please log in using your personal information. Smart Health Pro offers secure 
-            access to patient records and a seamless online booking experience.
-          </p>
+    <div className="main-container">
+      <style>
+        {`
+          .main-container {
+            background: #1a1d21;
+            border-radius: 20px;
+            overflow: hidden;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 15px;
+          }
+
+          .welcome-section {
+            background: #0D6EFD;
+            padding: 3rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+
+          .form-section {
+            background: #1a1d21;
+            padding: 3rem;
+          }
+
+          .form-control {
+            background: rgba(30, 34, 40, 0.9) !important;
+            border: none !important;
+            color: white !important;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            height: auto;
+          }
+
+          .form-control:focus {
+            background: rgba(30, 34, 40, 1) !important;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25) !important;
+          }
+
+          .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
+          }
+
+          .icon-wrapper {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+          }
+
+          .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+          }
+
+          .btn-primary {
+            padding: 0.75rem;
+            font-size: 1rem;
+            background: #0D6EFD;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+          }
+
+          .btn-primary:hover {
+            background: #0b5ed7;
+            transform: translateY(-1px);
+          }
+        `}
+      </style>
+
+      <div className="row g-0">
+        <div className="col-md-6">
+          <div className="welcome-section">
+            <h2 className="text-white mb-4">Welcome Back!</h2>
+            <p className="text-white mb-0" style={{ opacity: 0.9 }}>
+              Welcome, Doctor! To stay connected and manage your appointments
+              with ease, please sign up using your personal information. Smart
+              Health Pro offers secure access to patient records and a seamless
+              online booking experience.
+            </p>
+          </div>
         </div>
 
-        {/* Right Side - SignUp Form */}
-        <div className="col-md-6 d-flex flex-column justify-content-center p-4">
-          <h2 className="text-center mb-4">Create Account</h2>
-          <form onSubmit={handleNextStep} className="w-100">
-            {/* Name Field */}
-            <div className="form-group mb-3 position-relative">
-              <input 
-                type="text" 
-                className="form-control" 
-                value={ fullName} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="Name" 
-                required 
-              />
-              <User className="position-absolute top-50 end-0 translate-middle-y me-2" size={20} />
-            </div>
+        <div className="col-md-6">
+          <div className="form-section">
+            <h2 className="text-white text-center mb-4">Create Account</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.fullName}
+                  onChange={(e) => updateFormData({ fullName: e.target.value })}
+                  placeholder="Name"
+                  required
+                />
+                <div className="icon-wrapper">
+                  <User size={20} />
+                </div>
+              </div>
 
-            {/* Email Field */}
-            <div className="form-group mb-3 position-relative">
-              <input 
-                type="email" 
-                className="form-control" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                placeholder="Email" 
-                required 
-              />
-              <Mail className="position-absolute top-50 end-0 translate-middle-y me-2" size={20} />
-            </div>
+              <div className="form-group">
+                <input
+                  type="email"
+                  className="form-control"
+                  value={formData.email}
+                  onChange={(e) => updateFormData({ email: e.target.value })}
+                  placeholder="Email"
+                  required
+                />
+                <div className="icon-wrapper">
+                  <Mail size={20} />
+                </div>
+              </div>
 
-            {/* Password Field */}
-            <div className="form-group mb-3 position-relative">
-              <input 
-                type="password" 
-                className="form-control" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="Password" 
-                required 
-              />
-              <Lock className="position-absolute top-50 end-0 translate-middle-y me-2" size={20} />
-            </div>
+              <div className="form-group">
+                <input
+                  type="password"
+                  className="form-control"
+                  value={formData.password}
+                  onChange={(e) => updateFormData({ password: e.target.value })}
+                  placeholder="Password"
+                  required
+                />
+                <div className="icon-wrapper">
+                  <Lock size={20} />
+                </div>
+              </div>
 
-            {/* Confirm Password Field */}
-            <div className="form-group mb-3 position-relative">
-              <input 
-                type="password" 
-                className="form-control" 
-                value={confirmPassword} 
-                onChange={(e) => setConfirmPassword(e.target.value)} 
-                placeholder="Confirm Password" 
-                required 
-              />
-              <Lock className="position-absolute top-50 end-0 translate-middle-y me-2" size={20} />
-            </div>
-{/* 
-            <div className="form-group mb-3">
-              <select 
-                className="form-select" 
-                value={gender} 
-                onChange={(e) => setGender(e.target.value)} 
-                required
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div> */}
+              <div className="form-group">
+                <input
+                  type="password"
+                  className="form-control"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    updateFormData({ confirmPassword: e.target.value })
+                  }
+                  placeholder="Confirm Password"
+                  required
+                />
+                <div className="icon-wrapper">
+                  <Lock size={20} />
+                </div>
+              </div>
 
-            {/* Contact Number Field */}
-            {/* <div className="form-group mb-3 position-relative">
-              <input 
-                type="tel" 
-                className="form-control" 
-                value={contactNumber} 
-                onChange={(e) => setContactNumber(e.target.value)} 
-                placeholder="Contact Number" 
-                required 
-              />
-              <Phone className="position-absolute top-50 end-0 translate-middle-y me-2" size={20} />
-            </div> */}
+              {error && (
+                <div className="alert alert-danger py-2 mb-3" role="alert">
+                  {error}
+                </div>
+              )}
 
-            {error && <p className="text-danger text-center">{error}</p>}
+              <button type="submit" className="btn btn-primary w-100">
+                Continue
+              </button>
 
-            {/* Continue Button */}
-            <button type="submit" className="btn btn-primary w-100">Continue</button>
-          </form>
+              <div className="text-center mt-3">
+                <span className="text-light opacity-75">
+                  Already have an account?{" "}
+                </span>
+                <a
+                  href="#"
+                  className="text-primary text-decoration-none"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/login");
+                  }}
+                >
+                  Log in
+                </a>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>

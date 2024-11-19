@@ -1,58 +1,165 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function SignUpStep3() {
+function SignUpStep3({ formData, onBack }) {
+  // Add onBack prop
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleCompleteRegistration = async (event) => {
     event.preventDefault();
-
-    // Get data from localStorage
-    const basicData = JSON.parse(localStorage.getItem('basicData'));
-    const additionalData = JSON.parse(localStorage.getItem('additionalData'));
-
-    // Create an object to send as plain JSON
-    const dataToUpload = {
-      ...basicData,
-      ...additionalData,
-      role: "doctor"  
-    };
-
-    console.log('Data to upload:', dataToUpload);  // Log the data being sent
+    setIsLoading(true);
+    setError("");
 
     try {
-      // Make the POST request to the server with application/json content type
-      const response = await axios.post('http://localhost:5000/user/register', dataToUpload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Create registration data object
+      const dataToUpload = {
+        ...formData,
+        role: "doctor",
+      };
 
-      console.log('Response from API:', response.data);  // Log the API response data
+      console.log("Data to upload:", dataToUpload);
 
-      // Navigate to login if registration is successful
-    if (response.status === 200 || response.status === 201) {
-        console.log('Registration successful, navigating to login page');
-        navigate('/login');
+      const response = await axios.post(
+        "http://localhost:5000/user/register",
+        dataToUpload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response from API:", response.data);
+
+      if (response.status === 200 || response.status === 201) {
+        console.log("Registration successful, navigating to login page");
+        navigate("/login");
       } else {
-        console.error('Registration failed:', response.data);
+        setError("Registration failed. Please try again.");
+        console.error("Registration failed:", response.data);
       }
     } catch (error) {
-      console.error('Error during registration:', error);
+      setError(
+        error.response?.data?.message ||
+          "An error occurred during registration. Please try again."
+      );
+      console.error("Error during registration:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="row w-100">
-        <div className="col-md-6 d-flex flex-column justify-content-center p-4">
-          <h2 className="text-center mb-4">Complete Registration</h2>
-          <form onSubmit={handleCompleteRegistration} className="w-100">
-            {/* Removed image upload functionality */}
+    <div className="main-container">
+      <style>
+        {`
+          .main-container {
+            background: #1a1d21;
+            border-radius: 20px;
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 15px;
+          }
+          .section-title {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+          }
+          .completion-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+          }
+          .btn-primary {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            background: #0D6EFD;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+          }
+          .btn-primary:hover {
+            background: #0b5ed7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+          }
+          .btn-outline-light {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+          }
+          // .btn-outline-light:hover {
+          //   background: rgba(255, 255, 255, 0.1);
+          //   transform: translateY(-2px);
+          // }
+          .completion-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 1.5rem;
+          }
+          .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+          }
+        `}
+      </style>
 
-            <button type="submit" className="btn btn-primary w-100">Done</button>
-          </form>
+      <div className="p-4 p-md-5">
+        <div className="text-center">
+          <div className="completion-icon">✓</div>
+          <h2 className="section-title mb-4">Almost There!</h2>
+          <p className="completion-text">
+            You're just one click away from completing your registration. Click
+            'Complete Registration' to finalize your account setup and join our
+            healthcare professional community.
+          </p>
+
+          {error && (
+            <div className="alert alert-danger mb-4" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="d-flex flex-column gap-3">
+            <button
+              type="button"
+              className="btn btn-primary w-100"
+              onClick={handleCompleteRegistration}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Completing Registration...
+                </span>
+              ) : (
+                "Complete Registration"
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline-light"
+              onClick={onBack} // Changed from navigate(-1) to onBack
+              disabled={isLoading}
+            >
+              Back
+            </button>
+          </div>
         </div>
       </div>
     </div>

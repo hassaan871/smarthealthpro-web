@@ -41,7 +41,11 @@ const Nav = ({ setActiveSection, activeSection }) => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <div className="container-fluid">
-        <a className="navbar-brand" href="#" onClick={() => navigate("/")}>
+        <a
+          className="navbar-brand"
+          href="/dashboard/overview"
+          onClick={() => navigate("/")}
+        >
           SmartHealthPro
         </a>
         <button

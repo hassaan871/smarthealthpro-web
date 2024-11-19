@@ -21,6 +21,7 @@ const AppointmentProgressWidget = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [prescriptions, setPrescriptions] = useState({});
+  const [statusFilter, setStatusFilter] = useState("all");
   const [prescriptionData, setPrescriptionData] = useState({
     medicines: [
       {
@@ -37,6 +38,57 @@ const AppointmentProgressWidget = () => {
   const [medicalRecords, setMedicalRecords] = useState({});
   const navigate = useNavigate();
 
+  const isToday = (date) => {
+    const today = new Date();
+    const appointmentDate = new Date(date);
+    return (
+      appointmentDate.getDate() === today.getDate() &&
+      appointmentDate.getMonth() === today.getMonth() &&
+      appointmentDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const isThisWeek = (date) => {
+    const today = new Date();
+    const appointmentDate = new Date(date);
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+
+    return appointmentDate >= weekStart && appointmentDate <= weekEnd;
+  };
+
+  const isThisMonth = (date) => {
+    const today = new Date();
+    const appointmentDate = new Date(date);
+    return (
+      appointmentDate.getMonth() === today.getMonth() &&
+      appointmentDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const getFilteredAppointments = () => {
+    return appointments.filter((apt) => {
+      const appointmentDate = apt.date;
+      const matchesStatus =
+        statusFilter === "all" ||
+        apt.appointmentStatus.toLowerCase() === statusFilter.toLowerCase();
+
+      switch (activeTab) {
+        case "today":
+          return isToday(appointmentDate) && matchesStatus;
+        case "week":
+          return isThisWeek(appointmentDate) && matchesStatus;
+        case "month":
+          return isThisMonth(appointmentDate) && matchesStatus;
+        case "all":
+          return matchesStatus; // Only filter by status when showing all dates
+        default:
+          return matchesStatus;
+      }
+    });
+  };
   useEffect(() => {
     // Demo data for prescriptions
     const demoMedicalRecords = {
@@ -585,6 +637,7 @@ const AppointmentProgressWidget = () => {
   };
 
   // Update the savePrescription function
+  const filteredAppointments = getFilteredAppointments();
 
   return (
     <div className="container-fluid bg-gray-900 p-5">
@@ -594,8 +647,22 @@ const AppointmentProgressWidget = () => {
             <h3 className="card-title text-white mb-0">
               Comprehensive Appointment Progress
             </h3>
+
+            <div className="col-md-3">
+              <select
+                className="form-select bg-gray-700 border-0 text-white"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="canceled">Canceled</option>
+              </select>
+            </div>
+
             <div className="btn-group" role="group">
-              {["today", "week", "month"].map((tab) => (
+              {["all", "today", "week", "month"].map((tab) => (
                 <button
                   key={tab}
                   className={`btn ${
@@ -613,13 +680,21 @@ const AppointmentProgressWidget = () => {
         </div>
 
         <div className="card-body">
-          {appointments.length === 0 ? (
+          {filteredAppointments.length === 0 ? (
             <div className="text-center py-5 text-gray-400">
               <h5>No Pending Appointments</h5>
-              <p>There are no appointments scheduled for this time period</p>
+              <p>
+                {activeTab === "today"
+                  ? "There are no appointments scheduled for today"
+                  : activeTab === "week"
+                  ? "There are no appointments scheduled for this week"
+                  : activeTab === "month"
+                  ? "There are no appointments scheduled for this month"
+                  : "There are no appointments scheduled"}
+              </p>
             </div>
           ) : (
-            appointments.map((apt, index) => (
+            filteredAppointments.map((apt, index) => (
               <div
                 key={index}
                 className="card bg-gray-700 border-0 shadow-sm mb-4"

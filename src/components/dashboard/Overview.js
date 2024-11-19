@@ -19,11 +19,15 @@ import {
   Calendar,
   Clock,
   PinIcon,
+  MessageSquare,
 } from "lucide-react";
 import Context from "../context/context";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Overview = () => {
   const { appointments, setAppointments } = useContext(Context);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -131,6 +135,61 @@ const Overview = () => {
       </div>
     </div>
   );
+
+  const handleViewClick = async (appointment) => {
+    try {
+      const userId = localStorage.getItem("userToken");
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      // Get all conversations for the current user
+      const conversationsResponse = await axios.get(
+        `http://localhost:5000/conversations/${userId}`
+      );
+
+      const conversations = conversationsResponse.data;
+      console.log("All conversations:", conversations);
+      console.log("Current userId:", userId);
+      console.log("Patient ID to match:", appointment.patient.id);
+
+      // Modified conversation finding logic
+      const existingConversation = conversations.find((conv) => {
+        // The participants array contains the direct IDs, so this comparison should work
+        return (
+          conv.participants.includes(userId) &&
+          conv.participants.includes(appointment.patient.id)
+        );
+      });
+
+      console.log("Found existing conversation:", existingConversation);
+
+      const navigationState = {
+        conversation: existingConversation
+          ? {
+              ...existingConversation,
+              _id: existingConversation._id, // Convert _id to string format if needed
+            }
+          : null,
+        patient: !existingConversation ? appointment.patient : null,
+        doctorInfo: {
+          id: userId,
+          avatar: appointment?.doctor?.avatar,
+          name: appointment?.doctor?.name,
+        },
+      };
+
+      console.log("Navigation state being passed:", navigationState);
+
+      navigate("/dashboard/chat", {
+        state: navigationState,
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error handling chat:", error);
+      alert("Failed to open chat. Please try again.");
+    }
+  };
 
   return (
     <div
@@ -280,7 +339,10 @@ const Overview = () => {
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5 className="card-title text-white">Latest Patients</h5>
-                <a href="#" className="text-decoration-none text-primary">
+                <a
+                  href="/dashboard/patients"
+                  className="text-decoration-none text-primary"
+                >
                   View all →
                 </a>
               </div>
@@ -310,8 +372,15 @@ const Overview = () => {
                         </h6>
                       </div>
                     </div>
-                    <button className="btn btn-sm btn-gray-700">
-                      <MoreVertical size={16} className="text-gray-400" />
+                    <button
+                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm mt-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewClick(appointment);
+                      }}
+                    >
+                      <MessageSquare size={16} />
+                      Chat
                     </button>
                   </li>
                 ))}
@@ -324,7 +393,10 @@ const Overview = () => {
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5 className="card-title text-white">Latest Appointments</h5>
-                <a href="#" className="text-decoration-none text-primary">
+                <a
+                  href="/dashboard/appointments"
+                  className="text-decoration-none text-primary"
+                >
                   View all →
                 </a>
               </div>
@@ -446,6 +518,15 @@ const Overview = () => {
 
         .text-yellow-300 {
           color: #fcd34d;
+        }
+        .btn-gray-600 {
+          background-color: #4b5563;
+          border: none;
+          color: #d1d5db;
+        }
+        .btn-gray-600:hover {
+          background-color: #6b7280;
+          color: #f3f4f6;
         }
       `}</style>
     </div>

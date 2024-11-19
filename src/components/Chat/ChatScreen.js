@@ -176,7 +176,7 @@ const ChatScreen = () => {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const userId = userInfo || localStorage.getItem("userToken");
+      const userId = localStorage.getItem("userToken");
       if (!userId) {
         setFetchError("User not authenticated. Please log in.");
         return;
@@ -582,46 +582,39 @@ const ChatScreen = () => {
   };
 
   return (
-    <div
-      className="container-fluid bg-gray-900"
-      style={{
-        width: "100vw",
-        margin: "0",
-        minHeight: "100vh",
-      }}
-    >
-      <div className="chat-screen">
-        <div className="chat-sidebar bg-gray-800 border-r border-gray-700">
-          <div className="chat-search bg-gray-700">
-            <div className="input-group">
-              <span className="input-group-text bg-gray-700 border-0">
-                <FiSearch className="text-gray-400" />
-              </span>
-              <input
-                type="text"
-                className="form-control bg-gray-700 border-0 text-white"
-                placeholder="Search conversations"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="conversation-list">
-            {fetchError ? (
-              <div className="error-message text-red-500 p-4">{fetchError}</div>
-            ) : (
-              filteredConversations.map(renderConversationItem)
-            )}
+    <div className="chat-screen">
+      <div className="chat-sidebar bg-gray-800 border-r border-gray-700">
+        <div className="chat-search bg-gray-700">
+          <div className="input-group">
+            <span className="input-group-text bg-gray-700 border-0">
+              <FiSearch className="text-gray-400" />
+            </span>
+            <input
+              type="text"
+              className="form-control bg-gray-700 border-0 text-white"
+              placeholder="Search conversations"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
+        <div className="conversation-list">
+          {fetchError ? (
+            <div className="error-message text-red-500 p-4">{fetchError}</div>
+          ) : (
+            filteredConversations.map(renderConversationItem)
+          )}
+        </div>
+      </div>
 
-        <div className="chat-main bg-gray-900">
-          {selectedConversation || incomingConversation || incomingPatient ? (
-            <>
-              <div className="chat-header2 bg-gray-800 border-b border-gray-700">
-                {renderChatHeader()}
-              </div>
-              <div className="chat-messages bg-gray-900">
+      <div className="chat-main bg-gray-900">
+        {selectedConversation || incomingConversation || incomingPatient ? (
+          <>
+            <div className="chat-header2 bg-gray-800 border-b border-gray-700">
+              {renderChatHeader()}
+            </div>
+            <div className="messages-wrapper">
+              <div className="messages-container">
                 {loading ? (
                   <div className="loader text-gray-400"></div>
                 ) : (
@@ -652,64 +645,92 @@ const ChatScreen = () => {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-              <div className="chat-input bg-gray-800 border-t border-gray-700">
-                <input
-                  type="text"
-                  className="bg-gray-700 text-white border-0 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Type a message"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <input
-                  type="file"
-                  id="file-upload"
-                  style={{ display: "none" }}
-                  onChange={handleFileUpload}
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="file-upload-label text-gray-400 hover:text-white"
-                >
-                  <FiPaperclip />
-                </label>
-                <button
-                  onClick={debouncedSendMessage}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <FiSend />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="no-conversation-selected text-gray-400">
-              <h3>Select a conversation to start messaging</h3>
             </div>
-          )}
-        </div>
+            <div className="chat-input bg-gray-800 border-t border-gray-700">
+              <input
+                type="text"
+                className="bg-gray-700 text-white border-0 focus:ring-2 focus:ring-blue-500"
+                placeholder="Type a message"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <input
+                type="file"
+                id="file-upload"
+                style={{ display: "none" }}
+                onChange={handleFileUpload}
+              />
+              <label
+                htmlFor="file-upload"
+                className="file-upload-label text-gray-400 hover:text-white"
+              >
+                <FiPaperclip />
+              </label>
+              <button
+                onClick={debouncedSendMessage}
+                className="text-gray-400 hover:text-white"
+              >
+                <FiSend />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="no-conversation-selected text-gray-400">
+            <h3>Select a conversation to start messaging</h3>
+          </div>
+        )}
       </div>
 
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        .chat-screen {
-          display: flex;
-          height: calc(100vh - 60px);
-          overflow: hidden;
-          background-color: #0f172a;
-        }
+       .chat-screen {
+          height: calc(100vh - 50px); /* Adjust for the top navbar */
+  width: 100%;
+  display: flex;
+  background-color: #0f172a;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+      }
+
+      .messages-wrapper {
+   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background-color: #0f172a;
+}
+
+      
+     .messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
 
         .chat-sidebar {
           width: 260px;
           display: flex;
           flex-direction: column;
           background-color: #1e293b;
-          border-right: 1px solid #334155;
+        border-right: 1px solid #334155;
+  position: relative;
+  z-index: 20;
         }
 
-        .chat-search {
-          padding: 0.5rem 0.75rem;
-          border-bottom: 1px solid #334155;
+        .chat-search {  
+        padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #334155;
+  background-color: #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 30;
         }
 
         .conversation-list {
@@ -762,12 +783,16 @@ const ChatScreen = () => {
           color: #64748b;
         }
 
-        .chat-main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
+          .chat-main {
+ flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+  background-color: #0f172a;
+}
+
 
         .chat-header {
           padding: 0.75rem;
@@ -792,11 +817,15 @@ const ChatScreen = () => {
           flex-direction: column;
         }
 
-        .chat-header2 {
-          padding: 0.75rem;
-          min-height: 45px;
-          border-bottom: 1px solid #334155;
-        }
+       .chat-header2 {
+   padding: 0.75rem;
+  min-height: 45px;
+  border-bottom: 1px solid #334155;
+  background-color: #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
 
         .header-content2 {
           display: flex;
@@ -831,12 +860,13 @@ const ChatScreen = () => {
           max-width: 70%;
         }
 
-        .message {
-          max-width: 70%;
-          margin-bottom: 0.4rem;
-          display: inline-block;
-          /* Remove align-self from here as it's not needed for the container */
-        }
+       .message {
+  max-width: 70%;
+  margin-bottom: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 
         /* Remove the background colors from the outer message containers */
         .message.sent,
@@ -860,9 +890,11 @@ const ChatScreen = () => {
         }
 
         /* Add specific alignment for sent/received */
-        .message.sent {
-          align-self: flex-end;
-        }
+   .message.sent {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
 
         .message.received {
           align-self: flex-start;
@@ -906,13 +938,17 @@ const ChatScreen = () => {
           text-align: right; // Align timestamp to right for sent messages
         }
 
-        .chat-input {
-          padding: 0.6rem;
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          border-top: 1px solid #334155;
-        }
+      .chat-input {
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px solid #334155;
+  background-color: #1e293b;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
 
         .chat-input input {
           flex: 1;
@@ -972,17 +1008,16 @@ const ChatScreen = () => {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        body {
-          background-color: #0f172a !important;
-          margin: 0;
-          padding: 0;
-          font-size: 13px;
-        }
+          body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
 
-        #root {
-          background-color: #0f172a;
-          min-height: 100vh;
-        }
+      #root {
+        height: 100vh;
+         overflow: hidden;
+      }
 
         .bg-gray-900 {
           background-color: #0f172a;
@@ -1052,16 +1087,28 @@ const ChatScreen = () => {
           font-size: 0.75rem;
         }
 
-        .input-group-text {
-          background-color: transparent;
-          border: none;
-        }
+       .input-group {
+  display: flex;
+  align-items: center;
+  background-color: #334155;
+  border-radius: 4px;
+  padding: 0.25rem;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  color: #94a3b8;
+}
 
         .form-control {
-          background-color: #1e293b;
-          border: none;
-          color: white;
-          font-size: 0.75rem;
+           width: 100%;
+  background-color: #334155;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
         }
 
         .form-control:focus {

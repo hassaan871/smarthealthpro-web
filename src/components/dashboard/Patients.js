@@ -10,8 +10,13 @@ import {
   Search,
   Filter,
   MessageSquare,
+  FileText, // Add this
+  PlusCircle, // Add this
+  ClipboardList, // Add this
 } from "lucide-react";
 import axios from "axios";
+import SummaryModal from "../notes/SummaryModal";
+import NotesModal from "../notes/NotesModal";
 
 const Patients = () => {
   const [appointments, setAppointments] = useState([]);
@@ -20,6 +25,10 @@ const Patients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [note, setNote] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -207,18 +216,7 @@ const Patients = () => {
                 />
               </div>
             </div>
-            <div className="col-md-3">
-              <select
-                className="form-select bg-gray-700 border-0 text-white"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="canceled">Canceled</option>
-              </select>
-            </div>
+
             <div className="col-md-3">
               <select
                 className="form-select bg-gray-700 border-0 text-white"
@@ -302,22 +300,59 @@ const Patients = () => {
                   >
                     {appointment.priority} Priority
                   </span>
-                  <button
-                    className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm mt-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewClick(appointment);
-                    }}
-                  >
-                    <MessageSquare size={12} />
-                    Chat
-                  </button>
+
+                  <div className="d-flex gap-2 mt-2">
+                    <button
+                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewClick(appointment);
+                      }}
+                    >
+                      <MessageSquare size={12} />
+                      Chat
+                    </button>
+                    <button
+                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAppointment(appointment);
+                        setShowNotesModal(true);
+                      }}
+                    >
+                      <FileText size={12} />
+                      Notes
+                    </button>
+                    <button
+                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAppointment(appointment);
+                        setShowSummaryModal(true);
+                      }}
+                    >
+                      <ClipboardList size={12} />
+                      Summary
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      <NotesModal
+        show={showNotesModal}
+        onHide={() => setShowNotesModal(false)}
+        appointment={selectedAppointment}
+      />
+
+      <SummaryModal
+        show={showSummaryModal}
+        onHide={() => setShowSummaryModal(false)}
+        appointment={selectedAppointment}
+      />
 
       <style jsx>{`
         .bg-gray-900 {

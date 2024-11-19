@@ -8,12 +8,10 @@ import {
 
 // Authentication Components
 import Login from "./components/authentication/login/Login";
-import SignUpStep1 from "./components/authentication/signup/SignUpStep1";
-import SignUpStep2 from "./components/authentication/signup/SignUpStep2";
-import SignUpStep3 from "./components/authentication/signup/SignUpStep3";
-import UserProfileCompletion from "./components/authentication/signup/UserProfileCompletion";
+import SignUp from "./components/authentication/signup/SignUp"; // New combined component
 import ForgotPassword from "./components/authentication/forget/ForgetPassword";
 import ResetPassword from "./components/authentication/forget/Reset";
+import UserProfileCompletion from "./components/authentication/signup/UserProfileCompletion";
 
 // Context Providers
 import { MyContextProvider } from "./components/context/context";
@@ -45,9 +43,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Navigate to="/login" />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/SignUpStep1" element={<SignUpStep1 />} />
-            <Route path="/SignUpStep2" element={<SignUpStep2 />} />
-            <Route path="/SignUpStep3" element={<SignUpStep3 />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route
               path="/user/reset-password/:userId/:token"
@@ -73,7 +69,6 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Redirect /dashboard to /dashboard/overview */}
               <Route
                 index
                 element={<Navigate to="/dashboard/overview" replace />}
@@ -82,7 +77,6 @@ function App() {
               <Route path="appointments" element={<DashboardAppointments />} />
               <Route path="patients" element={<DashboardPatients />} />
               <Route path="chat" element={<ChatScreen />} />
-              <Route path="chat" element={<DashboardChat />} />
               <Route path="chat/:conversationId" element={<ChatScreen />} />
               <Route path="profile" element={<DashboardProfile />} />
               <Route

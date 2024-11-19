@@ -8,9 +8,10 @@ import Overview from "./Overview";
 import ChatScreen from "../Chat/ChatScreen";
 import { AlertCircle } from "lucide-react";
 import Context from "../context/context";
+import axios from "axios";
 
 const Dashboard = () => {
-  const { setAppointments } = useContext(Context);
+  const { setAppointments, setUserInfo } = useContext(Context);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const [activeSection, setActiveSection] = useState(() => {
@@ -18,6 +19,56 @@ const Dashboard = () => {
     const path = location.pathname.split("/").pop();
     return path ? path.charAt(0).toUpperCase() + path.slice(1) : "Overview";
   });
+
+  useEffect(() => {
+    const fetchDoctorData = async () => {
+      const userString = localStorage.getItem("userToken");
+      const userId = userString;
+
+      try {
+        const userResponse = await axios.get(
+          `http://localhost:5000/user/getUserInfo/${userId}`
+        );
+        const userData = userResponse.data.user;
+
+        const doctorsResponse = await axios.get(
+          "http://localhost:5000/user/getAllDoctors"
+        );
+        const doctorsData = doctorsResponse.data;
+
+        const doctorData = doctorsData.find((doctor) => doctor.user === userId);
+        const doctorId = doctorData ? doctorData._id : null;
+
+        if (doctorId) {
+          const doctorResponse = await axios.get(
+            `http://localhost:5000/user/getDoctorById/${doctorId}`
+          );
+          const doctorDetails = doctorResponse.data;
+
+          // Convert the fetched office hours to our internal format
+          const formattedOfficeHours = {};
+          Object.entries(doctorDetails.officeHours || {}).forEach(
+            ([day, hours]) => {
+              formattedOfficeHours[day] = {
+                status: hours === "Closed" ? "closed" : "open",
+                time: hours,
+              };
+            }
+          );
+          const User = {
+            userData,
+            doctor: doctorDetails,
+          };
+
+          setUserInfo(User);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchDoctorData();
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
