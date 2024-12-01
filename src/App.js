@@ -27,6 +27,7 @@ import Dashboard, {
 } from "./components/dashboard/Dashboard";
 import ChatScreen from "./components/Chat/ChatScreen";
 import DoctorChatWithPatientDetails from "./components/doctor/DoctorChatWithPatientDetails/DoctorChatWithPatientDetails";
+import AdminLogin from "./module/Admin/AdminLogin";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -87,6 +88,9 @@ function App() {
 
             {/* Catch all route - 404 */}
             <Route path="*" element={<Navigate to="/login" replace />} />
+
+            {/* Admin routes */}
+            <Route path="/AdminLogin" element={<AdminLogin />}/>
           </Routes>
         </Router>
       </SocketContextProvider>
