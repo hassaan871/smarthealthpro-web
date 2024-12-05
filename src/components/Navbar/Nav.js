@@ -82,9 +82,6 @@ const Nav = ({ setActiveSection, activeSection }) => {
               </li>
             ))}
           </ul>
-          <span className="navbar-text">
-            <FiUser size={24} />
-          </span>
         </div>
       </div>
     </nav>

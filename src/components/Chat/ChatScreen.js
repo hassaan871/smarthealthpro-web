@@ -14,6 +14,245 @@ import { encrypt, decrypt } from "../encrypt/Encrypt";
 import { debounce } from "lodash";
 import { useLocation } from "react-router-dom";
 
+import { FiX, FiMessageSquare, FiFileText } from "react-icons/fi";
+
+const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
+  const [activeTab, setActiveTab] = useState("summary");
+  const [loadingStates, setLoadingStates] = useState({
+    summary: false,
+    notes: false,
+    prescriptions: false,
+  });
+  const [summaries, setSummaries] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [prescriptions, setPrescriptions] = useState({});
+  const { userInfo } = useContext(Context);
+
+  useEffect(() => {
+    if (selectedConversation?.participants[1]) {
+      if (activeTab === "summary") {
+        fetchSummaries();
+      } else if (activeTab === "notes") {
+        fetchNotes(selectedConversation.participants[1]);
+      } else if (activeTab === "prescriptions" && selectedConversation._id) {
+        fetchPrescriptions();
+      }
+    } else {
+      console.log("h2");
+    }
+  }, [selectedConversation, activeTab]);
+
+  const setLoadingFor = (tab, isLoading) => {
+    setLoadingStates((prev) => ({
+      ...prev,
+      [tab]: isLoading,
+    }));
+  };
+
+  const fetchSummaries = async () => {
+    console.log("fetching summary");
+    try {
+      setLoadingFor("summary", true);
+      const patientIDIndex = selectedConversation.participants.findIndex(
+        (id) => id !== userInfo
+      );
+      const patientID = selectedConversation.participants[patientIDIndex];
+      console.log("userinfo: ", userInfo);
+      const link = `http://localhost:5000/user/getSummaries/${patientID}/${userInfo}`;
+      console.log("link is: ", link);
+      const response = await axios.get(link);
+      console.log("Summaries response:", response.data);
+      setSummaries(response.data);
+    } catch (error) {
+      console.error("Error fetching summaries:", error);
+      setSummaries([]);
+    } finally {
+      setLoadingFor("summary", false);
+    }
+  };
+
+  const fetchNotes = async (patientId) => {
+    try {
+      setLoadingFor("notes", true);
+      const userString = localStorage.getItem("userToken");
+      const response = await axios.get(
+        `http://localhost:5000/user/getMatchingNotes`,
+        {
+          params: {
+            doctorId: userString,
+            patientId: patientId,
+          },
+        }
+      );
+      setNotes(response.data.notes);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      setNotes([]);
+    } finally {
+      setLoadingFor("notes", false);
+    }
+  };
+
+  const fetchPrescriptions = async () => {
+    try {
+      setLoadingFor("prescriptions", true);
+
+      const patientIDIndex = selectedConversation.participants.findIndex(
+        (id) => id !== userInfo
+      );
+      const patientID = selectedConversation.participants[patientIDIndex];
+      const response = await fetch(
+        `http://localhost:5000/appointment/${patientID}/prescription`
+      );
+      const data = await response.json();
+      console.log("Raw API Response:", data);
+      setPrescriptions(data.data);
+    } catch (error) {
+      console.error("Error fetching prescriptions:", error);
+      setPrescriptions({});
+    } finally {
+      setLoadingFor("prescriptions", false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const options = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+    return new Date(dateString).toLocaleDateString("en-US", options);
+  };
+
+  const renderLoader = () => (
+    <div className="loading-state">
+      <div className="loader-container">
+        <div className="loader"></div>
+        <div className="loader-text">Loading...</div>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    if (loadingStates[activeTab]) {
+      return renderLoader();
+    }
+
+    switch (activeTab) {
+      case "summary":
+        return (
+          <div className="summaries-list">
+            {summaries?.length > 0 ? (
+              summaries.map((summary, index) => (
+                <div key={index} className="summary-item">
+                  <div className="item-header">
+                    <span className="item-type">Summary</span>
+                    <span className="item-date">
+                      {formatDate(summary.createdAt)}
+                    </span>
+                  </div>
+                  <div className="item-content">{summary.summary}</div>
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">No summaries available</div>
+            )}
+          </div>
+        );
+
+      case "notes":
+        return (
+          <div className="notes-list">
+            {notes?.length > 0 ? (
+              notes.map((note, index) => (
+                <div key={index} className="note-item">
+                  <div className="item-header">
+                    <span className="item-type">Clinical Note</span>
+                    <span className="item-date">{formatDate(note.date)}</span>
+                  </div>
+                  <div className="item-content">{note.note}</div>
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">No clinical notes available</div>
+            )}
+          </div>
+        );
+
+      case "prescriptions":
+        return (
+          <div className="prescriptions-list">
+            {prescriptions.length > 0 ? (
+              prescriptions.map((appointment) =>
+                appointment.prescriptions.map((prescription, index) => (
+                  <div key={index} className="prescription-item">
+                    <div className="item-header">
+                      <span className="item-type">Prescription</span>
+                      <span className="item-date">
+                        {appointment.date + " at " + appointment.time}
+                      </span>
+                    </div>
+                    <div className="prescription-content">
+                      <div className="medicine-name">
+                        {prescription.medication}
+                      </div>
+                      <div className="medicine-details">
+                        <div>Dosage: {prescription.dosage}</div>
+                        <div>Frequency: {prescription.frequency}</div>
+                        <div>Duration: {prescription.duration}</div>
+                        <div>Instructions: {prescription.instructions}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : (
+              <div className="empty-state">No prescriptions available</div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={`details-sidebar ${isOpen ? "open" : ""}`}>
+      <div className="details-content">
+        <div className="tabs-header">
+          <button
+            className={`tab ${activeTab === "summary" ? "active" : ""}`}
+            onClick={() => setActiveTab("summary")}
+          >
+            Summary
+          </button>
+          <button
+            className={`tab ${activeTab === "notes" ? "active" : ""}`}
+            onClick={() => setActiveTab("notes")}
+          >
+            Notes
+          </button>
+          <button
+            className={`tab ${activeTab === "prescriptions" ? "active" : ""}`}
+            onClick={() => setActiveTab("prescriptions")}
+          >
+            Prescriptions
+          </button>
+          <div className="sidebar-header">
+            <button onClick={onClose} className="close-sidebar-btn">
+              <FiX />
+            </button>
+          </div>
+        </div>
+
+        <div className="tab-content">{renderContent()}</div>
+      </div>
+    </div>
+  );
+};
+
 const ChatScreen = () => {
   const { setUserInfo, userInfo } = useContext(Context);
   const [conversations, setConversations] = useState([]);
@@ -23,6 +262,8 @@ const ChatScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("chatSummaries");
   const messagesEndRef = useRef(null);
   const { socket, connectSocket } = useSocketContext();
   const location = useLocation();
@@ -562,6 +803,12 @@ const ChatScreen = () => {
               {getOtherUserName(selectedConversation)}
             </h3>
           </div>
+          <button
+            className="details-toggle"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            {isSidebarOpen ? <FiX /> : <FiFileText />}
+          </button>
         </div>
       );
     } else if (incomingPatient) {
@@ -608,6 +855,13 @@ const ChatScreen = () => {
       </div>
 
       <div className="chat-main bg-gray-900">
+        <DetailsSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          selectedConversation={selectedConversation}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
         {selectedConversation || incomingConversation || incomingPatient ? (
           <>
             <div className="chat-header2 bg-gray-800 border-b border-gray-700">
@@ -681,450 +935,6 @@ const ChatScreen = () => {
           </div>
         )}
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-       .chat-screen {
-          height: calc(100vh - 50px); /* Adjust for the top navbar */
-  width: 100%;
-  display: flex;
-  background-color: #0f172a;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-      }
-
-      .messages-wrapper {
-   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-  background-color: #0f172a;
-}
-
-      
-     .messages-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-}
-
-        .chat-sidebar {
-          width: 260px;
-          display: flex;
-          flex-direction: column;
-          background-color: #1e293b;
-        border-right: 1px solid #334155;
-  position: relative;
-  z-index: 20;
-        }
-
-        .chat-search {  
-        padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #334155;
-  background-color: #1e293b;
-  position: sticky;
-  top: 0;
-  z-index: 30;
-        }
-
-        .conversation-list {
-          flex: 1;
-          overflow-y: auto;
-        }
-
-        .conversation-item {
-          display: flex;
-          align-items: center;
-          padding: 0.5rem 0.75rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-height: 50px;
-        }
-
-        .conversation-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          margin-right: 0.75rem;
-          object-fit: cover;
-        }
-
-        .conversation-info {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .conversation-info h4 {
-          margin: 0;
-          font-size: 0.813rem;
-          font-weight: 500;
-          margin-bottom: 0.15rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .conversation-info p {
-          margin: 0;
-          font-size: 0.75rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .conversation-time {
-          font-size: 0.65rem;
-          color: #64748b;
-        }
-
-          .chat-main {
- flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-  position: relative;
-  background-color: #0f172a;
-}
-
-
-        .chat-header {
-          padding: 0.75rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 45px;
-          border-bottom: 1px solid #334155;
-        }
-
-        .chat-header h3 {
-          font-size: 0.875rem;
-          font-weight: 500;
-          margin: 0;
-        }
-
-        .chat-messages {
-          flex: 1;
-          padding: 0.5rem;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-        }
-
-       .chat-header2 {
-   padding: 0.75rem;
-  min-height: 45px;
-  border-bottom: 1px solid #334155;
-  background-color: #1e293b;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-        .header-content2 {
-          display: flex;
-          flex-direction: row;
-          align-items: flex-start;
-          gap: 0.75rem;
-        }
-
-        .conversation-avatar2 {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          object-fit: cover;
-        }
-
-        .header-text2 {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .chat-header2 h3 {
-          font-size: 0.875rem;
-          font-weight: 500;
-          margin: 0;
-        }
-
-        .message-container {
-          // Add this new class
-          display: flex;
-          flex-direction: column;
-          max-width: 70%;
-        }
-
-       .message {
-  max-width: 70%;
-  margin-bottom: 0.4rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-        /* Remove the background colors from the outer message containers */
-        .message.sent,
-        .message.received {
-          background: none; /* Ensure no background color */
-          padding: 0; /* Remove any padding */
-          margin: 0 0 0.4rem 0; /* Keep only bottom margin for spacing between messages */
-          border-radius: 0; /* Remove any border radius */
-        }
-
-        .message p {
-          display: inline-block;
-          font-size: 0.75rem;
-          padding: 0.4rem 0.65rem;
-          border-radius: 1rem;
-          margin: 0;
-          word-wrap: break-word;
-          line-height: 1.2;
-          max-width: 100%;
-          color: white;
-        }
-
-        /* Add specific alignment for sent/received */
-   .message.sent {
-  align-self: flex-end;
-  align-items: flex-end;
-}
-
-
-        .message.received {
-          align-self: flex-start;
-        }
-
-        .message.sent p {
-          background-color: #2563eb;
-          border-bottom-right-radius: 0.25rem;
-        }
-
-        .message.received p {
-          background-color: #334155;
-          border-bottom-left-radius: 0.25rem;
-        }
-        .file-message {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.4rem 0.65rem;
-          border-radius: 1rem;
-          transition: all 0.2s ease;
-          font-size: 0.75rem;
-          background-color: #334155; /* Add this */
-          color: white; /* Add this */
-          cursor: pointer; /* Add this */
-        }
-
-        /* Add this for sent file messages */
-        .message.sent .file-message {
-          background-color: #2563eb;
-        }
-
-        .message-time {
-          font-size: 0.65rem;
-          margin-top: 0.15rem;
-          color: #64748b;
-          padding: 0 0.4rem; // Add padding
-        }
-
-        .message.sent .message-time {
-          text-align: right; // Align timestamp to right for sent messages
-        }
-
-      .chat-input {
-  padding: 0.6rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  border-top: 1px solid #334155;
-  background-color: #1e293b;
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
-}
-
-        .chat-input input {
-          flex: 1;
-          padding: 0.4rem 0.75rem;
-          border-radius: 1.5rem;
-          outline: none;
-          font-size: 0.75rem;
-        }
-
-        .chat-input button,
-        .file-upload-label {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.35rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          transition: all 0.2s ease;
-        }
-
-        .chat-input button:hover,
-        .file-upload-label:hover {
-          background-color: #334155;
-        }
-
-        .no-conversation-selected {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          font-size: 0.813rem;
-        }
-
-        ::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: #1e293b;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: #334155;
-          border-radius: 2px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: #475569;
-        }
-     `,
-        }}
-      />
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-
-      #root {
-        height: 100vh;
-         overflow: hidden;
-      }
-
-        .bg-gray-900 {
-          background-color: #0f172a;
-        }
-        .bg-gray-800 {
-          background-color: #1e293b;
-        }
-        .bg-gray-700 {
-          background-color: #334155;
-        }
-        .bg-gray-600 {
-          background-color: #475569;
-        }
-
-        .text-white {
-          color: #ffffff;
-        }
-        .text-gray-400 {
-          color: #94a3b8;
-        }
-        .text-gray-500 {
-          color: #64748b;
-        }
-        .border-gray-700 {
-          border-color: #334155;
-        }
-
-        .hover\:bg-gray-700:hover {
-          background-color: #334155;
-        }
-        .hover\:bg-gray-600:hover {
-          background-color: #475569;
-        }
-
-        .message.sent p {
-          background-color: #2563eb;
-        }
-
-        .message.received p {
-          background-color: #334155;
-        }
-
-        .loader {
-          display: inline-block;
-          width: 30px;
-          height: 30px;
-          border: 2px solid #334155;
-          border-radius: 50%;
-          border-top-color: #60a5fa;
-          animation: spin 1s ease-in-out infinite;
-          margin: auto;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .error-message {
-          background-color: #991b1b;
-          color: white;
-          padding: 0.6rem;
-          border-radius: 0.4rem;
-          margin: 0.6rem;
-          text-align: center;
-          font-size: 0.75rem;
-        }
-
-       .input-group {
-  display: flex;
-  align-items: center;
-  background-color: #334155;
-  border-radius: 4px;
-  padding: 0.25rem;
-}
-
-.input-group-text {
-  display: flex;
-  align-items: center;
-  padding: 0 0.5rem;
-  color: #94a3b8;
-}
-
-        .form-control {
-           width: 100%;
-  background-color: #334155;
-  color: white;
-  border: none;
-  padding: 0.5rem;
-  border-radius: 4px;
-        }
-
-        .form-control:focus {
-          background-color: #334155;
-          border: none;
-          box-shadow: none;
-          color: white;
-        }
-
-        .form-control::placeholder {
-          color: #64748b;
-          font-size: 0.75rem;
-        }
-      `,
-        }}
-      />
     </div>
   );
 };

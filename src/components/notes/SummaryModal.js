@@ -14,11 +14,11 @@ const SummaryModal = ({ show, onHide, appointment }) => {
   const fetchSummaries = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `http://localhost:5000/user/getSummariesByPatientId/${appointment.patient.id}`
-      );
-      console.log("Summaries response:", response.data.data);
-      setSummaries(response.data.data);
+      const link = `http://localhost:5000/user/getSummaries/${appointment.patient.id}/${appointment.doctor.id}`;
+      console.log("link is: ", link);
+      const response = await axios.get(link);
+      console.log("Summaries response:", response.data);
+      setSummaries(response.data);
     } catch (error) {
       console.error("Error fetching summaries:", error);
     } finally {

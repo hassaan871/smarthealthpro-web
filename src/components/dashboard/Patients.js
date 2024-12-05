@@ -12,11 +12,13 @@ import {
   MessageSquare,
   FileText, // Add this
   PlusCircle, // Add this
-  ClipboardList, // Add this
+  ClipboardList,
+  CheckCircle, // Add this
 } from "lucide-react";
 import axios from "axios";
 import SummaryModal from "../notes/SummaryModal";
 import NotesModal from "../notes/NotesModal";
+import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
 
 const Patients = () => {
   const [appointments, setAppointments] = useState([]);
@@ -29,7 +31,13 @@ const Patients = () => {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [note, setNote] = useState("");
+  const [updatingPriority, setUpdatingPriority] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -65,50 +73,9 @@ const Patients = () => {
     fetchAppointments();
   }, []);
 
-  const getPriorityInfo = (priority) => {
-    switch (priority.toLowerCase()) {
-      case "low":
-        return { percentage: 20, color: "bg-info", textColor: "text-info" };
-      case "medium":
-        return {
-          percentage: 40,
-          color: "bg-success",
-          textColor: "text-success",
-        };
-      case "moderate":
-        return {
-          percentage: 60,
-          color: "bg-warning",
-          textColor: "text-warning",
-        };
-      case "high":
-        return { percentage: 80, color: "bg-danger", textColor: "text-danger" };
-      case "very high":
-        return {
-          percentage: 100,
-          color: "bg-danger",
-          textColor: "text-danger",
-        };
-      default:
-        return {
-          percentage: 0,
-          color: "bg-secondary",
-          textColor: "text-secondary",
-        };
-    }
-  };
-
   const getStatusBadgeColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-success";
-      case "pending":
-        return "bg-warning";
-      case "canceled":
-        return "bg-danger";
-      default:
-        return "bg-secondary";
-    }
+    const config = getStatusConfig(status);
+    return config.badgeClass.replace("badge-", "bg-");
   };
 
   const handleViewClick = async (appointment) => {
@@ -196,13 +163,70 @@ const Patients = () => {
     );
   }
 
+  const handlePriorityChange = async (appointmentId, newPriority, e) => {
+    e.stopPropagation();
+    setUpdatingPriority(appointmentId);
+    try {
+      const response = await fetch(
+        `http://localhost:5000/appointment/updateAppointment/${appointmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ priority: newPriority }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update priority");
+
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((apt) =>
+          apt._id === appointmentId ? { ...apt, priority: newPriority } : apt
+        )
+      );
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error updating priority:", error);
+    } finally {
+      setUpdatingPriority(null);
+    }
+  };
+
+  // Success toast component
+  const SuccessToast = () => (
+    <div
+      className={`position-fixed top-0 end-0 p-3 ${
+        showSuccess ? "opacity-100" : "opacity-0"
+      }`}
+      style={{ zIndex: 1050, transition: "opacity 0.3s ease-in-out" }}
+    >
+      <div className="toast show bg-success text-white">
+        <div className="toast-body d-flex align-items-center">
+          <CheckCircle size={16} className="me-2" />
+          Priority updated successfully
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="container-fluid bg-gray-900 min-vh-100">
+    <div className="container-fluid bg-gray-900 min-vh-100 px-3 px-md-4 py-4">
+      {/* Success Toast */}
+      <div className={`toast-container ${showSuccess ? "show" : ""}`}>
+        <div className="toast-content bg-success">
+          <CheckCircle size={16} />
+          <span>Priority updated successfully</span>
+        </div>
+      </div>
+
       {/* Filters Section */}
-      <div className="card bg-gray-800 border-0 shadow-lg mb-4 mx-5 mt-5">
+      <div className="card bg-gray-800 border-0 shadow-lg mb-4">
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-6">
+            <div className="col-12 col-md-6">
               <div className="input-group">
                 <span className="input-group-text bg-gray-700 border-0">
                   <Search size={18} className="text-gray-400" />
@@ -217,17 +241,17 @@ const Patients = () => {
               </div>
             </div>
 
-            <div className="col-md-3">
+            <div className="col-12 col-md-6 col-lg-3">
               <select
-                className="form-select bg-gray-700 border-0 text-white"
+                className="form-select bg-gray-700 border-0 text-white w-100"
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
               >
                 <option value="all">All Priorities</option>
                 <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="very high">Very High</option>
+                <option value="moderate">Moderate</option>
+                <option value="severe">Severe</option>
+                <option value="high severe">High Severe</option>
               </select>
             </div>
           </div>
@@ -235,42 +259,40 @@ const Patients = () => {
       </div>
 
       {/* Main Content */}
-      <div className="row row-cols-4 g-3 mx-5 mb-5">
+      <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
         {loading ? (
-          <div className="col d-flex justify-content-center align-items-center">
+          <div className="col-12 d-flex justify-content-center py-5">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         ) : filteredAppointments.length === 0 ? (
-          <div className="col d-flex justify-content-center align-items-center text-gray-400">
-            <div>
-              <h5>No Appointments Found</h5>
-              <p>Try adjusting your filters or search terms</p>
-            </div>
+          <div className="col-12 text-center py-5 text-gray-400">
+            <h5>No Appointments Found</h5>
+            <p>Try adjusting your filters or search terms</p>
           </div>
         ) : (
           filteredAppointments.map((appointment, index) => (
-            <div
-              key={index}
-              className="col"
-              onClick={() => handleViewClick(appointment)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="card bg-gray-700 border-0 shadow-sm h-100">
-                <div className="card-body p-3 d-flex flex-column justify-content-center align-items-center">
-                  <div className="position-relative mb-2">
+            <div key={index} className="col">
+              <div
+                className="card bg-gray-700 border-0 shadow-sm h-100"
+                onClick={() => handleViewClick(appointment)}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="card-body p-3 d-flex flex-column align-items-center">
+                  {/* Avatar Section */}
+                  <div className="position-relative mb-3">
                     <img
                       src={
-                        appointment?.patient?.avatar?.url?.length > 0
-                          ? appointment?.patient?.avatar?.url
-                          : appointment?.patient?.avatar
+                        appointment?.patient?.avatar?.url ||
+                        appointment?.patient?.avatar ||
+                        "default-avatar.png"
                       }
                       alt="Patient Avatar"
                       className="rounded-circle"
                       style={{
-                        width: "50px",
-                        height: "50px",
+                        width: "60px",
+                        height: "60px",
                         objectFit: "cover",
                       }}
                     />
@@ -278,60 +300,74 @@ const Patients = () => {
                       className={`position-absolute bottom-0 end-0 p-1 rounded-circle ${getStatusBadgeColor(
                         appointment.appointmentStatus
                       )}`}
-                      style={{ width: "10px", height: "10px" }}
-                    ></span>
+                      style={{ width: "12px", height: "12px" }}
+                    />
                   </div>
-                  <h6
-                    className="text-white mb-1 text-center"
-                    style={{
-                      fontSize: "0.8rem",
-                      maxWidth: "100px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
+
+                  {/* Patient Info */}
+                  <h6 className="text-white mb-2 text-center w-100 text-truncate">
                     {appointment.patient.name}
                   </h6>
                   <span
                     className={`badge ${
-                      getPriorityInfo(appointment.priority).color
-                    }`}
-                    style={{ fontSize: "0.7rem" }}
+                      getPriorityConfig(appointment.priority).color
+                    } mb-3`}
                   >
                     {appointment.priority} Priority
                   </span>
 
-                  <div className="d-flex gap-2 mt-2">
+                  {/* Priority Select */}
+                  <div className="d-flex align-items-center gap-2 w-100 mb-3">
+                    <select
+                      className="form-select form-select-sm bg-gray-700 border-gray-600 text-white flex-grow-1"
+                      value={appointment.priority.toLowerCase()}
+                      onChange={(e) =>
+                        handlePriorityChange(appointment._id, e.target.value, e)
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="moderate">Moderate Priority</option>
+                      <option value="severe">Severe Priority</option>
+                      <option value="high severe">High Severe Priority</option>
+                    </select>
+                    {updatingPriority === appointment._id && (
+                      <div className="spinner-border spinner-border-sm text-primary" />
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="d-flex flex-wrap gap-2 justify-content-center w-100">
                     <button
-                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      className="btn btn-gray-600 btn-sm d-flex align-items-center gap-2 flex-grow-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleViewClick(appointment);
                       }}
                     >
-                      <MessageSquare size={12} />
+                      <MessageSquare size={14} />
                       Chat
                     </button>
                     <button
-                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      className="btn btn-gray-600 btn-sm d-flex align-items-center gap-2 flex-grow-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedAppointment(appointment);
                         setShowNotesModal(true);
                       }}
                     >
-                      <FileText size={12} />
+                      <FileText size={14} />
                       Notes
                     </button>
                     <button
-                      className="btn btn-gray-600 d-flex align-items-center gap-2 btn-sm"
+                      className="btn btn-gray-600 btn-sm d-flex align-items-center gap-2 flex-grow-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedAppointment(appointment);
                         setShowSummaryModal(true);
                       }}
                     >
-                      <ClipboardList size={12} />
+                      <ClipboardList size={14} />
                       Summary
                     </button>
                   </div>
@@ -342,12 +378,12 @@ const Patients = () => {
         )}
       </div>
 
+      {/* Modals */}
       <NotesModal
         show={showNotesModal}
         onHide={() => setShowNotesModal(false)}
         appointment={selectedAppointment}
       />
-
       <SummaryModal
         show={showSummaryModal}
         onHide={() => setShowSummaryModal(false)}
@@ -355,6 +391,12 @@ const Patients = () => {
       />
 
       <style jsx>{`
+        body,
+        html {
+          background-color: #1a202c; /* This is the equivalent of Tailwind's bg-gray-900 */
+          margin: 0;
+          padding: 0;
+        }
         .bg-gray-900 {
           background-color: #111827;
         }
@@ -426,6 +468,45 @@ const Patients = () => {
         .badge {
           padding: 0.5em 0.8em;
           font-weight: 500;
+        }
+        .toast-container {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          z-index: 1050;
+          opacity: 0;
+          transform: translateY(-0.5rem);
+          transition: all 0.3s ease-in-out;
+        }
+
+        .toast-container.show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          border-radius: 0.5rem;
+          color: white;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 576px) {
+          .card-body {
+            padding: 1rem;
+          }
+
+          .btn-group {
+            flex-direction: column;
+            width: 100%;
+          }
+
+          .form-select {
+            width: 100%;
+          }
         }
       `}</style>
     </div>

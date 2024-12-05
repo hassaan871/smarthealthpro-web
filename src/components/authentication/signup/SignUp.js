@@ -1,33 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SignUpStep1 from "./SignUpStep1";
 import SignUpStep2 from "./SignUpStep2";
 import SignUpStep3 from "./SignUpStep3";
 
 function SignUp() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    // Basic Data (Step 1)
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-
-    // Additional Data (Step 2)
-    specialization: "",
-    cnic: "",
-    address: "",
-    about: "",
-    education: [{ degree: "", institution: "", year: "" }],
-    officeHours: {
-      sunday: { status: "Closed", openTime: "", closeTime: "" },
-      monday: { status: "Closed", openTime: "", closeTime: "" },
-      tuesday: { status: "Closed", openTime: "", closeTime: "" },
-      wednesday: { status: "Closed", openTime: "", closeTime: "" },
-      thursday: { status: "Closed", openTime: "", closeTime: "" },
-      friday: { status: "Closed", openTime: "", closeTime: "" },
-      saturday: { status: "Closed", openTime: "", closeTime: "" },
-    },
+  // Initialize state from localStorage if available, otherwise use default values
+  const [step, setStep] = useState(() => {
+    const savedStep = localStorage.getItem("signupStep");
+    return savedStep ? parseInt(savedStep) : 1;
   });
+
+  const [formData, setFormData] = useState(() => {
+    const savedFormData = localStorage.getItem("signupFormData");
+    return savedFormData
+      ? JSON.parse(savedFormData)
+      : {
+          // Basic Data (Step 1)
+          fullName: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+
+          // Additional Data (Step 2)
+          specialization: "",
+          cnic: "",
+          address: "",
+          about: "",
+          education: [{ degree: "", institution: "", year: "" }],
+          officeHours: {
+            sunday: { status: "Closed", openTime: "", closeTime: "" },
+            monday: { status: "Closed", openTime: "", closeTime: "" },
+            tuesday: { status: "Closed", openTime: "", closeTime: "" },
+            wednesday: { status: "Closed", openTime: "", closeTime: "" },
+            thursday: { status: "Closed", openTime: "", closeTime: "" },
+            friday: { status: "Closed", openTime: "", closeTime: "" },
+            saturday: { status: "Closed", openTime: "", closeTime: "" },
+          },
+        };
+  });
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("signupStep", step);
+  }, [step]);
+
+  useEffect(() => {
+    localStorage.setItem("signupFormData", JSON.stringify(formData));
+  }, [formData]);
 
   const nextStep = () => {
     window.scrollTo(0, 0);
@@ -44,6 +63,34 @@ function SignUp() {
       ...prev,
       ...newData,
     }));
+  };
+
+  // Optional: Add a function to reset the form
+  const resetForm = () => {
+    console.log("cleaning ");
+    localStorage.removeItem("signupStep");
+    localStorage.removeItem("signupFormData");
+    setStep(1);
+    setFormData({
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      specialization: "",
+      cnic: "",
+      address: "",
+      about: "",
+      education: [{ degree: "", institution: "", year: "" }],
+      officeHours: {
+        sunday: { status: "Closed", openTime: "", closeTime: "" },
+        monday: { status: "Closed", openTime: "", closeTime: "" },
+        tuesday: { status: "Closed", openTime: "", closeTime: "" },
+        wednesday: { status: "Closed", openTime: "", closeTime: "" },
+        thursday: { status: "Closed", openTime: "", closeTime: "" },
+        friday: { status: "Closed", openTime: "", closeTime: "" },
+        saturday: { status: "Closed", openTime: "", closeTime: "" },
+      },
+    });
   };
 
   const renderStep = () => {
@@ -66,7 +113,16 @@ function SignUp() {
           />
         );
       case 3:
-        return <SignUpStep3 formData={formData} onBack={prevStep} />;
+        return (
+          <SignUpStep3
+            formData={formData}
+            onBack={prevStep}
+            onComplete={() => {
+              // When form is submitted successfully, reset the stored data
+              resetForm();
+            }}
+          />
+        );
       default:
         return <SignUpStep1 />;
     }

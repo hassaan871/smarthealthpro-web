@@ -3,19 +3,55 @@ import { User, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 function SignUpStep1({ formData, updateFormData, onNext }) {
-  const [error, setError] = useState("");
+  const [error, setError] = useState({
+    password: "",
+    confirmPassword: "",
+  });
   const navigate = useNavigate();
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Password and confirm password do not match");
+    // Validate password length
+    const isPasswordValid = validatePassword(formData.password);
+
+    if (!isPasswordValid) {
       return;
     }
 
-    setError("");
+    if (formData.password !== formData.confirmPassword) {
+      setError((prev) => ({
+        ...prev,
+        confirmPassword: "Passwords do not match",
+      }));
+      return;
+    }
+
+    setError({ password: "", confirmPassword: "" });
     onNext();
+  };
+
+  const handleNameChange = (e) => {
+    let newName = e.target.value;
+    // Remove any existing "Dr." prefix to prevent duplicates
+    newName = newName.replace(/^Dr\.\s*/i, "");
+    // Add "Dr." prefix if it's not empty
+    if (newName) {
+      newName = `Dr. ${newName}`;
+    }
+    updateFormData({ fullName: newName });
+  };
+
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      setError((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+      return false;
+    }
+    setError((prev) => ({ ...prev, password: "" }));
+    return true;
   };
 
   return (
@@ -116,7 +152,7 @@ function SignUpStep1({ formData, updateFormData, onNext }) {
                   type="text"
                   className="form-control"
                   value={formData.fullName}
-                  onChange={(e) => updateFormData({ fullName: e.target.value })}
+                  onChange={handleNameChange}
                   placeholder="Name"
                   required
                 />
@@ -142,9 +178,14 @@ function SignUpStep1({ formData, updateFormData, onNext }) {
               <div className="form-group">
                 <input
                   type="password"
-                  className="form-control"
+                  className={`form-control ${
+                    error.password ? "border-danger border-2" : ""
+                  }`}
                   value={formData.password}
-                  onChange={(e) => updateFormData({ password: e.target.value })}
+                  onChange={(e) => {
+                    updateFormData({ password: e.target.value });
+                    validatePassword(e.target.value);
+                  }}
                   placeholder="Password"
                   required
                 />
@@ -152,6 +193,11 @@ function SignUpStep1({ formData, updateFormData, onNext }) {
                   <Lock size={20} />
                 </div>
               </div>
+              {(error.password || error.confirmPassword) && (
+                <div className="alert alert-danger py-2 mb-3" role="alert">
+                  {error.password || error.confirmPassword}
+                </div>
+              )}
 
               <div className="form-group">
                 <input
@@ -168,12 +214,6 @@ function SignUpStep1({ formData, updateFormData, onNext }) {
                   <Lock size={20} />
                 </div>
               </div>
-
-              {error && (
-                <div className="alert alert-danger py-2 mb-3" role="alert">
-                  {error}
-                </div>
-              )}
 
               <button type="submit" className="btn btn-primary w-100">
                 Continue

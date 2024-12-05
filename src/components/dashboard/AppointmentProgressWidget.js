@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   Calendar,
@@ -9,12 +9,17 @@ import {
   MessageSquare,
   PlusSquare,
   ClipboardList,
+  CheckCircle,
+  Loader2,
 } from "lucide-react";
 import Context from "../context/context";
+import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
 
-const AppointmentProgressWidget = () => {
+const AppointmentProgressWidget = ({ fromOverview }) => {
   const { appointments, setAppointments } = useContext(Context);
-  const [activeTab, setActiveTab] = useState("today");
+  const location = useLocation();
+  const tab = location.state?.activeTab || "today";
+  const [activeTab, setActiveTab] = useState(tab);
   const [error, setError] = useState(null);
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -23,7 +28,7 @@ const AppointmentProgressWidget = () => {
   const [prescriptions, setPrescriptions] = useState({});
   const [statusFilter, setStatusFilter] = useState("all");
   const [prescriptionData, setPrescriptionData] = useState({
-    medicines: [
+    prescription: [
       {
         medication: "",
         dosage: "",
@@ -33,10 +38,60 @@ const AppointmentProgressWidget = () => {
       },
     ],
   });
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPrescription, setEditingPrescription] = useState(null);
+  const [isPrioritySaving, setIsPrioritySaving] = useState(false);
+  const [showPrioritySuccess, setShowPrioritySuccess] = useState(false);
 
   // State to store prescriptions and notes
   const [medicalRecords, setMedicalRecords] = useState({});
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top
+  }, []);
+
+  const handleEditPrescription = (prescription) => {
+    setIsEditing(true);
+    setEditingPrescription(prescription);
+  };
+
+  const handleSaveEdit = async (record, prescription) => {
+    // console.log("editted prescription: ", editingPrescription);
+    // console.log("prescription: ", prescription);
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5000/appointment/${record.appointmentId}/prescriptions/${prescription.id}`, // Adjust the URL to match the API
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editingPrescription), // Send the updated prescription object
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update prescription");
+      }
+
+      // Refresh prescriptions data
+      handleViewRecords(selectedAppointment);
+      setIsEditing(false);
+      setEditingPrescription(null);
+
+      // Show success toast
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
+    } catch (error) {
+      console.error("Error updating prescription:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const isToday = (date) => {
     const today = new Date();
@@ -154,27 +209,6 @@ const AppointmentProgressWidget = () => {
           (apt) => apt.appointmentStatus === "pending"
         );
         setAppointments(pendingAppointments);
-
-        // Fetch prescriptions for each appointment
-        const prescriptionsData = {};
-        for (const apt of pendingAppointments) {
-          try {
-            const presResponse = await fetch(
-              `http://localhost:5000/appointment/${apt._id}/medicines`
-            );
-            if (presResponse.ok) {
-              const presData = await presResponse.json();
-              prescriptionsData[apt._id] = presData;
-            }
-          } catch (error) {
-            console.error(
-              `Error fetching prescriptions for appointment ${apt._id}:`,
-              error
-            );
-            prescriptionsData[apt._id] = []; // Initialize with empty array if fetch fails
-          }
-        }
-        setPrescriptions(prescriptionsData);
       } catch (err) {
         setError(err.message);
       }
@@ -193,46 +227,51 @@ const AppointmentProgressWidget = () => {
 
   // Update the handleViewRecords function
   const handleViewRecords = (appointment) => {
-    console.log("Selected appointment for view:", appointment);
     setSelectedAppointment(appointment);
     setShowViewModal(true);
 
-    // Fetch prescriptions for this appointment
-    fetch(`http://localhost:5000/appointment/${appointment._id}/medicines`)
+    const link = `http://localhost:5000/appointment/${appointment.patient.id}/prescription`;
+    console.log("link is: ", link);
+
+    fetch(link)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Raw API Response:", data);
-        console.log("Medicines from API:", data.data.medicines);
-        setPrescriptions((prev) => ({
-          ...prev,
-          [appointment._id]: data.data.medicines, // Store the medicines array directly
-        }));
+        console.log("Prescription data from API:", data);
+        setPrescriptions(data.data); // Now storing the entire response object
       })
       .catch((error) => {
         console.error("Error fetching prescriptions:", error);
+        setPrescriptions({
+          success: false,
+          message: "Failed to fetch prescriptions",
+          data: [],
+        });
       });
   };
-
   const savePrescription = async () => {
     if (!selectedAppointment) return;
 
+    setIsSaving(true); // Start loading
+    const body = {
+      prescription: prescriptionData.prescription.map((medicine) => ({
+        medication: medicine.medication,
+        dosage: medicine.dosage,
+        frequency: medicine.frequency,
+        duration: medicine.duration,
+        instructions: medicine.instructions,
+      })),
+    };
+
+    console.log("body is: ", body);
     try {
       const response = await fetch(
-        `http://localhost:5000/appointment/${selectedAppointment._id}/medicines`,
+        `http://localhost:5000/appointment/${selectedAppointment._id}/prescription`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            medicines: prescriptionData.medicines.map((medicine) => ({
-              medication: medicine.medication,
-              dosage: medicine.dosage,
-              frequency: medicine.frequency,
-              duration: medicine.duration,
-              instructions: medicine.instructions,
-            })),
-          }),
+          body: JSON.stringify(body),
         }
       );
 
@@ -240,48 +279,33 @@ const AppointmentProgressWidget = () => {
         throw new Error("Failed to save prescription");
       }
 
-      const savedResponse = await response.json();
-      console.log("Save Response:", savedResponse);
-
-      // Fetch updated prescriptions after saving
-      const updatedPresResponse = await fetch(
-        `http://localhost:5000/appointment/${selectedAppointment._id}/medicines`
-      );
-
-      if (!updatedPresResponse.ok) {
-        throw new Error("Failed to fetch updated prescriptions");
-      }
-
-      const updatedData = await updatedPresResponse.json();
-      console.log("Updated Prescriptions Response:", updatedData);
-
-      // Update local state with new prescriptions
-      setPrescriptions((prev) => ({
-        ...prev,
-        [selectedAppointment._id]: updatedData.data.medicines, // Store the medicines array directly
-      }));
-
-      // Reset form and close modal
-      setPrescriptionData({
-        medicines: [
-          {
-            medication: "",
-            dosage: "",
-            frequency: "",
-            duration: "",
-            instructions: "",
-          },
-        ],
-      });
       setShowPrescriptionModal(false);
 
-      // Show success message
-      alert("Prescription saved successfully");
+      // Show success toast
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000); // Hide after 3 seconds
     } catch (error) {
       console.error("Error saving prescription:", error);
-      alert("Failed to save prescription. Please try again.");
+      // You might want to show an error toast here as well
+    } finally {
+      setIsSaving(false); // End loading
     }
   };
+
+  const SuccessToast = () => (
+    <div
+      className={`fixed top-4 right-4 z-50 transition-all duration-300 ${
+        showSuccessToast
+          ? "opacity-100 transform translate-y-0"
+          : "opacity-0 transform -translate-y-2 pointer-events-none"
+      }`}
+    >
+      <div className="flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg">
+        <CheckCircle className="h-5 w-5" />
+        <span className="font-medium">Prescription saved successfully</span>
+      </div>
+    </div>
+  );
 
   const handleChat = async (appointment) => {
     try {
@@ -333,30 +357,14 @@ const AppointmentProgressWidget = () => {
     });
   };
 
-  const getPriorityInfo = (priority) =>
-    ({
-      low: { percentage: 20, color: "bg-info", textColor: "text-info" },
-      medium: {
-        percentage: 40,
-        color: "bg-success",
-        textColor: "text-success",
-      },
-      moderate: {
-        percentage: 60,
-        color: "bg-warning",
-        textColor: "text-warning",
-      },
-      high: { percentage: 80, color: "bg-danger", textColor: "text-danger" },
-      "very high": {
-        percentage: 100,
-        color: "bg-danger",
-        textColor: "text-danger",
-      },
-    }[priority.toLowerCase()] || {
-      percentage: 0,
-      color: "bg-secondary",
-      textColor: "text-secondary",
-    });
+  const getPriorityBadge = (priority) => {
+    const config = getPriorityConfig(priority);
+    return {
+      color: config.color,
+      textColor: config.textColor,
+      percentage: config.percentage,
+    };
+  };
 
   const getStatusBadgeColor = (status) =>
     ({
@@ -396,7 +404,7 @@ const AppointmentProgressWidget = () => {
             ></button>
           </div>
           <div className="modal-body">
-            {prescriptionData.medicines.map((medicine, index) => (
+            {prescriptionData.prescription.map((medicine, index) => (
               <div
                 key={index}
                 className="mb-4 p-3 border border-gray-700 rounded"
@@ -408,7 +416,7 @@ const AppointmentProgressWidget = () => {
                       className="btn btn-danger btn-sm"
                       onClick={() => {
                         setPrescriptionData((prev) => ({
-                          medicines: prev.medicines.filter(
+                          prescription: prev.prescription.filter(
                             (_, i) => i !== index
                           ),
                         }));
@@ -426,7 +434,7 @@ const AppointmentProgressWidget = () => {
                     value={medicine.medication}
                     onChange={(e) => {
                       setPrescriptionData((prev) => ({
-                        medicines: prev.medicines.map((m, i) =>
+                        prescription: prev.prescription.map((m, i) =>
                           i === index ? { ...m, medication: e.target.value } : m
                         ),
                       }));
@@ -442,7 +450,7 @@ const AppointmentProgressWidget = () => {
                     value={medicine.dosage}
                     onChange={(e) => {
                       setPrescriptionData((prev) => ({
-                        medicines: prev.medicines.map((m, i) =>
+                        prescription: prev.prescription.map((m, i) =>
                           i === index ? { ...m, dosage: e.target.value } : m
                         ),
                       }));
@@ -458,7 +466,7 @@ const AppointmentProgressWidget = () => {
                     value={medicine.frequency}
                     onChange={(e) => {
                       setPrescriptionData((prev) => ({
-                        medicines: prev.medicines.map((m, i) =>
+                        prescription: prev.prescription.map((m, i) =>
                           i === index ? { ...m, frequency: e.target.value } : m
                         ),
                       }));
@@ -474,7 +482,7 @@ const AppointmentProgressWidget = () => {
                     value={medicine.duration}
                     onChange={(e) => {
                       setPrescriptionData((prev) => ({
-                        medicines: prev.medicines.map((m, i) =>
+                        prescription: prev.prescription.map((m, i) =>
                           i === index ? { ...m, duration: e.target.value } : m
                         ),
                       }));
@@ -489,7 +497,7 @@ const AppointmentProgressWidget = () => {
                     value={medicine.instructions}
                     onChange={(e) => {
                       setPrescriptionData((prev) => ({
-                        medicines: prev.medicines.map((m, i) =>
+                        prescription: prev.prescription.map((m, i) =>
                           i === index
                             ? { ...m, instructions: e.target.value }
                             : m
@@ -507,8 +515,8 @@ const AppointmentProgressWidget = () => {
               className="btn btn-secondary w-100"
               onClick={() => {
                 setPrescriptionData((prev) => ({
-                  medicines: [
-                    ...prev.medicines,
+                  prescription: [
+                    ...prev.prescription,
                     {
                       medication: "",
                       dosage: "",
@@ -528,15 +536,24 @@ const AppointmentProgressWidget = () => {
               type="button"
               className="btn btn-secondary"
               onClick={() => setShowPrescriptionModal(false)}
+              disabled={isSaving}
             >
               Cancel
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary d-flex align-items-center gap-2"
               onClick={savePrescription}
+              disabled={isSaving}
             >
-              Save Prescription
+              {isSaving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Prescription"
+              )}
             </button>
           </div>
         </div>
@@ -546,16 +563,6 @@ const AppointmentProgressWidget = () => {
 
   // Update the renderViewModal function
   const renderViewModal = () => {
-    console.log("Selected Appointment in modal:", selectedAppointment);
-    console.log("All Prescriptions:", prescriptions);
-
-    const appointmentPrescriptions =
-      selectedAppointment && selectedAppointment._id
-        ? prescriptions[selectedAppointment._id] || []
-        : [];
-
-    console.log("Final Prescriptions to render:", appointmentPrescriptions);
-
     return (
       <div
         className={`modal ${showViewModal ? "show d-block" : ""}`}
@@ -568,54 +575,219 @@ const AppointmentProgressWidget = () => {
               <button
                 type="button"
                 className="btn-close btn-close-white"
-                onClick={() => setShowViewModal(false)}
+                onClick={() => {
+                  setShowViewModal(false);
+                  setIsEditing(false);
+                  setEditingPrescription(null);
+                }}
               ></button>
             </div>
             <div className="modal-body">
               <div className="mb-4">
                 <h6 className="text-lg font-semibold mb-3">Prescriptions</h6>
-                {Array.isArray(appointmentPrescriptions) &&
-                appointmentPrescriptions.length > 0 ? (
-                  <div className="space-y-4">
-                    {appointmentPrescriptions.map((prescription, index) => {
-                      console.log("Rendering prescription:", prescription);
-                      return (
-                        <div key={index} className="bg-gray-700 p-4 rounded">
-                          <div className="d-flex justify-content-between align-items-start mb-2">
-                            <h6 className="font-medium mb-0">
-                              {prescription.medication || prescription.medicine}
+                {prescriptions?.length > 0 ? (
+                  prescriptions.map((record, recordIndex) => (
+                    <div key={recordIndex} className="mb-4">
+                      <div className="bg-gray-700 p-4 rounded">
+                        {/* Appointment Info Header */}
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <div>
+                            <h6 className="font-medium mb-1">
+                              Doctor: {record?.doctorName}
                             </h6>
-                            <span className="text-sm text-gray-400">
-                              {new Date(
-                                prescription.createdAt || new Date()
-                              ).toLocaleDateString()}
-                            </span>
+                            <p className="text-sm text-gray-400 mb-0">
+                              Patient: {record?.patientName}
+                            </p>
                           </div>
-                          <div className="row mb-2">
-                            <div className="col-md-4">
-                              <span className="text-gray-400">Dosage:</span>{" "}
-                              {prescription.dosage}
+                          <div className="text-end">
+                            <div className="text-sm text-gray-400">
+                              Date: {record?.date}
                             </div>
-                            <div className="col-md-4">
-                              <span className="text-gray-400">Frequency:</span>{" "}
-                              {prescription.frequency}
-                            </div>
-                            <div className="col-md-4">
-                              <span className="text-gray-400">Duration:</span>{" "}
-                              {prescription.duration}
+                            <div className="text-sm text-gray-400">
+                              Time: {record?.time}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-300 mb-0">
-                            {prescription.instructions}
-                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        {/* Prescriptions */}
+                        <div className="space-y-3">
+                          {record.prescriptions.map((prescription, index) => (
+                            <div
+                              key={index}
+                              className="border border-gray-600 rounded p-3 mt-3"
+                            >
+                              {isEditing &&
+                              editingPrescription?._id === prescription._id ? (
+                                // Editing Form
+                                <div>
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Medication
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-control bg-gray-700 border-gray-600 text-white"
+                                      value={editingPrescription.medication}
+                                      onChange={(e) =>
+                                        setEditingPrescription({
+                                          ...editingPrescription,
+                                          medication: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div className="row mb-3">
+                                    <div className="col-md-4">
+                                      <label className="form-label">
+                                        Dosage
+                                      </label>
+                                      <input
+                                        type="text"
+                                        className="form-control bg-gray-700 border-gray-600 text-white"
+                                        value={editingPrescription.dosage}
+                                        onChange={(e) =>
+                                          setEditingPrescription({
+                                            ...editingPrescription,
+                                            dosage: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                    <div className="col-md-4">
+                                      <label className="form-label">
+                                        Frequency
+                                      </label>
+                                      <input
+                                        type="text"
+                                        className="form-control bg-gray-700 border-gray-600 text-white"
+                                        value={editingPrescription.frequency}
+                                        onChange={(e) =>
+                                          setEditingPrescription({
+                                            ...editingPrescription,
+                                            frequency: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                    <div className="col-md-4">
+                                      <label className="form-label">
+                                        Duration
+                                      </label>
+                                      <input
+                                        type="text"
+                                        className="form-control bg-gray-700 border-gray-600 text-white"
+                                        value={editingPrescription.duration}
+                                        onChange={(e) =>
+                                          setEditingPrescription({
+                                            ...editingPrescription,
+                                            duration: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="mb-3">
+                                    <label className="form-label">
+                                      Instructions
+                                    </label>
+                                    <textarea
+                                      className="form-control bg-gray-700 border-gray-600 text-white"
+                                      value={editingPrescription.instructions}
+                                      onChange={(e) =>
+                                        setEditingPrescription({
+                                          ...editingPrescription,
+                                          instructions: e.target.value,
+                                        })
+                                      }
+                                      rows="3"
+                                    ></textarea>
+                                  </div>
+                                  <div className="d-flex justify-content-end gap-2">
+                                    <button
+                                      className="btn btn-secondary"
+                                      onClick={() => {
+                                        setIsEditing(false);
+                                        setEditingPrescription(null);
+                                      }}
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      className="btn btn-primary d-flex align-items-center gap-2"
+                                      onClick={() => {
+                                        // console.log("record: ", record);
+                                        handleSaveEdit(record, prescription);
+                                      }}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving ? (
+                                        <>
+                                          <Loader2
+                                            size={16}
+                                            className="animate-spin"
+                                          />
+                                          Saving...
+                                        </>
+                                      ) : (
+                                        "Save Changes"
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // View Mode
+                                <>
+                                  <div className="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 className="font-medium mb-0">
+                                      {prescription.medication}
+                                    </h6>
+                                    <button
+                                      className="btn btn-sm btn-gray-600"
+                                      onClick={() =>
+                                        handleEditPrescription(prescription)
+                                      }
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                  <div className="row mb-2">
+                                    <div className="col-md-4">
+                                      <span className="text-gray-400">
+                                        Dosage:
+                                      </span>{" "}
+                                      {prescription.dosage}
+                                    </div>
+                                    <div className="col-md-4">
+                                      <span className="text-gray-400">
+                                        Frequency:
+                                      </span>{" "}
+                                      {prescription.frequency}
+                                    </div>
+                                    <div className="col-md-4">
+                                      <span className="text-gray-400">
+                                        Duration:
+                                      </span>{" "}
+                                      {prescription.duration}
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-gray-300 mb-0">
+                                    <span className="text-gray-400">
+                                      Instructions:
+                                    </span>{" "}
+                                    {prescription.instructions}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 ) : (
                   <p className="text-gray-400">
                     {selectedAppointment
-                      ? "No prescriptions added yet."
+                      ? "No prescriptions found for this appointment."
                       : "Loading prescriptions..."}
                   </p>
                 )}
@@ -625,7 +797,11 @@ const AppointmentProgressWidget = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setShowViewModal(false)}
+                onClick={() => {
+                  setShowViewModal(false);
+                  setIsEditing(false);
+                  setEditingPrescription(null);
+                }}
               >
                 Close
               </button>
@@ -639,16 +815,71 @@ const AppointmentProgressWidget = () => {
   // Update the savePrescription function
   const filteredAppointments = getFilteredAppointments();
 
+  const handlePriorityChange = async (appointmentId, newPriority) => {
+    setIsPrioritySaving(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5000/appointment/updateAppointment/${appointmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            priority: newPriority,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update priority");
+
+      // Update local state
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((apt) =>
+          apt._id === appointmentId ? { ...apt, priority: newPriority } : apt
+        )
+      );
+
+      setShowPrioritySuccess(true);
+      setTimeout(() => setShowPrioritySuccess(false), 3000);
+    } catch (error) {
+      console.error("Error updating priority:", error);
+    } finally {
+      setIsPrioritySaving(false);
+    }
+  };
+
+  const PrioritySuccessToast = () => (
+    <div
+      className={`fixed top-4 right-4 z-50 transition-all duration-300 ${
+        showPrioritySuccess
+          ? "opacity-100 transform translate-y-0"
+          : "opacity-0 transform -translate-y-2 pointer-events-none"
+      }`}
+    >
+      <div className="d-flex items-center gap-2 bg-success text-white px-4 py-3 rounded shadow">
+        <CheckCircle className="h-5 w-5" />
+        <span className="font-medium">Priority updated successfully</span>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="container-fluid bg-gray-900 p-5">
-      <div className="card bg-gray-800 border-0 shadow-lg">
-        <div className="card-header bg-gray-800 border-bottom border-gray-700">
-          <div className="d-flex justify-content-between align-items-center">
+    <div
+      className="container-fluid bg-gray-900 px-4 py-5"
+      style={{ minHeight: "100vh" }}
+    >
+      <SuccessToast />
+      <div className="card bg-gray-800 border-0 shadow-lg mb-4">
+        {/* Header Section */}
+        <div className="card-header bg-gray-800 border-bottom border-gray-700 p-4">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <h3 className="card-title text-white mb-0">
               Comprehensive Appointment Progress
             </h3>
 
-            <div className="col-md-3">
+            {/* Status Filter */}
+            <div className="col-12 col-md-3">
               <select
                 className="form-select bg-gray-700 border-0 text-white"
                 value={statusFilter}
@@ -661,7 +892,8 @@ const AppointmentProgressWidget = () => {
               </select>
             </div>
 
-            <div className="btn-group" role="group">
+            {/* Tab Buttons */}
+            <div className="btn-group w-100 w-md-auto">
               {["all", "today", "week", "month"].map((tab) => (
                 <button
                   key={tab}
@@ -679,7 +911,8 @@ const AppointmentProgressWidget = () => {
           </div>
         </div>
 
-        <div className="card-body">
+        {/* Appointments List */}
+        <div className="card-body p-4">
           {filteredAppointments.length === 0 ? (
             <div className="text-center py-5 text-gray-400">
               <h5>No Pending Appointments</h5>
@@ -699,15 +932,16 @@ const AppointmentProgressWidget = () => {
                 key={index}
                 className="card bg-gray-700 border-0 shadow-sm mb-4"
               >
-                <div className="card-body">
-                  <div className="row">
-                    <div className="col-md-2 d-flex align-items-center justify-content-center">
+                <div className="card-body p-4">
+                  <div className="row g-4">
+                    {/* Patient Avatar Section */}
+                    <div className="col-12 col-md-2 d-flex align-items-center justify-content-center">
                       <div className="position-relative">
                         <img
                           src={
                             apt.patient.avatar?.url ||
                             apt.patient.avatar ||
-                            "https://example.com/avatar.png"
+                            "default-avatar.png"
                           }
                           alt="Patient"
                           className="rounded-circle"
@@ -726,8 +960,9 @@ const AppointmentProgressWidget = () => {
                       </div>
                     </div>
 
-                    <div className="col-md-10">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
+                    {/* Appointment Details Section */}
+                    <div className="col-12 col-md-10">
+                      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mb-3">
                         <div>
                           <h5 className="card-title text-white mb-1">
                             {apt.patient.name}
@@ -745,20 +980,21 @@ const AppointmentProgressWidget = () => {
                         </span>
                       </div>
 
+                      {/* Date, Time, Location */}
                       <div className="row mb-3">
-                        <div className="col-md-4">
+                        <div className="col-12 col-md-4 mb-2 mb-md-0">
                           <div className="d-flex align-items-center text-gray-400">
                             <Calendar size={16} className="me-2" />
                             {apt.date || "Not scheduled"}
                           </div>
                         </div>
-                        <div className="col-md-4">
+                        <div className="col-12 col-md-4 mb-2 mb-md-0">
                           <div className="d-flex align-items-center text-gray-400">
                             <Clock size={16} className="me-2" />
                             {apt.time || "Not scheduled"}
                           </div>
                         </div>
-                        <div className="col-md-4">
+                        <div className="col-12 col-md-4">
                           <div className="d-flex align-items-center text-gray-400">
                             <MapPin size={16} className="me-2" />
                             {apt.location || "Location TBD"}
@@ -766,30 +1002,33 @@ const AppointmentProgressWidget = () => {
                         </div>
                       </div>
 
+                      {/* Priority Progress Bar */}
                       <div className="progress mb-3" style={{ height: "6px" }}>
                         <div
                           className={`progress-bar ${
-                            getPriorityInfo(apt.priority).color
+                            getPriorityConfig(apt.priority).color
                           }`}
                           role="progressbar"
                           style={{
                             width: `${
-                              getPriorityInfo(apt.priority).percentage
+                              getPriorityConfig(apt.priority).percentage
                             }%`,
                           }}
                           aria-valuenow={
-                            getPriorityInfo(apt.priority).percentage
+                            getPriorityConfig(apt.priority).percentage
                           }
                           aria-valuemin="0"
                           aria-valuemax="100"
                         ></div>
                       </div>
 
-                      <div className="d-flex justify-content-between align-items-center">
+                      {/* Bottom Section */}
+                      <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                        {/* Priority Badge and Booking Date */}
                         <div className="d-flex align-items-center gap-3">
                           <span
                             className={`badge ${
-                              getPriorityInfo(apt.priority).color
+                              getPriorityConfig(apt.priority).color
                             }`}
                           >
                             {apt.priority} Priority
@@ -799,13 +1038,42 @@ const AppointmentProgressWidget = () => {
                             {new Date(apt.bookedOn).toLocaleDateString()}
                           </small>
                         </div>
-                        <div className="d-flex gap-2">
+
+                        {/* Priority Select */}
+                        <div className="d-flex align-items-center gap-2">
+                          <select
+                            className="form-select bg-gray-700 border-gray-600 text-white"
+                            value={apt.priority}
+                            onChange={(e) =>
+                              handlePriorityChange(apt._id, e.target.value)
+                            }
+                            disabled={isPrioritySaving}
+                          >
+                            <option value="low">Low Priority</option>
+                            <option value="moderate">Moderate Priority</option>
+                            <option value="severe">Severe Priority</option>
+                            <option value="high severe">
+                              High Severe Priority
+                            </option>
+                          </select>
+                          {isPrioritySaving && (
+                            <div className="spinner-border spinner-border-sm text-primary">
+                              <span className="visually-hidden">
+                                Loading...
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="d-flex flex-wrap gap-2">
                           <button
-                            className="btn btn-indigo d-flex align-items-center gap-2" // New custom class
+                            className="btn btn-indigo d-flex align-items-center gap-2"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAddPrescription(apt);
                             }}
+                            // disabled={apt.appointmentStatus !== "visited"}
                           >
                             <PlusSquare size={16} />
                             Add Prescription
@@ -816,6 +1084,7 @@ const AppointmentProgressWidget = () => {
                               e.stopPropagation();
                               handleViewRecords(apt);
                             }}
+                            // disabled={apt.appointmentStatus !== "visited"}
                           >
                             <ClipboardList size={16} />
                             View Records
@@ -839,9 +1108,9 @@ const AppointmentProgressWidget = () => {
             ))
           )}
         </div>
-        {renderPrescriptionModal()}
-        {renderViewModal()}
       </div>
+      {renderPrescriptionModal()}
+      {renderViewModal()}
 
       <style jsx>{`
         .bg-gray-900 {
@@ -956,6 +1225,69 @@ const AppointmentProgressWidget = () => {
         .btn-primary:hover {
           background-color: #2563eb; /* Darker blue on hover */
         }
+        .fixed {
+          position: fixed;
+        }
+
+        .z-50 {
+          z-index: 50;
+        }
+
+        .transition-all {
+          transition-property: all;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .duration-300 {
+          transition-duration: 300ms;
+        }
+
+        .transform {
+          transform: translateY(0);
+        }
+
+        .-translate-y-2 {
+          transform: translateY(-0.5rem);
+        }
+
+        .bg-green-600 {
+          background-color: #059669;
+        }
+
+        .rounded-lg {
+          border-radius: 0.5rem;
+        }
+
+        .shadow-lg {
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .flex {
+          display: flex;
+        }
+
+        .items-center {
+          align-items: center;
+        }
+
+        .gap-2 {
+          gap: 0.5rem;
+        }
+
+        .px-4 {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+
+        .py-3 {
+          padding-top: 0.75rem;
+          padding-bottom: 0.75rem;
+        }
+
+        .font-medium {
+          font-weight: 500;
+        }
       `}</style>
 
       <style jsx global>{`
@@ -970,10 +1302,6 @@ const AppointmentProgressWidget = () => {
           min-height: 100vh;
         }
 
-        .container-fluid {
-          background-color: #111827 !important;
-        }
-
         .card,
         .card-header,
         .card-body {
@@ -986,29 +1314,37 @@ const AppointmentProgressWidget = () => {
           border: none;
         }
 
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: #1f2937;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: #4b5563;
-          border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
-        }
-
         /* Override select dropdown styles */
         select option {
           background-color: #374151;
           color: #fff;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        /* Hide scrollbar while maintaining functionality */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* For Firefox */
+        * {
+          scrollbar-width: none;
+        }
+
+        /* For IE/Edge */
+        * {
+          -ms-overflow-style: none;
         }
       `}</style>
     </div>

@@ -24,10 +24,15 @@ import {
 import Context from "../context/context";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
 
 const Overview = () => {
   const { appointments, setAppointments } = useContext(Context);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -78,9 +83,17 @@ const Overview = () => {
   ];
 
   const trafficData = [
-    { name: "Completed", value: 63 },
-    { name: "Pending", value: 15 },
-    { name: "TBD", value: 22 },
+    {
+      name: "Completed",
+      value: 63,
+      color: getStatusConfig("completed").badgeClass,
+    },
+    {
+      name: "Pending",
+      value: 15,
+      color: getStatusConfig("pending").badgeClass,
+    },
+    { name: "TBD", value: 22, color: getStatusConfig("tbd").badgeClass },
   ];
   const COLORS = ["#60A5FA", "#F59E0B", "#10B981"];
 
@@ -195,13 +208,14 @@ const Overview = () => {
     <div
       className="container-fluid bg-gray-900"
       style={{
-        width: "99vw",
-        minHeight: "100vh", // Ensures minimum full viewport height
-        paddingBottom: "2rem", // Adds bottom padding
+        width: "100vw",
+        margin: "0",
+        minHeight: "100vh",
+        paddingBottom: 20,
       }}
     >
-      <div className="row mb-4 g-3" style={{ paddingTop: "25px" }}>
-        <div className="col-md-3">
+      <div className="row g-4 mb-4">
+        <div className="col-12 col-sm-6 col-lg-3">
           <StatCard
             title="Total Patients"
             value="24"
@@ -211,7 +225,7 @@ const Overview = () => {
             color="warning"
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-12 col-sm-6 col-lg-3">
           <StatCard
             title="Total Appointments"
             value="16"
@@ -221,7 +235,7 @@ const Overview = () => {
             color="info"
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-12 col-sm-6 col-lg-3">
           <StatCard
             title="Pending Appointments"
             value="10"
@@ -230,7 +244,7 @@ const Overview = () => {
             color="primary"
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-12 col-sm-6 col-lg-3">
           <StatCard
             title="TBD Appointments"
             value="6"
@@ -395,6 +409,12 @@ const Overview = () => {
                 <h5 className="card-title text-white">Latest Appointments</h5>
                 <a
                   href="/dashboard/appointments"
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevents the default anchor behavior
+                    navigate("/dashboard/appointments", {
+                      state: { activeTab: "all" },
+                    });
+                  }}
                   className="text-decoration-none text-primary"
                 >
                   View all →
@@ -414,15 +434,15 @@ const Overview = () => {
                     {appointments.map((appointment, index) => (
                       <tr key={index} className="border-bottom border-gray-700">
                         <td>
-                          <span
-                            className={`badge ${
-                              appointment.priority === "high"
-                                ? "bg-red-900 text-red-300"
-                                : "bg-yellow-900 text-yellow-300"
-                            }`}
-                          >
-                            {appointment.priority}
-                          </span>
+                          <td>
+                            <span
+                              className={`badge ${
+                                getPriorityConfig(appointment.priority).color
+                              }`}
+                            >
+                              {appointment.priority}
+                            </span>
+                          </td>
                         </td>
                         <td style={{ color: "#ffffff" }}>
                           {appointment.patient.name}
@@ -464,10 +484,6 @@ const Overview = () => {
         }
         .border-gray-700 {
           border-color: #374151 !important;
-        }
-
-        .container-fluid {
-          background-color: #111827 !important;
         }
 
         .card {
@@ -527,6 +543,21 @@ const Overview = () => {
         .btn-gray-600:hover {
           background-color: #6b7280;
           color: #f3f4f6;
+        }
+
+        /* Hide scrollbar while maintaining functionality */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* For Firefox */
+        * {
+          scrollbar-width: none;
+        }
+
+        /* For IE/Edge */
+        * {
+          -ms-overflow-style: none;
         }
       `}</style>
     </div>

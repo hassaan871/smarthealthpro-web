@@ -38,6 +38,10 @@ const DoctorProfile = () => {
   const [updateMessage, setUpdateMessage] = useState("");
 
   useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to the top
+  }, []);
+
+  useEffect(() => {
     const fetchDoctorData = async () => {
       const userString = localStorage.getItem("userToken");
       const userId = userString;
@@ -339,7 +343,7 @@ const DoctorProfile = () => {
         width: "100vw",
         margin: "0",
         minHeight: "100vh",
-        padding: "80px 5vw 0 5vw",
+        paddingBottom: 20,
       }}
     >
       <div className="row">
@@ -741,6 +745,21 @@ const DoctorProfile = () => {
         input[type="file"]::-webkit-file-upload-button:hover {
           background-color: #6b7280;
         }
+
+        /* Hide scrollbar while maintaining functionality */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* For Firefox */
+        * {
+          scrollbar-width: none;
+        }
+
+        /* For IE/Edge */
+        * {
+          -ms-overflow-style: none;
+        }
       `}</style>
 
       <style jsx global>{`
@@ -755,10 +774,6 @@ const DoctorProfile = () => {
           min-height: 100vh;
         }
 
-        .container-fluid {
-          background-color: #111827 !important;
-        }
-
         /* Override Bootstrap's default white backgrounds */
         .card,
         .card-header,
@@ -771,25 +786,6 @@ const DoctorProfile = () => {
         .btn,
         .form-control {
           border: none;
-        }
-
-        /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: #1f2937;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: #4b5563;
-          border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
         }
 
         /* Override select dropdown styles */

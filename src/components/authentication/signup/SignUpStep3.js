@@ -2,11 +2,52 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-function SignUpStep3({ formData, onBack }) {
+function SignUpStep3({ formData, onBack, onComplete }) {
   // Add onBack prop
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const transformFormData = (formData) => {
+    // Deep clone the form data to avoid mutations
+    const transformedData = { ...formData };
+
+    // Transform office hours
+    const transformedHours = {};
+    Object.entries(formData.officeHours).forEach(([day, hours]) => {
+      if (hours.status === "Closed") {
+        transformedHours[day] = "Closed";
+      } else {
+        // Convert 24h time to 12h time with AM/PM
+        const convertTo12Hour = (time24) => {
+          const [hours, minutes] = time24.split(":");
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+
+        const openTime = convertTo12Hour(hours.openTime);
+        const closeTime = convertTo12Hour(hours.closeTime);
+        transformedHours[day] = `${openTime} - ${closeTime}`;
+      }
+    });
+
+    // Transform education years
+    const transformedEducation = formData.education.map((edu) => ({
+      ...edu,
+      // Extract the start year from the range
+      year: edu.year,
+    }));
+
+    return {
+      ...transformedData,
+      officeHours: transformedHours,
+      education: transformedEducation,
+      // Remove confirmPassword as it's not needed in the final payload
+      confirmPassword: undefined,
+    };
+  };
 
   const handleCompleteRegistration = async (event) => {
     event.preventDefault();
@@ -15,16 +56,16 @@ function SignUpStep3({ formData, onBack }) {
 
     try {
       // Create registration data object
-      const dataToUpload = {
+      const transformedData = transformFormData({
         ...formData,
         role: "doctor",
-      };
+      });
 
-      console.log("Data to upload:", dataToUpload);
+      console.log("Data to upload:", transformedData);
 
       const response = await axios.post(
         "http://localhost:5000/user/register",
-        dataToUpload,
+        transformedData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -48,6 +89,7 @@ function SignUpStep3({ formData, onBack }) {
       );
       console.error("Error during registration:", error);
     } finally {
+      onComplete();
       setIsLoading(false);
     }
   };
