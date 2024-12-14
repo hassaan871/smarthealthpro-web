@@ -303,7 +303,7 @@ const AdminDoctors = () => {
 
         {/* Doctor Details Modal */}
         {selectedDoctor && (
-          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1050 }}>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1050, overflowY: "auto" }}>
             <div className="modal-dialog modal-lg">
               <div className="modal-content bg-secondary text-white">
                 <div className="modal-header border-bottom-0">
@@ -321,7 +321,7 @@ const AdminDoctors = () => {
                         src={selectedDoctor.avatar} 
                         alt={selectedDoctor.fullName} 
                         className="img-fluid rounded-circle mb-3"
-                        style={{ maxWidth: "200px" }}
+                        style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "cover" }}
                       />
                     </div>
                     <div className="col-md-8">
@@ -330,6 +330,47 @@ const AdminDoctors = () => {
                       <p><strong className="text-info">About:</strong> {selectedDoctor.about}</p>
                       <p><strong className="text-info">CNIC:</strong> {selectedDoctor.cnic}</p>
                       <p><strong className="text-info">Address:</strong> {selectedDoctor.address}</p>
+                      <p><strong className="text-info">Rating:</strong> {selectedDoctor.rating}/5.0</p>
+                      <p><strong className="text-info">Number of Patients:</strong> {selectedDoctor.numPatients}</p>
+                      <p><strong className="text-info">Review Count:</strong> {selectedDoctor.reviewCount}</p>
+                    </div>
+                  </div>
+
+                  {/* Education Section */}
+                  <div className="row mt-4">
+                    <div className="col-12">
+                      <h4 className="text-info mb-3">Education</h4>
+                      <ul className="list-group">
+                        {selectedDoctor.education.map((edu, index) => (
+                          <li 
+                            key={index} 
+                            className="list-group-item bg-dark text-white"
+                          >
+                            <strong className="text-info">{edu.degree}</strong> from {edu.institution}
+                            <br />
+                            <small className="text-muted">({edu.year})</small>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Office Hours Section */}
+                  <div className="row mt-4">
+                    <div className="col-12">
+                      <h4 className="text-info mb-3">Office Hours</h4>
+                      <div className="table-responsive">
+                        <table className="table table-dark table-striped">
+                          <tbody>
+                            {Object.entries(selectedDoctor.officeHours).map(([day, hours]) => (
+                              <tr key={day}>
+                                <td className="text-capitalize">{day}</td>
+                                <td>{hours}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 </div>
