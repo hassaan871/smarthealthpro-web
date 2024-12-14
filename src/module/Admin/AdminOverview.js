@@ -79,7 +79,7 @@ const AdminOverview = () => {
           <StatCard title="Pending Doctors Approvals" value="10" icon={PinIcon} color="primary" />
         </div>
         <div className="col-12 col-sm-6 col-lg-3">
-          <StatCard title="TBD Appointments" value="6" icon={Clock} color="success" />
+          <StatCard title="New Patients" value="6" icon={Clock} color="success" />
         </div>
       </div>
 
