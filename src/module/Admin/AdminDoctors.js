@@ -257,6 +257,274 @@ const doctors = [
 // console.log(doctors);
 
 
+// const AdminDoctors = () => {
+//   const [selectedDoctor, setSelectedDoctor] = useState(null);
+//   const [doctorToDelete, setDoctorToDelete] = useState(null);
+//   const [searchTerm, setSearchTerm] = useState("");
+
+//   const handleDoctorDetails = (doctor) => {
+//     setSelectedDoctor(doctor);
+//   };
+
+//   const closeDetails = () => {
+//     setSelectedDoctor(null);
+//   };
+
+//   const handleDeleteDoctor = (doctor) => {
+//     setDoctorToDelete(doctor);
+//   };
+
+//   const confirmDeleteDoctor = () => {
+//     // Here you would typically call an API to delete the doctor
+//     // For now, we'll just log the deletion and reset the state
+//     console.log(`Deleting doctor: ${doctorToDelete.fullName}`);
+//     setDoctorToDelete(null);
+//     setSelectedDoctor(null);
+//   };
+
+//   const cancelDelete = () => {
+//     setDoctorToDelete(null);
+//   };
+
+//   // Filter doctors based on search term
+//   const filteredDoctors = useMemo(() => {
+//     if (!searchTerm) return doctors;
+
+//     const searchTermLower = searchTerm.toLowerCase();
+//     return doctors.filter(doctor => 
+//       doctor.fullName.toLowerCase().includes(searchTermLower) ||
+//       doctor.cnic.toLowerCase().includes(searchTermLower)
+//     );
+//   }, [searchTerm]);
+
+//   return (
+//     <div className="container-fluid bg-dark text-white py-5" style={{ minHeight: "100vh" }}>
+//       <div className="container">
+//         <h1 className="text-center mb-5 text-primary">Doctor Management</h1>
+        
+//         {/* Search Bar */}
+//         <div className="row mb-4">
+//           <div className="col-md-8 offset-md-2">
+//             <div className="input-group">
+//               <input 
+//                 type="text" 
+//                 className="form-control bg-secondary text-white" 
+//                 placeholder="Search by Doctor Name or CNIC" 
+//                 value={searchTerm}
+//                 onChange={(e) => setSearchTerm(e.target.value)}
+//               />
+//               <span className="input-group-text bg-primary text-white">
+//                 <i className="bi bi-search"></i>
+//               </span>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="row">
+//           <div className="col-md-8 offset-md-2">
+//             <div className="card bg-secondary">
+//               <div className="card-header bg-dark text-primary">
+//                 <h3 className="mb-0">Registered Doctors</h3>
+//               </div>
+//               <div className="card-body">
+//                 <div className="list-group">
+//                   {filteredDoctors.map((doctor) => (
+//                     <div 
+//                       key={doctor._id} 
+//                       className="list-group-item list-group-item-action bg-dark text-white mb-2 rounded"
+//                       onClick={() => handleDoctorDetails(doctor)}
+//                       style={{ cursor: "pointer" }}
+//                     >
+//                       <div className="d-flex w-100 justify-content-between">
+//                         <h5 className="mb-1 text-primary">{doctor.fullName}</h5>
+//                         <small className="text-muted">{doctor.specialization}</small>
+//                       </div>
+//                       <p className="mb-1">{doctor.about}</p>
+//                     </div>
+//                   ))}
+                  
+//                   {filteredDoctors.length === 0 && (
+//                     <div className="text-center text-muted py-3">
+//                       No doctors found matching your search
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="row">
+//           <div className="col-md-8 offset-md-2">
+//             <div className="card bg-secondary">
+//               <div className="card-header bg-dark text-primary">
+//                 <h3 className="mb-0">Registered Doctors</h3>
+//               </div>
+//               <div className="card-body">
+//                 <div className="list-group">
+//                   {doctors.map((doctor) => (
+//                     <div 
+//                       key={doctor._id} 
+//                       className="list-group-item list-group-item-action bg-dark text-white mb-2 rounded"
+//                       onClick={() => handleDoctorDetails(doctor)}
+//                       style={{ cursor: "pointer" }}
+//                     >
+//                       <div className="d-flex w-100 justify-content-between">
+//                         <h5 className="mb-1 text-primary">{doctor.fullName}</h5>
+//                         <small className="text-muted">{doctor.specialization}</small>
+//                       </div>
+//                       <p className="mb-1">{doctor.about}</p>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Doctor Details Modal */}
+//         {selectedDoctor && (
+//           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1050, overflowY: "auto" }}>
+//             <div className="modal-dialog modal-lg">
+//               <div className="modal-content bg-dark text-white">
+//                 <div className="modal-header border-bottom-0">
+//                   <h5 className="modal-title text-primary">{selectedDoctor.fullName}</h5>
+//                   <button 
+//                     type="button" 
+//                     className="btn-close btn-close-white" 
+//                     onClick={closeDetails}
+//                   ></button>
+//                 </div>
+//                 <div className="modal-body">
+//                   <div className="row">
+//                     <div className="col-md-4 text-center">
+//                       <img 
+//                         src={selectedDoctor.avatar} 
+//                         alt={selectedDoctor.fullName} 
+//                         className="img-fluid rounded-circle mb-3"
+//                         style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "cover" }}
+//                       />
+//                     </div>
+//                     <div className="col-md-8">
+//                       <h4 className="text-primary mb-3">Doctor Details</h4>
+//                       <p><strong className="text-primary">Specialization:</strong> {selectedDoctor.specialization}</p>
+//                       <p><strong className="text-primary">About:</strong> {selectedDoctor.about}</p>
+//                       <p><strong className="text-primary">CNIC:</strong> {selectedDoctor.cnic}</p>
+//                       <p><strong className="text-primary">Address:</strong> {selectedDoctor.address}</p>
+//                       <p><strong className="text-primary">Rating:</strong> {selectedDoctor.rating}/5.0</p>
+//                       <p><strong className="text-primary">Number of Patients:</strong> {selectedDoctor.numPatients}</p>
+//                       <p><strong className="text-primary">Review Count:</strong> {selectedDoctor.reviewCount}</p>
+//                     </div>
+//                   </div>
+
+//                   {/* Education Section */}
+//                   <div className="row mt-4">
+//                     <div className="col-12">
+//                       <h4 className="text-primary mb-3">Education</h4>
+//                       <ul className="list-group">
+//                         {selectedDoctor.education.map((edu, index) => (
+//                           <li 
+//                             key={index} 
+//                             className="list-group-item bg-dark text-white"
+//                           >
+//                             <strong className="text-primary">{edu.degree}</strong> from {edu.institution}
+//                             <br />
+//                             <small className="text-muted">({edu.year})</small>
+//                           </li>
+//                         ))}
+//                       </ul>
+//                     </div>
+//                   </div>
+
+//                   {/* Office Hours Section */}
+//                   <div className="row mt-4">
+//                     <div className="col-12">
+//                       <h4 className="text-primary mb-3">Office Hours</h4>
+//                       <div className="table-responsive">
+//                         <table className="table table-dark table-striped">
+//                           <tbody>
+//                             {Object.entries(selectedDoctor.officeHours).map(([day, hours]) => (
+//                               <tr key={day}>
+//                                 <td className="text-capitalize">{day}</td>
+//                                 <td>{hours}</td>
+//                               </tr>
+//                             ))}
+//                           </tbody>
+//                         </table>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 <div className="modal-footer border-top-0">
+//                   <button 
+//                     type="button" 
+//                     className="btn btn-danger me-2" 
+//                     onClick={() => handleDeleteDoctor(selectedDoctor)}
+//                   >
+//                     Delete Doctor
+//                   </button>
+//                   <button 
+//                     type="button" 
+//                     className="btn btn-outline-light" 
+//                     onClick={closeDetails}
+//                   >
+//                     Close
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Delete Confirmation Modal */}
+//         {doctorToDelete && (
+//           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1051, overflowY: "auto" }}>
+//             <div className="modal-dialog">
+//               <div className="modal-content bg-dark text-white">
+//                 <div className="modal-header border-bottom-0">
+//                   <h5 className="modal-title text-danger">Confirm Doctor Deletion</h5>
+//                   <button 
+//                     type="button" 
+//                     className="btn-close btn-close-white" 
+//                     onClick={cancelDelete}
+//                   ></button>
+//                 </div>
+//                 <div className="modal-body">
+//                   <p>Are you sure you want to delete the following doctor permanently?</p>
+//                   <div className="alert alert-danger">
+//                     <strong>Name:</strong> {doctorToDelete.fullName}<br />
+//                     <strong>Specialization:</strong> {doctorToDelete.specialization}<br />
+//                     <strong>Rating:</strong> {doctorToDelete.rating}/5.0
+//                   </div>
+//                   <p className="text-warning">This action cannot be undone.</p>
+//                 </div>
+//                 <div className="modal-footer border-top-0">
+//                   <button 
+//                     type="button" 
+//                     className="btn btn-outline-light" 
+//                     onClick={cancelDelete}
+//                   >
+//                     Close
+//                   </button>
+//                   <button 
+//                     type="button" 
+//                     className="btn btn-danger" 
+//                     onClick={confirmDeleteDoctor}
+//                   >
+//                     Confirm Delete
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default AdminDoctors;
+
 const AdminDoctors = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [doctorToDelete, setDoctorToDelete] = useState(null);
@@ -348,34 +616,6 @@ const AdminDoctors = () => {
                       No doctors found matching your search
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-md-8 offset-md-2">
-            <div className="card bg-secondary">
-              <div className="card-header bg-dark text-primary">
-                <h3 className="mb-0">Registered Doctors</h3>
-              </div>
-              <div className="card-body">
-                <div className="list-group">
-                  {doctors.map((doctor) => (
-                    <div 
-                      key={doctor._id} 
-                      className="list-group-item list-group-item-action bg-dark text-white mb-2 rounded"
-                      onClick={() => handleDoctorDetails(doctor)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div className="d-flex w-100 justify-content-between">
-                        <h5 className="mb-1 text-primary">{doctor.fullName}</h5>
-                        <small className="text-muted">{doctor.specialization}</small>
-                      </div>
-                      <p className="mb-1">{doctor.about}</p>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
