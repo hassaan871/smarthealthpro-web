@@ -259,6 +259,7 @@ const doctors = [
 
 const AdminDoctors = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [doctorToDelete, setDoctorToDelete] = useState(null);
 
   const handleDoctorDetails = (doctor) => {
     setSelectedDoctor(doctor);
@@ -266,6 +267,22 @@ const AdminDoctors = () => {
 
   const closeDetails = () => {
     setSelectedDoctor(null);
+  };
+
+  const handleDeleteDoctor = (doctor) => {
+    setDoctorToDelete(doctor);
+  };
+
+  const confirmDeleteDoctor = () => {
+    // Here you would typically call an API to delete the doctor
+    // For now, we'll just log the deletion and reset the state
+    console.log(`Deleting doctor: ${doctorToDelete.fullName}`);
+    setDoctorToDelete(null);
+    setSelectedDoctor(null);
+  };
+
+  const cancelDelete = () => {
+    setDoctorToDelete(null);
   };
 
   return (
@@ -306,7 +323,6 @@ const AdminDoctors = () => {
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1050, overflowY: "auto" }}>
             <div className="modal-dialog modal-lg">
               <div className="modal-content bg-dark text-white">
-              {/* <div className="modal-content bg-secondary text-white"> */}
                 <div className="modal-header border-bottom-0">
                   <h5 className="modal-title text-primary">{selectedDoctor.fullName}</h5>
                   <button 
@@ -378,10 +394,60 @@ const AdminDoctors = () => {
                 <div className="modal-footer border-top-0">
                   <button 
                     type="button" 
+                    className="btn btn-danger me-2" 
+                    onClick={() => handleDeleteDoctor(selectedDoctor)}
+                  >
+                    Delete Doctor
+                  </button>
+                  <button 
+                    type="button" 
                     className="btn btn-outline-light" 
                     onClick={closeDetails}
                   >
                     Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {doctorToDelete && (
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1051, overflowY: "auto" }}>
+            <div className="modal-dialog">
+              <div className="modal-content bg-dark text-white">
+                <div className="modal-header border-bottom-0">
+                  <h5 className="modal-title text-danger">Confirm Doctor Deletion</h5>
+                  <button 
+                    type="button" 
+                    className="btn-close btn-close-white" 
+                    onClick={cancelDelete}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p>Are you sure you want to delete the following doctor permanently?</p>
+                  <div className="alert alert-danger">
+                    <strong>Name:</strong> {doctorToDelete.fullName}<br />
+                    <strong>Specialization:</strong> {doctorToDelete.specialization}<br />
+                    <strong>Rating:</strong> {doctorToDelete.rating}/5.0
+                  </div>
+                  <p className="text-warning">This action cannot be undone.</p>
+                </div>
+                <div className="modal-footer border-top-0">
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-light" 
+                    onClick={cancelDelete}
+                  >
+                    Close
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    onClick={confirmDeleteDoctor}
+                  >
+                    Confirm Delete
                   </button>
                 </div>
               </div>
