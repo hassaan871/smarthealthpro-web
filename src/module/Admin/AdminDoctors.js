@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const doctors = [
@@ -260,6 +260,7 @@ const doctors = [
 const AdminDoctors = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [doctorToDelete, setDoctorToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleDoctorDetails = (doctor) => {
     setSelectedDoctor(doctor);
@@ -285,11 +286,74 @@ const AdminDoctors = () => {
     setDoctorToDelete(null);
   };
 
+  // Filter doctors based on search term
+  const filteredDoctors = useMemo(() => {
+    if (!searchTerm) return doctors;
+
+    const searchTermLower = searchTerm.toLowerCase();
+    return doctors.filter(doctor => 
+      doctor.fullName.toLowerCase().includes(searchTermLower) ||
+      doctor.cnic.toLowerCase().includes(searchTermLower)
+    );
+  }, [searchTerm]);
+
   return (
     <div className="container-fluid bg-dark text-white py-5" style={{ minHeight: "100vh" }}>
       <div className="container">
         <h1 className="text-center mb-5 text-primary">Doctor Management</h1>
         
+        {/* Search Bar */}
+        <div className="row mb-4">
+          <div className="col-md-8 offset-md-2">
+            <div className="input-group">
+              <input 
+                type="text" 
+                className="form-control bg-secondary text-white" 
+                placeholder="Search by Doctor Name or CNIC" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <span className="input-group-text bg-primary text-white">
+                <i className="bi bi-search"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-8 offset-md-2">
+            <div className="card bg-secondary">
+              <div className="card-header bg-dark text-primary">
+                <h3 className="mb-0">Registered Doctors</h3>
+              </div>
+              <div className="card-body">
+                <div className="list-group">
+                  {filteredDoctors.map((doctor) => (
+                    <div 
+                      key={doctor._id} 
+                      className="list-group-item list-group-item-action bg-dark text-white mb-2 rounded"
+                      onClick={() => handleDoctorDetails(doctor)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="d-flex w-100 justify-content-between">
+                        <h5 className="mb-1 text-primary">{doctor.fullName}</h5>
+                        <small className="text-muted">{doctor.specialization}</small>
+                      </div>
+                      <p className="mb-1">{doctor.about}</p>
+                    </div>
+                  ))}
+                  
+                  {filteredDoctors.length === 0 && (
+                    <div className="text-center text-muted py-3">
+                      No doctors found matching your search
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="row">
           <div className="col-md-8 offset-md-2">
             <div className="card bg-secondary">
@@ -460,3 +524,4 @@ const AdminDoctors = () => {
 };
 
 export default AdminDoctors;
+
