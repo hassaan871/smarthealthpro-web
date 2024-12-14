@@ -271,12 +271,12 @@ const AdminDoctors = () => {
   return (
     <div className="container-fluid bg-dark text-white py-5" style={{ minHeight: "100vh" }}>
       <div className="container">
-        <h1 className="text-center mb-5 text-info">Doctor Management</h1>
+        <h1 className="text-center mb-5 text-primary">Doctor Management</h1>
         
         <div className="row">
           <div className="col-md-8 offset-md-2">
             <div className="card bg-secondary">
-              <div className="card-header bg-dark text-info">
+              <div className="card-header bg-dark text-primary">
                 <h3 className="mb-0">Registered Doctors</h3>
               </div>
               <div className="card-body">
@@ -289,7 +289,7 @@ const AdminDoctors = () => {
                       style={{ cursor: "pointer" }}
                     >
                       <div className="d-flex w-100 justify-content-between">
-                        <h5 className="mb-1 text-info">{doctor.fullName}</h5>
+                        <h5 className="mb-1 text-primary">{doctor.fullName}</h5>
                         <small className="text-muted">{doctor.specialization}</small>
                       </div>
                       <p className="mb-1">{doctor.about}</p>
@@ -305,9 +305,10 @@ const AdminDoctors = () => {
         {selectedDoctor && (
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.7)", position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 1050, overflowY: "auto" }}>
             <div className="modal-dialog modal-lg">
-              <div className="modal-content bg-secondary text-white">
+              <div className="modal-content bg-dark text-white">
+              {/* <div className="modal-content bg-secondary text-white"> */}
                 <div className="modal-header border-bottom-0">
-                  <h5 className="modal-title text-info">{selectedDoctor.fullName}</h5>
+                  <h5 className="modal-title text-primary">{selectedDoctor.fullName}</h5>
                   <button 
                     type="button" 
                     className="btn-close btn-close-white" 
@@ -325,28 +326,28 @@ const AdminDoctors = () => {
                       />
                     </div>
                     <div className="col-md-8">
-                      <h4 className="text-info mb-3">Doctor Details</h4>
-                      <p><strong className="text-info">Specialization:</strong> {selectedDoctor.specialization}</p>
-                      <p><strong className="text-info">About:</strong> {selectedDoctor.about}</p>
-                      <p><strong className="text-info">CNIC:</strong> {selectedDoctor.cnic}</p>
-                      <p><strong className="text-info">Address:</strong> {selectedDoctor.address}</p>
-                      <p><strong className="text-info">Rating:</strong> {selectedDoctor.rating}/5.0</p>
-                      <p><strong className="text-info">Number of Patients:</strong> {selectedDoctor.numPatients}</p>
-                      <p><strong className="text-info">Review Count:</strong> {selectedDoctor.reviewCount}</p>
+                      <h4 className="text-primary mb-3">Doctor Details</h4>
+                      <p><strong className="text-primary">Specialization:</strong> {selectedDoctor.specialization}</p>
+                      <p><strong className="text-primary">About:</strong> {selectedDoctor.about}</p>
+                      <p><strong className="text-primary">CNIC:</strong> {selectedDoctor.cnic}</p>
+                      <p><strong className="text-primary">Address:</strong> {selectedDoctor.address}</p>
+                      <p><strong className="text-primary">Rating:</strong> {selectedDoctor.rating}/5.0</p>
+                      <p><strong className="text-primary">Number of Patients:</strong> {selectedDoctor.numPatients}</p>
+                      <p><strong className="text-primary">Review Count:</strong> {selectedDoctor.reviewCount}</p>
                     </div>
                   </div>
 
                   {/* Education Section */}
                   <div className="row mt-4">
                     <div className="col-12">
-                      <h4 className="text-info mb-3">Education</h4>
+                      <h4 className="text-primary mb-3">Education</h4>
                       <ul className="list-group">
                         {selectedDoctor.education.map((edu, index) => (
                           <li 
                             key={index} 
                             className="list-group-item bg-dark text-white"
                           >
-                            <strong className="text-info">{edu.degree}</strong> from {edu.institution}
+                            <strong className="text-primary">{edu.degree}</strong> from {edu.institution}
                             <br />
                             <small className="text-muted">({edu.year})</small>
                           </li>
@@ -358,7 +359,7 @@ const AdminDoctors = () => {
                   {/* Office Hours Section */}
                   <div className="row mt-4">
                     <div className="col-12">
-                      <h4 className="text-info mb-3">Office Hours</h4>
+                      <h4 className="text-primary mb-3">Office Hours</h4>
                       <div className="table-responsive">
                         <table className="table table-dark table-striped">
                           <tbody>
