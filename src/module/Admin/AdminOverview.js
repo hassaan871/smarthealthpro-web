@@ -18,6 +18,7 @@ import {
   Clock,
   PinIcon,
 } from "lucide-react";
+import AdminNavbar from "./AdminNavbar";
 
 const AdminOverview = () => {
   useEffect(() => {
@@ -67,6 +68,8 @@ const AdminOverview = () => {
   );
 
   return (
+    <div>
+      <AdminNavbar />
     <div className="container-fluid bg-dark text-white" style={{ marginTop: "80px", minHeight: "100vh" }}>
       <div className="row g-4 mb-4">
         <div className="col-12 col-sm-6 col-lg-3">
@@ -196,6 +199,7 @@ const AdminOverview = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
     </div>
   );

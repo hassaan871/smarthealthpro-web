@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import AdminNavbar from "./AdminNavbar";
 
 const doctors = [
   {
@@ -297,6 +298,9 @@ const AdminDoctors = () => {
   }, [searchTerm]);
 
   return (
+    <div>
+      <AdminNavbar />
+    
     <div className="container-fluid bg-dark text-white py-5" style={{ minHeight: "100vh" }}>
       <div className="container">
         <h1 className="text-center mb-5 text-primary">Doctor Management</h1>
@@ -490,6 +494,7 @@ const AdminDoctors = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

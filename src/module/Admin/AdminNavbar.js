@@ -8,41 +8,70 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-const Nav = () => {
+const AdminNavbar = () => {
+  const navigate = useNavigate();
+
   const navItems = [
-    /*Set the Appripiate paths to the correct routes */
-    { name: "Overview", icon: FiGrid, path: "" },
-    { name: "Doctors", icon: FiCalendar, path: "" },
-    { name: "Patients", icon: FiUsers, path: "" },
-    { name: "Approve Doctors", icon: FiMessageSquare, path: "" },
-    // { name: "Profile", icon: FiSettings, path: "/dashboard/profile" },
-    { name: "Log out", icon: FiLogOut, path: "/login" },
+    { 
+      name: "Overview", 
+      icon: FiGrid, 
+      path: "/admin/AdminOverview" 
+    },
+    { 
+      name: "Doctors", 
+      icon: FiCalendar, 
+      path: "/admin/adminDoctors" 
+    },
+    { 
+      name: "Patients", 
+      icon: FiUsers, 
+      path: "/admin/AdminPatients" 
+    },
+    { 
+      name: "Approve Doctors", 
+      icon: FiMessageSquare, 
+      path: "/admin/AdminApproveDoctors" 
+    },
+    { 
+      name: "Log out", 
+      icon: FiLogOut, 
+      path: "/login",
+      onClick: () => {
+        // Clear any authentication tokens
+        localStorage.removeItem('userToken');
+        navigate('/login');
+      }
+    }
   ];
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" >
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <div className="container-fluid">
-        <Link className="navbar-brand" to=""> {/*Route to the Admin panel Overview*/}
+        <Link className="navbar-brand" to="/admin/overview">
           Admin SmartHealthPro
         </Link>
         <button
           className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
+          data-bs-target="#adminNavbar"
+          aria-controls="adminNavbar"
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className="collapse navbar-collapse" id="adminNavbar">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             {navItems.map((item) => (
               <li key={item.name} className="nav-item">
-                <Link className="nav-link" to={item.path}>
+                <Link 
+                  className="nav-link" 
+                  to={item.path}
+                  onClick={item.onClick}
+                >
                   <item.icon className="me-2" />
                   {item.name}
                 </Link>
@@ -55,4 +84,4 @@ const Nav = () => {
   );
 };
 
-export default Nav;
+export default AdminNavbar;
