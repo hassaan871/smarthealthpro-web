@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import Context from "../../context/context";
+import { encrypt, decrypt } from "../../encrypt/Encrypt";
 
 const DoctorProfile = () => {
   const { setUserInfo } = useContext(Context);

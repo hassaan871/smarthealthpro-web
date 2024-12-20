@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useState, useEffect, useContext } from "react";
 import Context from "../context/context";
+import { encrypt, decrypt } from "../encrypt/Encrypt";
 
 const NotesModal = ({ show, onHide, appointment }) => {
   const [notes, setNotes] = useState([]);
@@ -69,8 +70,13 @@ const NotesModal = ({ show, onHide, appointment }) => {
             patientId: id,
           },
         }
-      );
-      setNotes(response.data.notes);
+      ); // Decrypt each note before setting to state
+      const decryptedNotes = response.data.notes.map((note) => ({
+        ...note,
+        note: decrypt(note.note), // Decrypt the note content
+      }));
+
+      setNotes(decryptedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
     } finally {
@@ -101,8 +107,11 @@ const NotesModal = ({ show, onHide, appointment }) => {
         .filter((line) => line) // Remove empty lines
         .join("\n"); // Join back with newlines
 
+      // Encrypt the formatted note before sending
+      const encryptedNote = encrypt(formattedNote);
+
       const body = {
-        note: formattedNote,
+        note: encryptedNote,
         patient: appointment.patient.id,
         doctor: {
           _id: appointment.doctor.id,

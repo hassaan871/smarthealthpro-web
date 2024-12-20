@@ -8,6 +8,6 @@ export const ProtectedRoute = ({ children }) => {
 };
 
 export const AdminProtectedRoute = ({ children }) => {
-  const isAdminAuthenticated = localStorage.getItem("adminToken");
+  const isAdminAuthenticated = localStorage.getItem("adminInfo");
   return isAdminAuthenticated ? children : <Navigate to="/admin/login" />;
 };

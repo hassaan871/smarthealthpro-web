@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Context from "../context/context";
 import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
+import { encrypt, decrypt } from "../encrypt/Encrypt";
 
 const AppointmentProgressWidget = ({ fromOverview }) => {
   const { appointments, setAppointments } = useContext(Context);
@@ -44,6 +45,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const [editingPrescription, setEditingPrescription] = useState(null);
   const [isPrioritySaving, setIsPrioritySaving] = useState(false);
   const [showPrioritySuccess, setShowPrioritySuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // State to store prescriptions and notes
   const [medicalRecords, setMedicalRecords] = useState({});
@@ -63,6 +65,15 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
     // console.log("prescription: ", prescription);
     setIsSaving(true);
     try {
+      const encryptedPrescription = {
+        ...editingPrescription,
+        medication: encrypt(editingPrescription.medication),
+        dosage: encrypt(editingPrescription.dosage),
+        frequency: encrypt(editingPrescription.frequency),
+        duration: encrypt(editingPrescription.duration),
+        instructions: encrypt(editingPrescription.instructions),
+      };
+
       const response = await fetch(
         `http://localhost:5000/appointment/${record.appointmentId}/prescriptions/${prescription.id}`, // Adjust the URL to match the API
         {
@@ -70,7 +81,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editingPrescription), // Send the updated prescription object
+          body: JSON.stringify(encryptedPrescription), // Send the updated prescription object
         }
       );
 
@@ -82,6 +93,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
       handleViewRecords(selectedAppointment);
       setIsEditing(false);
       setEditingPrescription(null);
+      setShowViewModal(false);
 
       // Show success toast
       setShowSuccessToast(true);
@@ -199,7 +211,6 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
         const doctorId = userString;
         if (!doctorId) throw new Error("Doctor ID not found");
 
-        // Fetch appointments
         const response = await fetch(
           `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
         );
@@ -229,6 +240,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const handleViewRecords = (appointment) => {
     setSelectedAppointment(appointment);
     setShowViewModal(true);
+    setLoading(true);
 
     const link = `http://localhost:5000/appointment/${appointment.patient.id}/prescription`;
     console.log("link is: ", link);
@@ -237,7 +249,20 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
       .then((response) => response.json())
       .then((data) => {
         console.log("Prescription data from API:", data);
-        setPrescriptions(data.data); // Now storing the entire response object
+        const decryptedPrescriptions = data.data.map((record) => ({
+          ...record,
+          prescriptions: record.prescriptions.map((prescription) => ({
+            ...prescription,
+            medication: decrypt(prescription.medication),
+            dosage: decrypt(prescription.dosage),
+            frequency: decrypt(prescription.frequency),
+            duration: decrypt(prescription.duration),
+            instructions: decrypt(prescription.instructions),
+          })),
+        }));
+
+        setPrescriptions(decryptedPrescriptions);
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching prescriptions:", error);
@@ -252,14 +277,18 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
     if (!selectedAppointment) return;
 
     setIsSaving(true); // Start loading
+
+    const encryptedPrescription = prescriptionData.prescription.map(
+      (medicine) => ({
+        medication: encrypt(medicine.medication),
+        dosage: encrypt(medicine.dosage),
+        frequency: encrypt(medicine.frequency),
+        duration: encrypt(medicine.duration),
+        instructions: encrypt(medicine.instructions),
+      })
+    );
     const body = {
-      prescription: prescriptionData.prescription.map((medicine) => ({
-        medication: medicine.medication,
-        dosage: medicine.dosage,
-        frequency: medicine.frequency,
-        duration: medicine.duration,
-        instructions: medicine.instructions,
-      })),
+      prescription: encryptedPrescription,
     };
 
     console.log("body is: ", body);
@@ -319,7 +348,19 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
       );
 
       const conversations = conversationsResponse.data;
-      const existingConversation = conversations.find(
+
+      // Decrypt conversation data
+      const decryptedConversations = conversations.map((conv) => ({
+        ...conv,
+        messages: conv.messages
+          ? conv.messages.map((msg) => ({
+              ...msg,
+              content: decrypt(msg.content),
+            }))
+          : [],
+      }));
+
+      const existingConversation = decryptedConversations.find(
         (conv) =>
           conv.participants.includes(userId) &&
           conv.participants.includes(appointment.patient.id)
@@ -336,7 +377,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
         doctorInfo: {
           id: userId,
           avatar: appointment?.doctor?.avatar,
-          name: appointment?.doctor?.name,
+          name: encrypt(appointment?.doctor?.name), // Encrypt doctor name
         },
       };
 
@@ -585,7 +626,13 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
             <div className="modal-body">
               <div className="mb-4">
                 <h6 className="text-lg font-semibold mb-3">Prescriptions</h6>
-                {prescriptions?.length > 0 ? (
+                {loading ? (
+                  <div className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : prescriptions?.length > 0 ? (
                   prescriptions.map((record, recordIndex) => (
                     <div key={recordIndex} className="mb-4">
                       <div className="bg-gray-700 p-4 rounded">

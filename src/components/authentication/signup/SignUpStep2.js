@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { encrypt, decrypt } from "../../encrypt/Encrypt";
 
 function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
   const [cnicError, setCnicError] = useState("");
@@ -37,18 +38,39 @@ function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
       },
     });
   };
-
-  // New function to check CNIC uniqueness
+  // New function to encrypt sensitive form data
+  const encryptSensitiveData = (data) => {
+    return {
+      ...data,
+      cnic: encrypt(data.cnic),
+      address: data.address,
+      specialization: data.specialization,
+      education: data.education.map((edu) => ({
+        degree: edu.degree,
+        institution: edu.institution,
+        year: edu.year,
+      })),
+    };
+  };
+  // Function to check CNIC uniqueness with encryption
   const checkCnicUniqueness = async (cnic) => {
     if (cnic.length === 15) {
       try {
         setIsCheckingCnic(true);
         setCnicError("");
 
+        // Encrypt CNIC before sending to server
+        const encryptedCnic = encrypt(cnic);
+
         const response = await axios.get(
-          `http://localhost:5000/check-cnic/${cnic}`
+          `http://localhost:5000/check-cnic/${encryptedCnic}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
-        return true; // CNIC is unique
+        return true;
       } catch (error) {
         if (error.response?.status === 400) {
           setCnicError(error.response.data.message);
@@ -65,17 +87,15 @@ function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    if (cnicError) {
-      return;
-    }
+    if (cnicError) return;
 
     const isUnique = await checkCnicUniqueness(formData.cnic);
     if (isUnique) {
+      const encryptedFormData = encryptSensitiveData(formData);
+      updateFormData(encryptedFormData);
       onNext();
     }
   };
-
   const addEducation = () => {
     updateFormData({
       education: [
@@ -117,9 +137,11 @@ function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
     return formatted.slice(0, 15);
   };
 
-  // Handle CNIC change with validation
+  // Handle CNIC change with validation and encryption
   const handleCnicChange = async (e) => {
     const formattedCnic = formatCNIC(e.target.value);
+
+    // Store formatted CNIC in form data (unencrypted for display)
     updateFormData({ cnic: formattedCnic });
 
     if (formattedCnic.length === 15) {

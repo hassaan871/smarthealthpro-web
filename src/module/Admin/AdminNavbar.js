@@ -14,36 +14,36 @@ const AdminNavbar = () => {
   const navigate = useNavigate();
 
   const navItems = [
-    { 
-      name: "Overview", 
-      icon: FiGrid, 
-      path: "/admin/AdminOverview" 
+    {
+      name: "Overview",
+      icon: FiGrid,
+      path: "/admin/overview",
     },
-    { 
-      name: "Doctors", 
-      icon: FiCalendar, 
-      path: "/admin/adminDoctors" 
+    {
+      name: "Doctors",
+      icon: FiCalendar,
+      path: "/admin/doctors",
     },
-    { 
-      name: "Patients", 
-      icon: FiUsers, 
-      path: "/admin/AdminPatients" 
+    {
+      name: "Patients",
+      icon: FiUsers,
+      path: "/admin/patients",
     },
-    { 
-      name: "Approve Doctors", 
-      icon: FiMessageSquare, 
-      path: "/admin/AdminApproveDoctors" 
+    {
+      name: "Approve Doctors",
+      icon: FiMessageSquare,
+      path: "/admin/approve",
     },
-    { 
-      name: "Log out", 
-      icon: FiLogOut, 
-      path: "/login",
+    {
+      name: "Log out",
+      icon: FiLogOut,
+      path: "/admin/login",
       onClick: () => {
         // Clear any authentication tokens
-        localStorage.removeItem('userToken');
-        navigate('/login');
-      }
-    }
+        localStorage.removeItem("userToken");
+        navigate("/login");
+      },
+    },
   ];
 
   return (
@@ -67,8 +67,8 @@ const AdminNavbar = () => {
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             {navItems.map((item) => (
               <li key={item.name} className="nav-item">
-                <Link 
-                  className="nav-link" 
+                <Link
+                  className="nav-link"
                   to={item.path}
                   onClick={item.onClick}
                 >

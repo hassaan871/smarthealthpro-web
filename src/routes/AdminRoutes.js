@@ -1,4 +1,3 @@
-// src/routes/AdminRoutes.js
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLogin from "../module/Admin/AdminLogin";
@@ -6,25 +5,97 @@ import AdminOverview from "../module/Admin/AdminOverview";
 import AdminDoctors from "../module/Admin/AdminDoctors";
 import AdminPatients from "../module/Admin/AdminPatients";
 import AdminApproveDoctors from "../module/Admin/AdminApproveDoctors";
-import { AdminProtectedRoute } from "./ProtectedRoute";
+
+const AdminProtectedRoute = ({ children }) => {
+  const adminInfo = localStorage.getItem("adminInfo");
+  if (!adminInfo) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  return children;
+};
+
+// New component for handling unauthorized state
+const AdminUnauthorizedRoute = ({ children }) => {
+  const adminInfo = localStorage.getItem("adminInfo");
+  if (adminInfo) {
+    return <Navigate to="/admin/overview" replace />;
+  }
+  return children;
+};
 
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/admin/login" />} />
-      <Route path="/login" element={<AdminLogin />} />
+      {/* Default route */}
       <Route
-        path="/AdminOverview"
+        path="/"
         element={
-          //   <AdminProtectedRoute>
-          <AdminOverview />
-          //   </AdminProtectedRoute>
+          localStorage.getItem("adminInfo") ? (
+            <Navigate to="overview" replace />
+          ) : (
+            <Navigate to="login" replace />
+          )
         }
       />
-      <Route path="/adminDoctors" element={<AdminDoctors/>} />{/*  */}
-      <Route path="/adminPatients" element={<AdminPatients />} />
-      <Route path="/adminApproveDoctors" element={<AdminApproveDoctors />} />
-      <Route path="*" element={<Navigate to="/admin/login" />} />
+
+      {/* Login route - redirects to overview if already logged in */}
+      <Route
+        path="login"
+        element={
+          <AdminUnauthorizedRoute>
+            <AdminLogin />
+          </AdminUnauthorizedRoute>
+        }
+      />
+
+      {/* Protected routes */}
+      <Route
+        path="overview"
+        element={
+          <AdminProtectedRoute>
+            <AdminOverview />
+          </AdminProtectedRoute>
+        }
+      />
+
+      <Route
+        path="doctors"
+        element={
+          <AdminProtectedRoute>
+            <AdminDoctors />
+          </AdminProtectedRoute>
+        }
+      />
+
+      <Route
+        path="patients"
+        element={
+          <AdminProtectedRoute>
+            <AdminPatients />
+          </AdminProtectedRoute>
+        }
+      />
+
+      <Route
+        path="approve"
+        element={
+          <AdminProtectedRoute>
+            <AdminApproveDoctors />
+          </AdminProtectedRoute>
+        }
+      />
+
+      {/* Catch all route - redirects to overview if logged in, login if not */}
+      <Route
+        path="*"
+        element={
+          localStorage.getItem("adminInfo") ? (
+            <Navigate to="/admin/overview" replace />
+          ) : (
+            <Navigate to="/admin/login" replace />
+          )
+        }
+      />
     </Routes>
   );
 };
