@@ -16,6 +16,45 @@ import { useLocation } from "react-router-dom";
 
 import { FiX, FiMessageSquare, FiFileText } from "react-icons/fi";
 
+// Add this component at the top of your file
+const OnlineStatusIndicator = ({ userId }) => {
+  const [isOnline, setIsOnline] = useState(false);
+  const { socket } = useSocketContext();
+
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    // Check initial status
+    socket.emit("checkOnlineStatus", userId);
+
+    // Listen for status updates
+    const handleUserStatus = (data) => {
+      if (data.userId === userId) {
+        setIsOnline(data.isOnline);
+      }
+    };
+
+    socket.on("userStatus", handleUserStatus);
+
+    return () => {
+      socket.off("userStatus", handleUserStatus);
+    };
+  }, [socket, userId]);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className={`w-2 h-2 rounded-full ${
+          isOnline ? "bg-green-500" : "bg-gray-500"
+        }`}
+      />
+      <span className="text-sm text-gray-400">
+        {isOnline ? "Online" : "Offline"}
+      </span>
+    </div>
+  );
+};
+
 const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
   const [activeTab, setActiveTab] = useState("summary");
   const [loadingStates, setLoadingStates] = useState({
@@ -791,17 +830,24 @@ const ChatScreen = () => {
   // Render the active chat header
   const renderChatHeader = () => {
     if (selectedConversation) {
+      const otherUserId = selectedConversation.participants.find(
+        (id) => id !== userInfo
+      );
+
       return (
         <div className="header-content2">
-          <img
-            src={getOtherUserAvatar(selectedConversation)}
-            alt={getOtherUserName(selectedConversation)}
-            className="conversation-avatar2"
-          />
-          <div className="header-text2">
-            <h3 className="text-white">
-              {getOtherUserName(selectedConversation)}
-            </h3>
+          <div className="flex items-center gap-3">
+            <img
+              src={getOtherUserAvatar(selectedConversation)}
+              alt={getOtherUserName(selectedConversation)}
+              className="conversation-avatar2"
+            />
+            <div className="header-text2">
+              <h3 className="text-white">
+                {getOtherUserName(selectedConversation)}
+              </h3>
+              <OnlineStatusIndicator userId={otherUserId} />
+            </div>
           </div>
           <button
             className="details-toggle"
@@ -814,13 +860,16 @@ const ChatScreen = () => {
     } else if (incomingPatient) {
       return (
         <div className="header-content2">
-          <img
-            src={incomingPatient.avatar}
-            alt={incomingPatient.name}
-            className="conversation-avatar2"
-          />
-          <div className="header-text2">
-            <h3 className="text-white">{incomingPatient.name}</h3>
+          <div className="flex items-center gap-3">
+            <img
+              src={incomingPatient.avatar}
+              alt={incomingPatient.name}
+              className="conversation-avatar2"
+            />
+            <div className="header-text2">
+              <h3 className="text-white">{incomingPatient.name}</h3>
+              <OnlineStatusIndicator userId={incomingPatient.id} />
+            </div>
           </div>
         </div>
       );
