@@ -231,6 +231,7 @@ const AdminDoctors = () => {
           </div>
         </div>
 
+
         <div className="search-container">
           <i className="bi bi-search search-icon"></i>
           <input
