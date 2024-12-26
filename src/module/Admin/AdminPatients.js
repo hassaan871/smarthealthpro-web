@@ -1,124 +1,33 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
-
-const patients = [
-  {
-    userName: "martin_white",
-    fullName: "Martin White",
-    email: "martin.white@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/men/3.jpg",
-    gender: "male",
-    dateOfBirth: "1990-01-01T00:00:00.000Z",
-    bloodType: "O+",
-  },
-  {
-    userName: "jane_doe",
-    fullName: "Jane Doe",
-    email: "jane.doe@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/women/5.jpg",
-    gender: "female",
-    dateOfBirth: "1995-03-15T00:00:00.000Z",
-    bloodType: "A+",
-  },
-  {
-    userName: "alex_brown",
-    fullName: "Alex Brown",
-    email: "alex.brown@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/men/10.jpg",
-    gender: "male",
-    dateOfBirth: "1988-07-20T00:00:00.000Z",
-    bloodType: "B-",
-  },
-  {
-    userName: "sophia_smith",
-    fullName: "Sophia Smith",
-    email: "sophia.smith@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    gender: "female",
-    dateOfBirth: "2000-11-05T00:00:00.000Z",
-    bloodType: "O-",
-  },
-  {
-    userName: "john_davis",
-    fullName: "John Davis",
-    email: "john.davis@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/men/18.jpg",
-    gender: "male",
-    dateOfBirth: "1992-06-10T00:00:00.000Z",
-    bloodType: "AB+",
-  },
-  {
-    userName: "emily_clark",
-    fullName: "Emily Clark",
-    email: "emily.clark@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/women/25.jpg",
-    gender: "female",
-    dateOfBirth: "1985-12-23T00:00:00.000Z",
-    bloodType: "A-",
-  },
-  {
-    userName: "daniel_jones",
-    fullName: "Daniel Jones",
-    email: "daniel.jones@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/men/28.jpg",
-    gender: "male",
-    dateOfBirth: "1983-09-01T00:00:00.000Z",
-    bloodType: "B+",
-  },
-  {
-    userName: "olivia_lee",
-    fullName: "Olivia Lee",
-    email: "olivia.lee@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/women/34.jpg",
-    gender: "female",
-    dateOfBirth: "1997-04-18T00:00:00.000Z",
-    bloodType: "O+",
-  },
-  {
-    userName: "liam_martin",
-    fullName: "Liam Martin",
-    email: "liam.martin@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/men/40.jpg",
-    gender: "male",
-    dateOfBirth: "1987-02-14T00:00:00.000Z",
-    bloodType: "AB-",
-  },
-  {
-    userName: "amelia_turner",
-    fullName: "Amelia Turner",
-    email: "amelia.turner@example.com",
-    password: "$2b$10$5A/HiRdjC3gAG0D28uAlluDcnT4jpUQyy8sEfxZ71T7nOz/YfPTD.",
-    role: "patient",
-    avatar: "https://randomuser.me/api/portraits/women/45.jpg",
-    gender: "female",
-    dateOfBirth: "1993-08-25T00:00:00.000Z",
-    bloodType: "B+",
-  },
-];
 
 const AdminPatients = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientToDelete, setPatientToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/user/getAllPatients');
+        if (!response.ok) {
+          throw new Error('Failed to fetch patients');
+        }
+        const data = await response.json();
+        setPatients(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   const customStyles = `
     body {
@@ -235,6 +144,19 @@ const AdminPatients = () => {
       background-color: #dc3545;
       border-color: #dc3545;
     }
+
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .error-message {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
   `;
 
   const formatDate = (dateString) => {
@@ -250,11 +172,34 @@ const AdminPatients = () => {
     const searchTermLower = searchTerm.toLowerCase();
     return patients.filter(
       (patient) =>
-        patient.fullName.toLowerCase().includes(searchTermLower) ||
-        patient.email.toLowerCase().includes(searchTermLower) ||
-        patient.userName.toLowerCase().includes(searchTermLower)
+        patient.user.fullName.toLowerCase().includes(searchTermLower) ||
+        patient.user.email.toLowerCase().includes(searchTermLower) ||
+        patient.user.userName.toLowerCase().includes(searchTermLower)
     );
-  }, [searchTerm]);
+  }, [searchTerm, patients]);
+
+  if (loading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "#1a1a1a" }}>
+        <style>{customStyles}</style>
+        <div className="spinner-border text-primary loading-spinner" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "#1a1a1a" }}>
+        <style>{customStyles}</style>
+        <div className="error-message">
+          <h4>Error Loading Patients</h4>
+          <p className="mb-0">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-vh-100" style={{ background: "#1a1a1a" }}>
@@ -290,15 +235,15 @@ const AdminPatients = () => {
         <div className="patient-list-container p-4">
           <div className="row g-4">
             {filteredPatients.map((patient) => (
-              <div key={patient.userName} className="col-md-6">
+              <div key={patient.user._id} className="col-md-6">
                 <div
                   className="patient-card p-4 rounded-3 cursor-pointer"
                   onClick={() => setSelectedPatient(patient)}
                 >
                   <div className="d-flex align-items-center">
                     <img
-                      src={patient.avatar}
-                      alt={patient.fullName}
+                      src={patient.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
+                      alt={patient.user.fullName}
                       className="rounded-circle me-3"
                       style={{
                         width: "70px",
@@ -308,18 +253,18 @@ const AdminPatients = () => {
                     />
                     <div className="flex-grow-1">
                       <h5 className="text-light-custom mb-1">
-                        {patient.fullName}
+                        {patient.user.fullName}
                       </h5>
                       <div className="d-flex align-items-center mb-2">
                         <small className="text-muted-custom me-3">
-                          @{patient.userName}
+                          @{patient.user.userName}
                         </small>
                         <span className="blood-type-badge">
                           {patient.bloodType}
                         </span>
                       </div>
                       <small className="text-muted-custom d-block">
-                        {patient.email}
+                        {patient.user.email}
                       </small>
                     </div>
                   </div>
@@ -346,7 +291,7 @@ const AdminPatients = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content dark-modal">
                 <div className="modal-header border-0">
-                  <h4 className="modal-title">{selectedPatient.fullName}</h4>
+                  <h4 className="modal-title">{selectedPatient.user.fullName}</h4>
                   <button
                     className="btn-close btn-close-white"
                     onClick={() => setSelectedPatient(null)}
@@ -356,8 +301,8 @@ const AdminPatients = () => {
                   <div className="row">
                     <div className="col-md-4 text-center mb-4 mb-md-0">
                       <img
-                        src={selectedPatient.avatar}
-                        alt={selectedPatient.fullName}
+                        src={selectedPatient.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
+                        alt={selectedPatient.user.fullName}
                         className="rounded-circle mb-3"
                         style={{
                           width: "150px",
@@ -366,7 +311,7 @@ const AdminPatients = () => {
                         }}
                       />
                       <h5 className="text-light-custom mb-2">
-                        @{selectedPatient.userName}
+                        @{selectedPatient.user.userName}
                       </h5>
                       <span className="blood-type-badge">
                         {selectedPatient.bloodType}
@@ -383,7 +328,7 @@ const AdminPatients = () => {
                               <strong>Email</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.email}
+                              {selectedPatient.user.email}
                             </p>
                           </div>
                           <div className="col-sm-6">
@@ -391,8 +336,10 @@ const AdminPatients = () => {
                               <strong>Gender</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.gender.charAt(0).toUpperCase() +
-                                selectedPatient.gender.slice(1)}
+                              {selectedPatient.user.gender ? 
+                                selectedPatient.user.gender.charAt(0).toUpperCase() + 
+                                selectedPatient.user.gender.slice(1) : 
+                                'Not specified'}
                             </p>
                           </div>
                           <div className="col-sm-6">
@@ -408,8 +355,8 @@ const AdminPatients = () => {
                               <strong>Role</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.role.charAt(0).toUpperCase() +
-                                selectedPatient.role.slice(1)}
+                              {selectedPatient.user.role.charAt(0).toUpperCase() +
+                                selectedPatient.user.role.slice(1)}
                             </p>
                           </div>
                         </div>
@@ -451,8 +398,8 @@ const AdminPatients = () => {
                 <div className="modal-body">
                   <div className="text-center mb-4">
                     <img
-                      src={patientToDelete.avatar}
-                      alt={patientToDelete.fullName}
+                      src={patientToDelete.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
+                      alt={patientToDelete.user.fullName}
                       className="rounded-circle mb-3"
                       style={{
                         width: "80px",
@@ -461,10 +408,10 @@ const AdminPatients = () => {
                       }}
                     />
                     <h5 className="text-light-custom mb-1">
-                      {patientToDelete.fullName}
+                      {patientToDelete.user.fullName}
                     </h5>
                     <p className="text-muted-custom">
-                      @{patientToDelete.userName}
+                      @{patientToDelete.user.userName}
                     </p>
                   </div>
                   <div className="alert alert-danger bg-danger bg-opacity-10">
@@ -487,7 +434,7 @@ const AdminPatients = () => {
                     className="btn btn-danger"
                     onClick={() => {
                       console.log(
-                        `Deleting patient: ${patientToDelete.fullName}`
+                        `Deleting patient: ${patientToDelete.user.fullName}`
                       );
                       setPatientToDelete(null);
                       setSelectedPatient(null);
