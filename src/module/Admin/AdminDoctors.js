@@ -1,81 +1,57 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
+import axios from "axios";
 
-const AdminDoctors = () => {
-  const [doctors, setDoctors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [doctorToDelete, setDoctorToDelete] = useState(null);
+const AdminPatients = () => {
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientToDelete, setPatientToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const fetchPatients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/user/getAllDoctors');
-        if (!response.ok) {
-          throw new Error('Failed to fetch doctors');
-        }
-        const data = await response.json();
-        
-        // Fetch additional info for each doctor
-        const doctorsWithInfo = await Promise.all(
-          data.map(async (doctor) => {
-            try {
-              const userInfoResponse = await fetch(`http://localhost:5000/user/getUserInfo/${doctor.user}`);
-              if (userInfoResponse.ok) {
-                const userInfo = await userInfoResponse.json();
-                return {
-                  ...doctor,
-                  fullName: userInfo.user.fullName,
-                  gender: userInfo.user.gender,
-                  avatar: userInfo.user.avatar?.url || "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png"
-                };
-              }
-              return doctor;
-            } catch (error) {
-              console.error(`Error fetching user info for doctor ${doctor._id}:`, error);
-              return doctor;
-            }
-          })
+        const response = await axios.get(
+          "http://localhost:5000/user/getAllPatients"
         );
-
-        setDoctors(doctorsWithInfo);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
+        setPatients(response.data);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
       }
     };
 
-    fetchDoctors();
+    fetchPatients();
   }, []);
 
   const customStyles = `
     body {
       background: #1a1a1a;
-      color: #e0e0e0;
     }
 
-    .bg-dark-custom {
-      background: #242424;
+    .text-light-custom {
+      color: #ffffff !important;
     }
 
-    .doctor-card {
+    .text-muted-custom {
+      color: #a0a0a0 !important;
+    }
+
+    .patient-card {
       transition: all 0.3s ease;
       border: none;
       background: #2a2a2a;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      border: 1px solid #404040;
     }
     
-    .doctor-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    .patient-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       background: #2d2d2d;
     }
 
-    .rating-badge {
+    .blood-type-badge {
       background: rgba(59, 130, 246, 0.2);
       color: #60a5fa;
       padding: 4px 12px;
@@ -88,30 +64,23 @@ const AdminDoctors = () => {
       backdrop-filter: blur(5px);
     }
 
-    .custom-header {
+    .dark-modal {
+      background: #242424 !important;
+    }
+
+    .modal-title {
+      color: #ffffff;
+    }
+
+    .modal-header {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: white;
-      border-radius: 10px 10px 0 0;
+      color: #ffffff;
     }
 
-    .education-card {
+    .info-card {
       background: #2a2a2a;
-      border-radius: 8px;
       border: 1px solid #404040;
-      transition: all 0.2s ease;
-    }
-
-    .education-card:hover {
-      background: #333333;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .hours-card {
-      background: #2a2a2a;
       border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-      border: 1px solid #404040;
     }
 
     .search-container {
@@ -124,7 +93,7 @@ const AdminDoctors = () => {
       left: 15px;
       top: 50%;
       transform: translateY(-50%);
-      color: #6c757d;
+      color: #ffffff;
     }
 
     .custom-search {
@@ -133,7 +102,7 @@ const AdminDoctors = () => {
       border-radius: 25px;
       background: #2a2a2a !important;
       border: 2px solid #404040 !important;
-      color: #e0e0e0 !important;
+      color: #ffffff !important;
     }
 
     .custom-search:focus {
@@ -142,77 +111,75 @@ const AdminDoctors = () => {
     }
 
     .custom-search::placeholder {
-      color: #6c757d !important;
+      color: #808080 !important;
     }
 
-    .dark-modal {
-      background: #242424 !important;
-      color: #e0e0e0;
-    }
-
-    .info-section {
-      background: #2a2a2a;
+    .patient-list-container {
+      background: #242424;
+      border-radius: 10px;
       border: 1px solid #404040;
     }
 
-    .btn-dark-custom {
-      background: #2a2a2a;
-      border: 1px solid #404040;
-      color: #e0e0e0;
+    .btn-primary {
+      background-color: #2563eb;
+      border-color: #2563eb;
     }
 
-    .btn-dark-custom:hover {
-      background: #333333;
-      color: #fff;
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+      border-color: #1d4ed8;
     }
 
-    .text-dark-custom {
-      color: #e0e0e0 !important;
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
     }
 
-    .border-dark-custom {
-      border-color: #404040 !important;
-    }
-
-    .gender-badge {
-      background: rgba(59, 130, 246, 0.1);
-      color: #60a5fa;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      margin-left: 8px;
+    .btn-outline-danger:hover {
+      color: #ffffff;
+      background-color: #dc3545;
+      border-color: #dc3545;
     }
   `;
 
-  const filteredDoctors = useMemo(() => {
-    if (!searchTerm) return doctors;
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const filteredPatients = useMemo(() => {
+    if (!searchTerm) return patients;
     const searchTermLower = searchTerm.toLowerCase();
-    return doctors.filter(
-      (doctor) =>
-        doctor.fullName?.toLowerCase().includes(searchTermLower) ||
-        doctor.cnic?.toLowerCase().includes(searchTermLower)
+    return patients.filter(
+      (patient) =>
+        patient.user.fullName.toLowerCase().includes(searchTermLower) ||
+        patient.user.email.toLowerCase().includes(searchTermLower) ||
+        patient.user.userName.toLowerCase().includes(searchTermLower)
     );
-  }, [searchTerm, doctors]);
+  }, [searchTerm, patients]);
 
-  if (loading) {
-    return (
-      <div className="min-vh-100 d-flex justify-content-center align-items-center" style={{ background: "#1a1a1a" }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-vh-100 d-flex justify-content-center align-items-center" style={{ background: "#1a1a1a" }}>
-        <div className="alert alert-danger" role="alert">
-          Error: {error}
-        </div>
-      </div>
-    );
-  }
+  const handleDeletePatient = async () => {
+    setIsDeleting(true);
+    try {
+      await axios.delete(
+        `http://localhost:5000/user/deleteUser/${patientToDelete.user._id}`
+      );
+      setPatients(
+        patients.filter(
+          (patient) => patient.user._id !== patientToDelete.user._id
+        )
+      );
+      setPatientToDelete(null);
+      setSelectedPatient(null);
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="min-vh-100" style={{ background: "#1a1a1a" }}>
@@ -220,172 +187,177 @@ const AdminDoctors = () => {
       <AdminNavbar />
 
       <div className="container py-5">
+        {/* Header */}
         <div className="row mb-4">
           <div className="col-md-8">
             <h1 className="display-4 fw-bold text-primary mb-2">
-              Doctor Management
+              Patient Management
             </h1>
-            <p className="text-muted">
-              Manage and monitor healthcare professionals
+            <p className="text-light-custom">
+              Monitor and manage registered patients
             </p>
           </div>
         </div>
 
-
+        {/* Search Bar */}
         <div className="search-container">
           <i className="bi bi-search search-icon"></i>
           <input
             type="text"
             className="form-control custom-search"
-            placeholder="Search doctors by name or CNIC..."
+            placeholder="Search by name, username, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="row g-4">
-          {filteredDoctors.map((doctor) => (
-            <div key={doctor._id} className="col-md-6 col-lg-4">
-              <div
-                className="card doctor-card h-100 cursor-pointer"
-                onClick={() => setSelectedDoctor(doctor)}
-              >
-                <div className="position-relative">
-                  <img
-                    src={doctor.avatar}
-                    alt={doctor.fullName}
-                    className="card-img-top"
-                    style={{ height: "200px", objectFit: "cover" }}
-                  />
-                  <div className="position-absolute top-0 end-0 m-3">
-                    <span className="rating-badge">★ {doctor.rating}</span>
-                  </div>
-                </div>
-                <div className="card-body">
+        {/* Patient List */}
+        <div className="patient-list-container p-4">
+          <div className="row g-4">
+            {filteredPatients.map((patient) => (
+              <div key={patient._id} className="col-md-6">
+                <div
+                  className="patient-card p-4 rounded-3 cursor-pointer"
+                  onClick={() => setSelectedPatient(patient)}
+                >
                   <div className="d-flex align-items-center">
-                    <h5 className="card-title text-primary mb-1">
-                      {doctor.fullName || "Dr. Unknown"}
-                    </h5>
-                    <span className="gender-badge text-capitalize">
-                      {doctor.gender || "N/A"}
-                    </span>
-                  </div>
-                  <p className="text-muted mb-2">{doctor.specialization}</p>
-                  <p className="card-text small text-dark-custom text-truncate">
-                    {doctor.about}
-                  </p>
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <small className="text-muted">
-                      {doctor.numPatients} patients
-                    </small>
-                    <small className="text-primary">
-                      {doctor.reviewCount} reviews
-                    </small>
+                    <img
+                      src={patient.user.avatar}
+                      alt={patient.user.fullName}
+                      className="rounded-circle me-3"
+                      style={{
+                        width: "70px",
+                        height: "70px",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <div className="flex-grow-1">
+                      <h5 className="text-light-custom mb-1">
+                        {patient.user.fullName}
+                      </h5>
+                      <div className="d-flex align-items-center mb-2">
+                        <small className="text-muted-custom me-3">
+                          @{patient.user.userName}
+                        </small>
+                        <span className="blood-type-badge">
+                          {patient.bloodType}
+                        </span>
+                      </div>
+                      <small className="text-muted-custom d-block">
+                        {patient.user.email}
+                      </small>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {filteredPatients.length === 0 && (
+            <div className="text-center py-5">
+              <div className="text-light-custom">
+                <i className="bi bi-search mb-3 display-4"></i>
+                <p className="mb-0">
+                  No patients found matching your search criteria
+                </p>
+              </div>
             </div>
-          ))}
+          )}
         </div>
 
-        {selectedDoctor && (
+        {/* Patient Details Modal */}
+        {selectedPatient && (
           <div className="modal show d-block custom-modal">
-            <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-              <div className="modal-content dark-modal border-dark-custom">
-                <div className="custom-header p-4">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h4 className="mb-1">
-                        {selectedDoctor.fullName || "Dr. Unknown"}
-                        <span className="gender-badge text-capitalize">
-                          {selectedDoctor.gender || "N/A"}
-                        </span>
-                      </h4>
-                      <p className="mb-0 opacity-75">
-                        {selectedDoctor.specialization}
-                      </p>
-                    </div>
-                    <button
-                      className="btn-close btn-close-white"
-                      onClick={() => setSelectedDoctor(null)}
-                    ></button>
-                  </div>
+            <div className="modal-dialog modal-lg modal-dialog-centered">
+              <div className="modal-content dark-modal">
+                <div className="modal-header border-0">
+                  <h4 className="modal-title">
+                    {selectedPatient.user?.fullName}
+                  </h4>
+                  <button
+                    className="btn-close btn-close-white"
+                    onClick={() => setSelectedPatient(null)}
+                  ></button>
                 </div>
-
                 <div className="modal-body p-4">
                   <div className="row">
-                    <div className="col-md-4 mb-4 mb-md-0">
+                    <div className="col-md-4 text-center mb-4 mb-md-0">
                       <img
-                        src={selectedDoctor.avatar}
-                        alt={selectedDoctor.fullName}
-                        className="img-fluid rounded-3 mb-3"
+                        src={selectedPatient.user?.avatar}
+                        alt={selectedPatient.user?.fullName}
+                        className="rounded-circle mb-3"
+                        style={{
+                          width: "150px",
+                          height: "150px",
+                          objectFit: "cover",
+                        }}
                       />
-                      <div className="info-section p-3 rounded-3">
-                        <p className="mb-2">
-                          <strong>Rating:</strong> ★ {selectedDoctor.rating}/5.0
-                        </p>
-                        <p className="mb-2">
-                          <strong>Patients:</strong>{" "}
-                          {selectedDoctor.numPatients}
-                        </p>
-                        <p className="mb-2">
-                          <strong>CNIC:</strong> {selectedDoctor.cnic}
-                        </p>
-                        <p className="mb-0">
-                          <strong>Address:</strong> {selectedDoctor.address}
-                        </p>
-                      </div>
+                      <h5 className="text-light-custom mb-2">
+                        @{selectedPatient.user?.userName}
+                      </h5>
+                      <span className="blood-type-badge">
+                        {selectedPatient.bloodType}
+                      </span>
                     </div>
-
                     <div className="col-md-8">
-                      <h5 className="mb-3">About</h5>
-                      <p className="mb-4 text-dark-custom">
-                        {selectedDoctor.about}
-                      </p>
-
-                      <h5 className="mb-3">Education</h5>
-                      {selectedDoctor.education?.map((edu, index) => (
-                        <div key={index} className="education-card p-3 mb-3">
-                          <h6 className="text-primary mb-1">{edu.degree}</h6>
-                          <p className="mb-1 text-dark-custom">
-                            {edu.institution}
-                          </p>
-                          <small className="text-muted">{edu.year}</small>
+                      <div className="info-card p-4">
+                        <h5 className="text-light-custom mb-4">
+                          Patient Information
+                        </h5>
+                        <div className="row g-3">
+                          <div className="col-sm-6">
+                            <p className="mb-1 text-light-custom">
+                              <strong>Email</strong>
+                            </p>
+                            <p className="text-muted-custom">
+                              {selectedPatient.user?.email}
+                            </p>
+                          </div>
+                          <div className="col-sm-6">
+                            <p className="mb-1 text-light-custom">
+                              <strong>Gender</strong>
+                            </p>
+                            <p className="text-muted-custom">
+                              {selectedPatient.user?.gender
+                                ?.charAt(0)
+                                .toUpperCase() +
+                                selectedPatient.user?.gender?.slice(1)}
+                            </p>
+                          </div>
+                          <div className="col-sm-6">
+                            <p className="mb-1 text-light-custom">
+                              <strong>Date of Birth</strong>
+                            </p>
+                            <p className="text-muted-custom">
+                              {formatDate(selectedPatient.dateOfBirth)}
+                            </p>
+                          </div>
+                          <div className="col-sm-6">
+                            <p className="mb-1 text-light-custom">
+                              <strong>Role</strong>
+                            </p>
+                            <p className="text-muted-custom">
+                              {selectedPatient.user?.role
+                                ?.charAt(0)
+                                .toUpperCase() +
+                                selectedPatient.user?.role?.slice(1)}
+                            </p>
+                          </div>
                         </div>
-                      ))}
-
-                      <h5 className="mb-3 mt-4">Office Hours</h5>
-                      <div className="row">
-                        {Object.entries(selectedDoctor.officeHours || {}).map(
-                          ([day, hours]) => (
-                            <div key={day} className="col-md-6">
-                              <div className="hours-card">
-                                <strong className="text-primary text-capitalize">
-                                  {day}:
-                                </strong>
-                                <br />
-                                <span className="text-dark-custom">
-                                  {hours}
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="modal-footer border-dark-custom">
+                <div className="modal-footer border-0">
                   <button
                     className="btn btn-outline-danger"
-                    onClick={() => setDoctorToDelete(selectedDoctor)}
+                    onClick={() => setPatientToDelete(selectedPatient)}
                   >
-                    Delete Doctor
+                    Delete Patient
                   </button>
                   <button
-                    className="btn btn-dark-custom"
-                    onClick={() => setSelectedDoctor(null)}
+                    className="btn btn-primary"
+                    onClick={() => setSelectedPatient(null)}
                   >
                     Close
                   </button>
@@ -395,51 +367,64 @@ const AdminDoctors = () => {
           </div>
         )}
 
-        {doctorToDelete && (
+        {/* Delete Confirmation Modal */}
+        {patientToDelete && (
           <div className="modal show d-block custom-modal">
             <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content dark-modal border-dark-custom">
-                <div className="modal-header border-dark-custom text-center">
-                  <h5 className="modal-title w-100">Confirm Deletion</h5>
+              <div className="modal-content dark-modal">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title text-danger">Confirm Deletion</h5>
+                  <button
+                    className="btn-close btn-close-white"
+                    onClick={() => setPatientToDelete(null)}
+                  ></button>
                 </div>
                 <div className="modal-body">
-                  <div className="alert alert-danger bg-danger bg-opacity-10 text-danger border-danger">
+                  <div className="text-center mb-4">
+                    <img
+                      src={patientToDelete.user?.avatar}
+                      alt={patientToDelete.user?.fullName}
+                      className="rounded-circle mb-3"
+                      style={{
+                        width: "80px",
+                        height: "80px",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <h5 className="text-light-custom mb-1">
+                      {patientToDelete.user?.fullName}
+                    </h5>
+                    <p className="text-muted-custom">
+                      @{patientToDelete.user?.userName}
+                    </p>
+                  </div>
+                  <div className="alert alert-danger bg-danger bg-opacity-10">
                     <p className="mb-0 text-center">
-                      Are you sure you want to delete Dr.{" "}
-                      {doctorToDelete.fullName || "Unknown"}?
+                      Are you sure you want to permanently delete this patient's
+                      account?
                       <br />
                       <small>This action cannot be undone.</small>
                     </p>
                   </div>
                 </div>
-                <div className="modal-footer border-dark-custom">
+                <div className="modal-footer border-0">
                   <button
-                    className="btn btn-dark-custom"
-                    onClick={() => setDoctorToDelete(null)}
+                    className="btn btn-outline-secondary text-light-custom"
+                    onClick={() => setPatientToDelete(null)}
+                    disabled={isDeleting}
                   >
                     Cancel
                   </button>
                   <button
                     className="btn btn-danger"
-                    onClick={() => {
-                      console.log(
-                        `Deleting doctor: ${doctorToDelete.fullName}`
-                      );
-                      setDoctorToDelete(null);
-                      setSelectedDoctor(null);
-                    }}
+                    onClick={handleDeletePatient}
+                    disabled={isDeleting}
                   >
-                    Delete
+                    {isDeleting ? "Deleting..." : "Delete Patient"}
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {filteredDoctors.length === 0 && (
-          <div className="alert bg-primary bg-opacity-10 text-primary border-primary text-center mt-4">
-            No doctors found matching your search criteria.
           </div>
         )}
       </div>
@@ -447,4 +432,4 @@ const AdminDoctors = () => {
   );
 };
 
-export default AdminDoctors;
+export default AdminPatients;

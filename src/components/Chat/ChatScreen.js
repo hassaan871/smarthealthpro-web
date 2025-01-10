@@ -22,7 +22,10 @@ const OnlineStatusIndicator = ({ userId }) => {
   const { socket } = useSocketContext();
 
   useEffect(() => {
-    if (!socket || !userId) return;
+    if (!socket || !userId) {
+      console.log("Missing socket or userId:", { socket: !!socket, userId });
+      return;
+    }
 
     // Check initial status
     socket.emit("checkOnlineStatus", userId);
@@ -302,9 +305,16 @@ const ChatScreen = () => {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [messageReadStatus, setMessageReadStatus] = useState({});
   const [activeTab, setActiveTab] = useState("chatSummaries");
   const messagesEndRef = useRef(null);
-  const { socket, connectSocket } = useSocketContext();
+  const {
+    socket,
+    connectSocket,
+    disconnectSocket, // New: Added disconnectSocket
+    joinRoom, // New: Added joinRoom for explicit room management
+    isConnected, // New: Added connection status
+  } = useSocketContext();
   const location = useLocation();
   // console.log("Full location object:", location); // Debug full location object
   const incomingConversation = location.state?.conversation;
@@ -312,6 +322,67 @@ const ChatScreen = () => {
   // console.log("Received conversation in ChatScreen:", incomingConversation);
   const incomingPatient = location.state?.patient;
   const doctorInfo = location.state?.doctorInfo;
+
+  useEffect(() => {
+    if (socket) {
+      const handleMessageRead = (data) => {
+        console.log("Received messageRead event:", data);
+
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === data.messageId
+              ? {
+                  ...msg,
+                  readStatus: {
+                    ...msg.readStatus,
+                    [data.userId]: true,
+                  },
+                }
+              : msg
+          )
+        );
+      };
+
+      socket.on("messageRead", handleMessageRead);
+      return () => socket.off("messageRead", handleMessageRead);
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (selectedConversation?._id && userInfo) {
+      const markMessagesAsRead = async () => {
+        try {
+          await axios.post(
+            `http://localhost:5000/conversations/${selectedConversation._id}/mark-messages-read`,
+            {
+              conversationId: selectedConversation._id,
+              userId: userInfo,
+            }
+          );
+
+          // Reset unread count
+          await axios.post(
+            `http://localhost:5000/conversations/${selectedConversation._id}/read/${userInfo}`
+          );
+        } catch (error) {
+          console.error("Error marking messages as read:", error);
+        }
+      };
+
+      markMessagesAsRead();
+    }
+  }, [selectedConversation?._id, userInfo]);
+
+  useEffect(() => {
+    console.log("ChatScreen mounted - initializing socket connection");
+    connectSocket(); // Connect socket when ChatScreen mounts
+
+    // Cleanup function runs when component unmounts
+    return () => {
+      console.log("ChatScreen unmounting - cleaning up socket connection");
+      disconnectSocket(); // Disconnect socket when leaving ChatScreen
+    };
+  }, [connectSocket, disconnectSocket]);
 
   // 1. Consolidate socket event handlers into one place, outside of useEffect
   const socketHandlers = {
@@ -483,10 +554,32 @@ const ChatScreen = () => {
           `http://localhost:5000/conversations/${conversationId}/messages`
         );
 
-        console.log("Fetched messages:", response.data);
+        console.log("Raw messages from server:", response.data);
 
-        const decryptedMessages = response.data.map(decryptMessage);
+        const decryptedMessages = response.data.map((msg) => {
+          const decryptedMsg = decryptMessage(msg);
+          // Ensure readStatus exists
+          return {
+            ...decryptedMsg,
+            readStatus: decryptedMsg.readStatus || {
+              [userInfo]: true,
+            },
+          };
+        });
+
         setMessages(decryptedMessages);
+
+        // Mark messages as read immediately after fetching
+        if (socket && socket.connected) {
+          const lastMessage = response.data[response.data.length - 1];
+          if (lastMessage && lastMessage.sender !== userInfo) {
+            socket.emit("messageRead", {
+              messageId: lastMessage._id,
+              conversationId: conversationId,
+              userId: userInfo,
+            });
+          }
+        }
       } catch (error) {
         console.error("Error fetching messages:", error);
         setFetchError("Failed to load messages. Please try again later.");
@@ -494,8 +587,16 @@ const ChatScreen = () => {
         setLoading(false);
       }
     },
-    [decryptMessage]
+    [decryptMessage, userInfo, socket]
   );
+
+  useEffect(() => {
+    if (selectedConversation?._id && isConnected) {
+      console.log("Joining conversation room:", selectedConversation._id);
+      joinRoom(selectedConversation._id);
+      fetchMessages(selectedConversation._id);
+    }
+  }, [selectedConversation, isConnected, joinRoom, fetchMessages]);
 
   const handleNewMessage = useCallback(
     (newMessage) => {
@@ -877,6 +978,44 @@ const ChatScreen = () => {
     return null;
   };
 
+  useEffect(() => {
+    if (selectedConversation?._id && userInfo) {
+      const markMessagesAsRead = async () => {
+        try {
+          // Mark messages as read in the backend
+          await axios.post(
+            `http://localhost:5000/conversations/${selectedConversation._id}/mark-messages-read`,
+            {
+              conversationId: selectedConversation._id,
+              userId: userInfo,
+            }
+          );
+
+          // Emit socket event for real-time update
+          if (socket && socket.connected) {
+            const unreadMessages = messages.filter(
+              (msg) =>
+                msg.sender !== userInfo &&
+                (!msg.readStatus || !msg.readStatus[userInfo])
+            );
+
+            unreadMessages.forEach((msg) => {
+              socket.emit("messageRead", {
+                messageId: msg._id,
+                conversationId: selectedConversation._id,
+                userId: userInfo,
+              });
+            });
+          }
+        } catch (error) {
+          console.error("Error marking messages as read:", error);
+        }
+      };
+
+      markMessagesAsRead();
+    }
+  }, [selectedConversation?._id, userInfo, socket]);
+
   return (
     <div className="chat-screen">
       <div className="chat-sidebar bg-gray-800 border-r border-gray-700">
@@ -921,30 +1060,45 @@ const ChatScreen = () => {
                 {loading ? (
                   <div className="loader text-gray-400"></div>
                 ) : (
-                  messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`message ${
-                        message.sender === userInfo ? "sent" : "received"
-                      }`}
-                    >
-                      {message.fileInfo ? (
-                        <div
-                          className="file-message"
-                          onClick={() => handleFileClick(message.fileInfo)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <FiPaperclip />
-                          <span>{message.fileInfo.originalName}</span>
-                        </div>
-                      ) : (
-                        <p>{message.content}</p>
-                      )}
-                      <span className="message-time">
-                        {formatTime(message.timestamp)}
-                      </span>
-                    </div>
-                  ))
+                  messages.map((message, index) => {
+                    const isLastMessage = index === messages.length - 1;
+                    const otherUserId = selectedConversation.participants.find(
+                      (id) => id !== userInfo
+                    );
+                    const isRead =
+                      message.readStatus && message.readStatus[otherUserId];
+
+                    return (
+                      <div
+                        key={index}
+                        className={`message ${
+                          message.sender === userInfo ? "sent" : "received"
+                        }`}
+                      >
+                        {message.fileInfo ? (
+                          <div
+                            className="file-message"
+                            onClick={() => handleFileClick(message.fileInfo)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <FiPaperclip />
+                            <span>{message.fileInfo.originalName}</span>
+                          </div>
+                        ) : (
+                          <p>{message.content}</p>
+                        )}
+                        <span className="message-time">
+                          {formatTime(message.timestamp)}
+                          {message.sender === userInfo && isLastMessage && (
+                            <span className="message-status">
+                              {" • "}
+                              {isRead ? "Read" : "Delivered"}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })
                 )}
                 <div ref={messagesEndRef} />
               </div>

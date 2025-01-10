@@ -1,28 +1,24 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
+import axios from "axios";
 
 const AdminPatients = () => {
+  const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientToDelete, setPatientToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/user/getAllPatients');
-        if (!response.ok) {
-          throw new Error('Failed to fetch patients');
-        }
-        const data = await response.json();
-        setPatients(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        const response = await axios.get(
+          "http://localhost:5000/user/getAllPatients"
+        );
+        setPatients(response.data);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
       }
     };
 
@@ -144,19 +140,6 @@ const AdminPatients = () => {
       background-color: #dc3545;
       border-color: #dc3545;
     }
-
-    .loading-spinner {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .error-message {
-      background: rgba(220, 53, 69, 0.1);
-      color: #dc3545;
-      padding: 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(220, 53, 69, 0.3);
-    }
   `;
 
   const formatDate = (dateString) => {
@@ -178,28 +161,25 @@ const AdminPatients = () => {
     );
   }, [searchTerm, patients]);
 
-  if (loading) {
-    return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "#1a1a1a" }}>
-        <style>{customStyles}</style>
-        <div className="spinner-border text-primary loading-spinner" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: "#1a1a1a" }}>
-        <style>{customStyles}</style>
-        <div className="error-message">
-          <h4>Error Loading Patients</h4>
-          <p className="mb-0">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  const handleDeletePatient = async () => {
+    setIsDeleting(true);
+    try {
+      await axios.delete(
+        `http://localhost:5000/user/deleteUser/${patientToDelete.user._id}`
+      );
+      setPatients(
+        patients.filter(
+          (patient) => patient.user._id !== patientToDelete.user._id
+        )
+      );
+      setPatientToDelete(null);
+      setSelectedPatient(null);
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="min-vh-100" style={{ background: "#1a1a1a" }}>
@@ -235,14 +215,14 @@ const AdminPatients = () => {
         <div className="patient-list-container p-4">
           <div className="row g-4">
             {filteredPatients.map((patient) => (
-              <div key={patient.user._id} className="col-md-6">
+              <div key={patient._id} className="col-md-6">
                 <div
                   className="patient-card p-4 rounded-3 cursor-pointer"
                   onClick={() => setSelectedPatient(patient)}
                 >
                   <div className="d-flex align-items-center">
                     <img
-                      src={patient.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
+                      src={patient.user.avatar}
                       alt={patient.user.fullName}
                       className="rounded-circle me-3"
                       style={{
@@ -291,7 +271,9 @@ const AdminPatients = () => {
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content dark-modal">
                 <div className="modal-header border-0">
-                  <h4 className="modal-title">{selectedPatient.user.fullName}</h4>
+                  <h4 className="modal-title">
+                    {selectedPatient.user?.fullName}
+                  </h4>
                   <button
                     className="btn-close btn-close-white"
                     onClick={() => setSelectedPatient(null)}
@@ -301,8 +283,8 @@ const AdminPatients = () => {
                   <div className="row">
                     <div className="col-md-4 text-center mb-4 mb-md-0">
                       <img
-                        src={selectedPatient.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
-                        alt={selectedPatient.user.fullName}
+                        src={selectedPatient.user?.avatar}
+                        alt={selectedPatient.user?.fullName}
                         className="rounded-circle mb-3"
                         style={{
                           width: "150px",
@@ -311,7 +293,7 @@ const AdminPatients = () => {
                         }}
                       />
                       <h5 className="text-light-custom mb-2">
-                        @{selectedPatient.user.userName}
+                        @{selectedPatient.user?.userName}
                       </h5>
                       <span className="blood-type-badge">
                         {selectedPatient.bloodType}
@@ -328,7 +310,7 @@ const AdminPatients = () => {
                               <strong>Email</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.user.email}
+                              {selectedPatient.user?.email}
                             </p>
                           </div>
                           <div className="col-sm-6">
@@ -336,10 +318,10 @@ const AdminPatients = () => {
                               <strong>Gender</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.user.gender ? 
-                                selectedPatient.user.gender.charAt(0).toUpperCase() + 
-                                selectedPatient.user.gender.slice(1) : 
-                                'Not specified'}
+                              {selectedPatient.user?.gender
+                                ?.charAt(0)
+                                .toUpperCase() +
+                                selectedPatient.user?.gender?.slice(1)}
                             </p>
                           </div>
                           <div className="col-sm-6">
@@ -355,8 +337,10 @@ const AdminPatients = () => {
                               <strong>Role</strong>
                             </p>
                             <p className="text-muted-custom">
-                              {selectedPatient.user.role.charAt(0).toUpperCase() +
-                                selectedPatient.user.role.slice(1)}
+                              {selectedPatient.user?.role
+                                ?.charAt(0)
+                                .toUpperCase() +
+                                selectedPatient.user?.role?.slice(1)}
                             </p>
                           </div>
                         </div>
@@ -398,8 +382,8 @@ const AdminPatients = () => {
                 <div className="modal-body">
                   <div className="text-center mb-4">
                     <img
-                      src={patientToDelete.user.avatar || "https://randomuser.me/api/portraits/lego/1.jpg"}
-                      alt={patientToDelete.user.fullName}
+                      src={patientToDelete.user?.avatar}
+                      alt={patientToDelete.user?.fullName}
                       className="rounded-circle mb-3"
                       style={{
                         width: "80px",
@@ -408,10 +392,10 @@ const AdminPatients = () => {
                       }}
                     />
                     <h5 className="text-light-custom mb-1">
-                      {patientToDelete.user.fullName}
+                      {patientToDelete.user?.fullName}
                     </h5>
                     <p className="text-muted-custom">
-                      @{patientToDelete.user.userName}
+                      @{patientToDelete.user?.userName}
                     </p>
                   </div>
                   <div className="alert alert-danger bg-danger bg-opacity-10">
@@ -427,20 +411,16 @@ const AdminPatients = () => {
                   <button
                     className="btn btn-outline-secondary text-light-custom"
                     onClick={() => setPatientToDelete(null)}
+                    disabled={isDeleting}
                   >
                     Cancel
                   </button>
                   <button
                     className="btn btn-danger"
-                    onClick={() => {
-                      console.log(
-                        `Deleting patient: ${patientToDelete.user.fullName}`
-                      );
-                      setPatientToDelete(null);
-                      setSelectedPatient(null);
-                    }}
+                    onClick={handleDeletePatient}
+                    disabled={isDeleting}
                   >
-                    Delete Patient
+                    {isDeleting ? "Deleting..." : "Delete Patient"}
                   </button>
                 </div>
               </div>
