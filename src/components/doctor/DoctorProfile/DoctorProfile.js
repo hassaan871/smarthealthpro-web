@@ -47,6 +47,10 @@ const DoctorProfile = () => {
       const userString = localStorage.getItem("userToken");
       const userId = userString;
 
+      console.log(
+        "link is, ",
+        `http://localhost:5000/user/getUserInfo/${userId}`
+      );
       try {
         const userResponse = await axios.get(
           `http://localhost:5000/user/getUserInfo/${userId}`
@@ -58,8 +62,17 @@ const DoctorProfile = () => {
         );
         const doctorsData = doctorsResponse.data;
 
-        const doctorData = doctorsData.find((doctor) => doctor.user === userId);
+        console.log("user id is: ", userId);
+        const doctorData = doctorsData.find(
+          (doctor) => doctor.user._id === userId
+        );
+        console.log("doctor is: ", doctorData);
         const doctorId = doctorData ? doctorData._id : null;
+
+        console.log(
+          "link 2: ",
+          `http://localhost:5000/user/getDoctorById/${doctorId}`
+        );
 
         if (doctorId) {
           const doctorResponse = await axios.get(
@@ -137,10 +150,10 @@ const DoctorProfile = () => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
           ? ""
           : "Email address is invalid";
-      case "cnic":
-        return !/^\d{5}-\d{7}-\d$/.test(value)
-          ? "CNIC must be in the format xxxxx-xxxxxxx-x"
-          : "";
+      // case "cnic":
+      //   return !/^\d{5}-\d{7}-\d$/.test(value)
+      //     ? "CNIC must be in the format xxxxx-xxxxxxx-x"
+      //     : "";
       default:
         return "";
     }
@@ -280,6 +293,8 @@ const DoctorProfile = () => {
       }
     });
 
+    console.log("hais garmi");
+    console.log("error log: ", newErrors);
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
       try {
@@ -369,9 +384,9 @@ const DoctorProfile = () => {
                 <strong className="text-white">Email:</strong>{" "}
                 {doctor.user.email || "Not provided"}
               </li>
-              <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
+              {/* <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
                 <strong className="text-white">CNIC:</strong> {doctor.cnic}
-              </li>
+              </li> */}
               <li className="list-group-item bg-gray-800 border-gray-700 text-gray-400">
                 <strong className="text-white">Address:</strong>{" "}
                 {doctor.address}
@@ -501,7 +516,7 @@ const DoctorProfile = () => {
               )}
             </div>
 
-            <div className="mb-3">
+            {/* <div className="mb-3">
               <label htmlFor="cnic" className="form-label text-gray-400">
                 CNIC{" "}
                 {hasFieldChanged("cnic") && (
@@ -522,7 +537,7 @@ const DoctorProfile = () => {
               {errors.cnic && (
                 <div className="invalid-feedback">{errors.cnic}</div>
               )}
-            </div>
+            </div> */}
 
             <div className="mb-3">
               <label htmlFor="address" className="form-label text-gray-400">

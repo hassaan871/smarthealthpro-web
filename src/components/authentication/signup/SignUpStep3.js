@@ -3,22 +3,54 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function SignUpStep3({ formData, onBack, onComplete }) {
-  // Add onBack prop
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [image, setImage] = useState(null);
+  const [imageError, setImageError] = useState("");
+
+  const handleImageChange = (event) => {
+    setImage(event.target.files[0]);
+    setImageError("");
+  };
+
+  const uploadImage = async () => {
+    if (!image) {
+      setImageError("Profile picture is required.");
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("file", image);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/user/uploadPic",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Image upload response:", response.data);
+      return response.data.avatar.url;
+    } catch (error) {
+      setImageError("Error uploading profile picture. Please try again.");
+      console.error("Error uploading profile picture:", error);
+      return null;
+    }
+  };
 
   const transformFormData = (formData) => {
-    // Deep clone the form data to avoid mutations
     const transformedData = { ...formData };
 
-    // Transform office hours
     const transformedHours = {};
     Object.entries(formData.officeHours).forEach(([day, hours]) => {
       if (hours.status === "Closed") {
         transformedHours[day] = "Closed";
       } else {
-        // Convert 24h time to 12h time with AM/PM
         const convertTo12Hour = (time24) => {
           const [hours, minutes] = time24.split(":");
           const hour = parseInt(hours);
@@ -33,10 +65,8 @@ function SignUpStep3({ formData, onBack, onComplete }) {
       }
     });
 
-    // Transform education years
     const transformedEducation = formData.education.map((edu) => ({
       ...edu,
-      // Extract the start year from the range
       year: edu.year,
     }));
 
@@ -44,7 +74,6 @@ function SignUpStep3({ formData, onBack, onComplete }) {
       ...transformedData,
       officeHours: transformedHours,
       education: transformedEducation,
-      // Remove confirmPassword as it's not needed in the final payload
       confirmPassword: undefined,
     };
   };
@@ -53,12 +82,19 @@ function SignUpStep3({ formData, onBack, onComplete }) {
     event.preventDefault();
     setIsLoading(true);
     setError("");
+    // setImageError("");
+
+    // const imageUrl = await uploadImage();
+    // if (!imageUrl) {
+    //   setIsLoading(false);
+    //   return;
+    // }
 
     try {
-      // Create registration data object
       const transformedData = transformFormData({
         ...formData,
         role: "doctor",
+        // profilePicture: imageUrl,
       });
 
       console.log("Data to upload:", transformedData);
@@ -139,10 +175,6 @@ function SignUpStep3({ formData, onBack, onComplete }) {
             border-radius: 8px;
             transition: all 0.3s ease;
           }
-          // .btn-outline-light:hover {
-          //   background: rgba(255, 255, 255, 0.1);
-          //   transform: translateY(-2px);
-          // }
           .completion-icon {
             font-size: 4rem;
             color: #28a745;
@@ -172,6 +204,24 @@ function SignUpStep3({ formData, onBack, onComplete }) {
             </div>
           )}
 
+          {/* <div className="mb-3">
+            <label htmlFor="profilePicture" className="form-label text-white">
+              Upload Profile Picture
+            </label>
+            <input
+              type="file"
+              className="form-control"
+              id="profilePicture"
+              onChange={handleImageChange}
+              disabled={isLoading}
+            />
+            {imageError && (
+              <div className="alert alert-danger mt-2" role="alert">
+                {imageError}
+              </div>
+            )}
+          </div> */}
+
           <div className="d-flex flex-column gap-3">
             <button
               type="button"
@@ -196,7 +246,7 @@ function SignUpStep3({ formData, onBack, onComplete }) {
             <button
               type="button"
               className="btn btn-outline-light"
-              onClick={onBack} // Changed from navigate(-1) to onBack
+              onClick={onBack}
               disabled={isLoading}
             >
               Back
