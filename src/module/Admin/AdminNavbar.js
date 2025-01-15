@@ -13,6 +13,13 @@ import { Link, useNavigate } from "react-router-dom";
 const AdminNavbar = () => {
   const navigate = useNavigate();
 
+  const handleLogout = (event) => {
+    event.preventDefault();
+    // Clear any authentication tokens
+    localStorage.removeItem("adminInfo");
+    navigate("/admin/login");
+  };
+
   const navItems = [
     {
       name: "Overview",
@@ -38,11 +45,7 @@ const AdminNavbar = () => {
       name: "Log out",
       icon: FiLogOut,
       path: "/admin/login",
-      onClick: () => {
-        // Clear any authentication tokens
-        localStorage.removeItem("userToken");
-        navigate("/login");
-      },
+      onClick: handleLogout,
     },
   ];
 
