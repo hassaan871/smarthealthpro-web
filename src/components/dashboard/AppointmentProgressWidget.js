@@ -46,10 +46,33 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const [isPrioritySaving, setIsPrioritySaving] = useState(false);
   const [showPrioritySuccess, setShowPrioritySuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // State to store prescriptions and notes
   const [medicalRecords, setMedicalRecords] = useState({});
   const navigate = useNavigate();
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("");
+  const [alertActions, setAlertActions] = useState([]);
+
+  // Function to show alert messages
+  const showAlertMessage = (
+    setShow,
+    setMessage,
+    setType,
+    setActions,
+    message,
+    type,
+    actions
+  ) => {
+    setMessage(message);
+    setType(type);
+    setActions(actions);
+    setShow(true);
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0); // Scroll to the top
@@ -203,27 +226,28 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
     }));
   }, []); // Empty dependency array means this runs once on component mount
 
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const userString = localStorage.getItem("userToken");
-        if (!userString) throw new Error("User data not found");
-        const doctorId = userString;
-        if (!doctorId) throw new Error("Doctor ID not found");
+  const fetchAppointments = async () => {
+    try {
+      const userString = localStorage.getItem("userToken");
+      if (!userString) throw new Error("User data not found");
+      const doctorId = userString;
+      if (!doctorId) throw new Error("Doctor ID not found");
 
-        const response = await fetch(
-          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch appointments");
-        const data = await response.json();
-        const pendingAppointments = data.filter(
-          (apt) => apt.appointmentStatus === "pending"
-        );
-        setAppointments(pendingAppointments);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
+      const response = await fetch(
+        `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      const data = await response.json();
+      const pendingAppointments = data.filter(
+        (apt) => apt.appointmentStatus === "pending"
+      );
+      setAppointments(pendingAppointments);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
     fetchAppointments();
   }, []);
 
@@ -417,6 +441,113 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const handleViewClick = (appointment) => {
     navigate("/doctorchatwithpatientdetail", { state: { appointment } });
   };
+
+  const confirmCancellation = async (appointmentId) => {
+    setIsCancelling(true);
+    try {
+      await axios.patch(
+        `http://localhost:5000/appointment/${appointmentId}/cancel`
+      );
+      fetchAppointments(); // Refresh the list
+      setShowCancelConfirmation(false);
+      showAlertMessage(
+        setShowAlert,
+        setAlertMessage,
+        setAlertType,
+        setAlertActions,
+        "Appointment canceled successfully.",
+        "success",
+        [{ text: "OK", onPress: () => setShowAlert(false) }]
+      );
+    } catch (error) {
+      if (error.response) {
+        showAlertMessage(
+          setShowAlert,
+          setAlertMessage,
+          setAlertType,
+          setAlertActions,
+          `Error canceling appointment: ${error.response.data.message}`,
+          "error",
+          [{ text: "OK", onPress: () => setShowAlert(false) }]
+        );
+      } else if (error.request) {
+        showAlertMessage(
+          setShowAlert,
+          setAlertMessage,
+          setAlertType,
+          setAlertActions,
+          "Error canceling appointment: No response received from server.",
+          "error",
+          [{ text: "OK", onPress: () => setShowAlert(false) }]
+        );
+        console.error(
+          "Error canceling appointment: No response received",
+          error.request
+        );
+      } else {
+        showAlertMessage(
+          setShowAlert,
+          setAlertMessage,
+          setAlertType,
+          setAlertActions,
+          `Error canceling appointment: ${error.message}`,
+          "error",
+          [{ text: "OK", onPress: () => setShowAlert(false) }]
+        );
+        console.error("Error canceling appointment:", error.message);
+      }
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const renderCancelConfirmationModal = () => (
+    <div
+      className={`modal ${showCancelConfirmation ? "show d-block" : ""}`}
+      tabIndex="-1"
+    >
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content bg-gray-800 text-white">
+          <div className="modal-header border-gray-700">
+            <h5 className="modal-title">Cancel Appointment</h5>
+            <button
+              type="button"
+              className="btn-close btn-close-white"
+              onClick={() => setShowCancelConfirmation(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p>Are you sure you want to cancel this appointment?</p>
+          </div>
+          <div className="modal-footer border-gray-700">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowCancelConfirmation(false)}
+              disabled={isCancelling}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger d-flex align-items-center gap-2"
+              onClick={() => confirmCancellation(selectedAppointment._id)}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Yes, Cancel"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   if (error) {
     return (
@@ -649,9 +780,6 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
                           <div className="text-end">
                             <div className="text-sm text-gray-400">
                               Date: {record?.date}
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              Time: {record?.time}
                             </div>
                           </div>
                         </div>
@@ -917,6 +1045,22 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
       style={{ minHeight: "100vh" }}
     >
       <SuccessToast />
+      <PrioritySuccessToast />
+      {renderCancelConfirmationModal()}
+      {showAlert && (
+        <div className={`alert alert-${alertType} d-flex align-items-center`}>
+          <span>{alertMessage}</span>
+          {alertActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.onPress}
+              className="btn btn-link"
+            >
+              {action.text}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="card bg-gray-800 border-0 shadow-lg mb-4">
         {/* Header Section */}
         <div className="card-header bg-gray-800 border-bottom border-gray-700 p-4">
@@ -1145,6 +1289,17 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
                           >
                             <MessageSquare size={16} />
                             Chat
+                          </button>
+                          <button
+                            className="btn btn-danger d-flex align-items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAppointment(apt);
+                              setShowCancelConfirmation(true);
+                            }}
+                          >
+                            <AlertCircle size={16} />
+                            Cancel
                           </button>
                         </div>
                       </div>

@@ -2,13 +2,14 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Context from "../../context/context";
 import axios from "axios";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { setUserInfo, setToken } = useContext(Context);
@@ -215,15 +216,19 @@ function Login() {
 
                 <div className="form-group">
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     className="form-control"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
                   />
-                  <div className="icon-wrapper">
-                    <Lock size={20} />
+                  <div
+                    className="icon-wrapper"
+                    style={{ pointerEvents: "auto", cursor: "pointer" }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </div>
                 </div>
 
@@ -254,22 +259,6 @@ function Login() {
                 >
                   Sign up
                 </button>
-
-                <div className="text-center mt-3">
-                  <span className="text-light opacity-75">
-                    New to SmartHealth Pro?{" "}
-                  </span>
-                  <a
-                    href="#"
-                    className="text-primary text-decoration-none"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/signup");
-                    }}
-                  >
-                    Create an account
-                  </a>
-                </div>
               </form>
             </div>
           </div>

@@ -126,7 +126,11 @@ const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
           },
         }
       );
-      setNotes(response.data.notes);
+      const decryptedNotes = response.data.notes.map((note) => ({
+        ...note,
+        note: decrypt(note.note), // Decrypt the note content
+      }));
+      setNotes(decryptedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
       setNotes([]);
@@ -147,8 +151,19 @@ const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
         `http://localhost:5000/appointment/${patientID}/prescription`
       );
       const data = await response.json();
+      const decryptedPrescriptions = data.data.map((record) => ({
+        ...record,
+        prescriptions: record.prescriptions.map((prescription) => ({
+          ...prescription,
+          medication: decrypt(prescription.medication),
+          dosage: decrypt(prescription.dosage),
+          frequency: decrypt(prescription.frequency),
+          duration: decrypt(prescription.duration),
+          instructions: decrypt(prescription.instructions),
+        })),
+      }));
       console.log("Raw API Response:", data);
-      setPrescriptions(data.data);
+      setPrescriptions(decryptedPrescriptions);
     } catch (error) {
       console.error("Error fetching prescriptions:", error);
       setPrescriptions({});
@@ -232,9 +247,7 @@ const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
                   <div key={index} className="prescription-item">
                     <div className="item-header">
                       <span className="item-type">Prescription</span>
-                      <span className="item-date">
-                        {appointment.date + " at " + appointment.time}
-                      </span>
+                      <span className="item-date">{appointment.date}</span>
                     </div>
                     <div className="prescription-content">
                       <div className="medicine-name">
