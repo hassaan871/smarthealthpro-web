@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
 import { decrypt } from "../encrypt/Encrypt";
+import api from "../../api/axiosInstance";
 
 const AdminApproveDoctors = () => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -18,9 +18,7 @@ const AdminApproveDoctors = () => {
   useEffect(() => {
     const fetchPendingDoctors = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/user/admin/pendingDoctors"
-        );
+        const response = await api.get("/user/admin/pendingDoctors");
         setDoctors(response.data);
         setPendingCount(response.data.length);
       } catch (error) {
@@ -48,7 +46,7 @@ const AdminApproveDoctors = () => {
   const confirmApproveDoctor = async () => {
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/user/admin/doctorApproval", {
+      await api.post("/user/admin/doctorApproval", {
         doctorId: doctorToApprove._id,
         action: "approve",
       });
@@ -66,7 +64,7 @@ const AdminApproveDoctors = () => {
   const confirmDeleteDoctor = async () => {
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/user/admin/doctorApproval", {
+      await api.post("/user/admin/doctorApproval", {
         doctorId: doctorToDelete._id,
         action: "reject",
       });

@@ -9,6 +9,7 @@ import AdminApproveDoctors from "../module/Admin/AdminApproveDoctors";
 const AdminProtectedRoute = ({ children }) => {
   const adminInfo = localStorage.getItem("adminInfo");
   if (!adminInfo) {
+    console.log("Admin not authenticated, redirecting to login.");
     return <Navigate to="/admin/login" replace />;
   }
   return children;
@@ -88,13 +89,14 @@ const AdminRoutes = () => {
       {/* Catch all route - redirects to overview if logged in, login if not */}
       <Route
         path="*"
-        element={
-          localStorage.getItem("adminInfo") ? (
-            <Navigate to="/admin/overview" replace />
-          ) : (
-            <Navigate to="/admin/login" replace />
-          )
-        }
+        element={(() => {
+          if (localStorage.getItem("adminInfo")) {
+            return <Navigate to="/admin/overview" replace />;
+          } else {
+            console.log("Admin not authenticated, redirecting to login.");
+            return <Navigate to="/admin/login" replace />;
+          }
+        })()}
       />
     </Routes>
   );

@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
-import Context from "../../context/context";
-import { encrypt, decrypt } from "../../encrypt/Encrypt";
+import React, { useState, useEffect } from "react";
+import api from "../../../api/axiosInstance";
+import { useAuth } from "../../context/AuthContext";
 
 const DoctorProfile = () => {
-  const { setUserInfo } = useContext(Context);
   const [doctor, setDoctor] = useState({
     specialization: "",
     cnic: "",
@@ -29,6 +27,7 @@ const DoctorProfile = () => {
     profileImage:
       "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png",
   });
+  const { user, loading } = useAuth();
 
   // Track original data for comparison
   const [originalData, setOriginalData] = useState(null);
@@ -44,22 +43,13 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     const fetchDoctorData = async () => {
-      const userString = localStorage.getItem("userToken");
-      const userId = userString;
+      const userId = user._id;
 
-      console.log(
-        "link is, ",
-        `http://localhost:5000/user/getUserInfo/${userId}`
-      );
       try {
-        const userResponse = await axios.get(
-          `http://localhost:5000/user/getUserInfo/${userId}`
-        );
+        const userResponse = await api.post(`/user/getUserInfo`);
         const userData = userResponse.data.user;
 
-        const doctorsResponse = await axios.get(
-          "http://localhost:5000/user/getAllDoctors"
-        );
+        const doctorsResponse = await api.get("/user/getAllDoctors");
         const doctorsData = doctorsResponse.data;
 
         console.log("user id is: ", userId);
@@ -67,48 +57,38 @@ const DoctorProfile = () => {
           (doctor) => doctor.user._id === userId
         );
         console.log("doctor is: ", doctorData);
-        const doctorId = doctorData ? doctorData._id : null;
 
-        console.log(
-          "link 2: ",
-          `http://localhost:5000/user/getDoctorById/${doctorId}`
+        const doctorResponse = await api.get(`/user/getDoctorById`);
+        const doctorDetails = doctorResponse.data;
+
+        // Convert the fetched office hours to our internal format
+        const formattedOfficeHours = {};
+        Object.entries(doctorDetails.officeHours || {}).forEach(
+          ([day, hours]) => {
+            formattedOfficeHours[day] = {
+              status: hours === "Closed" ? "closed" : "open",
+              time: hours,
+            };
+          }
         );
 
-        if (doctorId) {
-          const doctorResponse = await axios.get(
-            `http://localhost:5000/user/getDoctorById/${doctorId}`
-          );
-          const doctorDetails = doctorResponse.data;
+        const User = {
+          userData,
+          doctor: doctorDetails,
+        };
 
-          // Convert the fetched office hours to our internal format
-          const formattedOfficeHours = {};
-          Object.entries(doctorDetails.officeHours || {}).forEach(
-            ([day, hours]) => {
-              formattedOfficeHours[day] = {
-                status: hours === "Closed" ? "closed" : "open",
-                time: hours,
-              };
-            }
-          );
+        console.log("User from setting: ", User);
+        setDoctor((prevDoctor) => ({
+          ...prevDoctor,
+          ...doctorDetails,
+          email: doctorDetails.user.email,
+          officeHours: formattedOfficeHours,
+        }));
 
-          const User = {
-            userData,
-            doctor: doctorDetails,
-          };
-
-          console.log("User from setting: ", User);
-          setDoctor((prevDoctor) => ({
-            ...prevDoctor,
-            ...doctorDetails,
-            email: doctorDetails.user.email,
-            officeHours: formattedOfficeHours,
-          }));
-
-          setOriginalData({
-            ...doctorDetails,
-            officeHours: formattedOfficeHours,
-          });
-        }
+        setOriginalData({
+          ...doctorDetails,
+          officeHours: formattedOfficeHours,
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -298,15 +278,13 @@ const DoctorProfile = () => {
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
       try {
-        const userId = localStorage.getItem("userToken");
+        const userId = user._id;
         const changedData = getChangedData();
 
         console.log("changedData: ", changedData);
         console.log("userid: ", userId);
-        const link = `http://localhost:5000/user/updateUser/${userId}`;
-        console.log("link: ", link);
         if (Object.keys(changedData).length > 0) {
-          const userResponse = await axios.put(link, changedData);
+          const userResponse = await api.put(`/user/updateUser`, changedData);
           setUpdateMessage("Profile updated successfully!");
           // Update original data with new values
           setOriginalData(doctor);

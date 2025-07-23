@@ -1,5 +1,5 @@
-import axios from "axios";
 import React, { useState, useEffect } from "react";
+import api from "../../api/axiosInstance";
 
 const SummaryModal = ({ show, onHide, appointment }) => {
   const [loading, setLoading] = useState(false);
@@ -14,9 +14,9 @@ const SummaryModal = ({ show, onHide, appointment }) => {
   const fetchSummaries = async () => {
     try {
       setLoading(true);
-      const link = `http://localhost:5000/user/getSummaries/${appointment.patient.id}/${appointment.doctor.id}`;
-      console.log("link is: ", link);
-      const response = await axios.get(link);
+      const response = await api.get(
+        `/user/getSummaries/${appointment.patient.id}/${appointment.doctor.id}`
+      );
       console.log("Summaries response:", response.data);
       setSummaries(response.data);
     } catch (error) {

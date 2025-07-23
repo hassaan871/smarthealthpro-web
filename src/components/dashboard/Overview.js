@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -21,13 +21,14 @@ import {
   PinIcon,
   MessageSquare,
 } from "lucide-react";
-import Context from "../context/context";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
+import api from "../../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const Overview = () => {
-  const { appointments, setAppointments } = useContext(Context);
+  const [appointments, setAppointments] = useState([]);
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,37 +36,44 @@ const Overview = () => {
   }, []);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const userString = localStorage.getItem("userToken");
-        if (!userString) {
-          throw new Error("User data not found in local storage");
-        }
-        const doctorId = userString;
-
-        if (!doctorId) {
-          throw new Error("Doctor ID not found in user data");
-        }
-
-        const response = await fetch(
-          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch appointments");
-        }
-
-        const data = await response.json();
-        const pendingAppointments = data.filter(
-          (apt) => apt.appointmentStatus === "pending"
-        );
-        setAppointments(pendingAppointments);
-      } catch (err) {
-        console.error(err.message);
-      }
-    };
-
+    console.log("[Overview] Current Auth State:", { loading, user });
     fetchAppointments();
-  }, []);
+  }, [loading, user]);
+
+  const fetchAppointments = async () => {
+    console.log("🚀 Starting fetchAppointments with state:", {
+      loading,
+      user: !!user,
+      userId: user?._id,
+    });
+
+    // Don't fetch if still loading or user doesn't exist
+    if (loading || !user || !user._id) {
+      console.log("⏳ Waiting for user authentication...", {
+        loading,
+        user: !!user,
+        userId: user?._id,
+      });
+      return;
+    }
+
+    try {
+      console.log("📡 Fetching appointments for user:", user._id);
+      const appointmentsResponse = await api.get(
+        `/appointment/getAppointmentsByDoctorId`
+      );
+      const appointmentsData = appointmentsResponse.data;
+      console.log("✅ Appointments Received:", appointmentsData);
+
+      const pendingAppointments = appointmentsData.filter(
+        (apt) => apt.appointmentStatus === "pending"
+      );
+      console.log("📌 Pending Appointments:", pendingAppointments.length);
+      setAppointments(pendingAppointments);
+    } catch (err) {
+      console.error("appointment not fetched: ", err.message);
+    }
+  };
 
   const salesData = [
     { name: "Jan", value: 18 },
@@ -151,15 +159,13 @@ const Overview = () => {
 
   const handleViewClick = async (appointment) => {
     try {
-      const userId = localStorage.getItem("userToken");
+      const userId = user._id;
       if (!userId) {
         throw new Error("User not authenticated");
       }
 
       // Get all conversations for the current user
-      const conversationsResponse = await axios.get(
-        `http://localhost:5000/conversations/${userId}`
-      );
+      const conversationsResponse = await api.get(`/conversations`);
 
       const conversations = conversationsResponse.data;
       console.log("All conversations:", conversations);
@@ -169,6 +175,7 @@ const Overview = () => {
       // Modified conversation finding logic
       const existingConversation = conversations.find((conv) => {
         // The participants array contains the direct IDs, so this comparison should work
+
         return (
           conv.participants.includes(userId) &&
           conv.participants.includes(appointment.patient.id)

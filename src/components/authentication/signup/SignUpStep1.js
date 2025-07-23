@@ -228,6 +228,7 @@ function SignUpStep1({ formData, updateFormData, onNext }) {
                   className="text-primary text-decoration-none"
                   onClick={(e) => {
                     e.preventDefault();
+                    console.log("Redirecting to login page from SignUpStep1");
                     navigate("/login");
                   }}
                 >

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { encrypt, decrypt } from "../../encrypt/Encrypt";
+import { encrypt, decrypt } from "../../../encrypt/Encrypt.js";
+import api from "../../../api/axiosInstance";
 
 function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
   const [cnicError, setCnicError] = useState("");
@@ -62,14 +62,11 @@ function SignUpStep2({ formData, updateFormData, onNext, onBack }) {
         // Encrypt CNIC before sending to server
         const encryptedCnic = encrypt(cnic);
 
-        const response = await axios.get(
-          `http://localhost:5000/check-cnic/${encryptedCnic}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await api.post(`/check-cnic/${encryptedCnic}`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         return true;
       } catch (error) {
         if (error.response?.status === 400) {

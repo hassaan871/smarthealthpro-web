@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  FiUser,
   FiCalendar,
   FiUsers,
   FiSettings,
@@ -10,10 +9,12 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import api from "../../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const Nav = ({ setActiveSection, activeSection }) => {
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState("Appointments");
+  const { setUser } = useAuth();
 
   const navItems = [
     { name: "Overview", icon: FiGrid, path: "/dashboard/overview" },
@@ -24,15 +25,19 @@ const Nav = ({ setActiveSection, activeSection }) => {
     { name: "Log out", icon: FiLogOut, path: "/login" },
   ];
 
-  const logoutHandler = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
-
-  const handleNavigation = (item) => {
+  const handleNavigation = async (item) => {
     if (item.name === "Log out") {
-      localStorage.clear();
-      navigate("/login");
+      try {
+        await api.post("/logout");
+        console.log("User logged out");
+        console.log("redirecting because of logout nav.js");
+
+        setUser(null); // Clear user state in context
+        // Optionally, clear any client-side state (like Redux or local context)
+        navigate("/login");
+      } catch (err) {
+        console.error("Logout failed", err);
+      }
     } else {
       setActiveSection(item.name);
       navigate(item.path);
@@ -44,7 +49,7 @@ const Nav = ({ setActiveSection, activeSection }) => {
         <a
           className="navbar-brand"
           href="/dashboard/overview"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/login")}
         >
           SmartHealthPro
         </a>

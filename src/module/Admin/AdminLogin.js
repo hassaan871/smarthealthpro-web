@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Mail, Lock } from "lucide-react";
-import axios from "axios"; // Added for making HTTP requests
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import api from "../../api/axiosInstance";
 
 function AdminLogin() {
   // Added hook for programmatic navigation
@@ -35,10 +35,7 @@ function AdminLogin() {
 
     try {
       console.log("Submitting with data:", formData);
-      const response = await axios.post(
-        "http://localhost:5000/user/admin/login",
-        formData
-      );
+      const response = await api.post("/user/admin/login", formData);
       console.log("Login response:", response.data);
 
       if (response.data) {

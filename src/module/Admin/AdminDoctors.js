@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
-import axios from "axios";
+import api from "../../api/axiosInstance";
 
 const AdminDoctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -13,9 +13,7 @@ const AdminDoctors = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/user/getAllDoctors"
-        );
+        const response = await api.get("/user/getAllDoctors");
         setDoctors(response.data);
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -164,9 +162,7 @@ const AdminDoctors = () => {
   const handleDeleteDoctor = async () => {
     setIsDeleting(true);
     try {
-      await axios.delete(
-        `http://localhost:5000/user/deleteUser/${doctorToDelete.user._id}`
-      );
+      await api.delete(`/user/deleteUser/${doctorToDelete.user._id}`);
       setDoctors(
         doctors.filter((doctor) => doctor.user._id !== doctorToDelete.user._id)
       );

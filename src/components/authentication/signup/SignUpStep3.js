@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../../api/axiosInstance";
 
 function SignUpStep3({ formData, onBack, onComplete }) {
   const navigate = useNavigate();
@@ -24,15 +24,11 @@ function SignUpStep3({ formData, onBack, onComplete }) {
     formData.append("file", image);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/user/uploadPic",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await api.post("/user/uploadPic", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       console.log("Image upload response:", response.data);
       return response.data.avatar.url;
@@ -99,15 +95,11 @@ function SignUpStep3({ formData, onBack, onComplete }) {
 
       console.log("Data to upload:", transformedData);
 
-      const response = await axios.post(
-        "http://localhost:5000/user/register",
-        transformedData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await api.post("/user/register", transformedData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       console.log("Response from API:", response.data);
 

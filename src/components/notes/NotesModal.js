@@ -1,14 +1,12 @@
-import axios from "axios";
-import React, { useState, useEffect, useContext } from "react";
-import Context from "../context/context";
-import { encrypt, decrypt } from "../encrypt/Encrypt";
+import React, { useState, useEffect } from "react";
+import { encrypt, decrypt } from "../../encrypt/Encrypt";
+import api from "../../api/axiosInstance";
 
 const NotesModal = ({ show, onHide, appointment }) => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { userInfo } = useContext(Context);
 
   const modalStyles = `
     .fade-in {
@@ -61,16 +59,11 @@ const NotesModal = ({ show, onHide, appointment }) => {
   const fetchNotes = async (id) => {
     try {
       setLoading(true);
-      const userString = localStorage.getItem("userToken");
-      const response = await axios.get(
-        `http://localhost:5000/user/getMatchingNotes`,
-        {
-          params: {
-            doctorId: userString,
-            patientId: id,
-          },
-        }
-      ); // Decrypt each note before setting to state
+      const response = await api.get(`/user/getMatchingNotes`, {
+        params: {
+          patientId: id,
+        },
+      }); // Decrypt each note before setting to state
       const decryptedNotes = response.data.notes.map((note) => ({
         ...note,
         note: decrypt(note.note), // Decrypt the note content
@@ -121,7 +114,7 @@ const NotesModal = ({ show, onHide, appointment }) => {
       };
 
       console.log("body is: ", body);
-      await axios.post(`http://localhost:5000/user/addNotes`, body);
+      await api.post(`/user/addNotes`, body);
 
       setIsSuccess(true);
       setNewNote("");

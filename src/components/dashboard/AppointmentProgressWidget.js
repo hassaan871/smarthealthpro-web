@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -12,12 +11,13 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import Context from "../context/context";
-import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
-import { encrypt, decrypt } from "../encrypt/Encrypt";
+import { getPriorityConfig } from "../../colorsConfig";
+import { encrypt, decrypt } from "../../encrypt/Encrypt";
+import { useAuth } from "../context/AuthContext";
+import api from "../../api/axiosInstance";
 
-const AppointmentProgressWidget = ({ fromOverview }) => {
-  const { appointments, setAppointments } = useContext(Context);
+const AppointmentProgressWidget = () => {
+  const [appointments, setAppointments] = useState([]);
   const location = useLocation();
   const tab = location.state?.activeTab || "today";
   const [activeTab, setActiveTab] = useState(tab);
@@ -45,9 +45,10 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const [editingPrescription, setEditingPrescription] = useState(null);
   const [isPrioritySaving, setIsPrioritySaving] = useState(false);
   const [showPrioritySuccess, setShowPrioritySuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const { user, loading } = useAuth();
 
   // State to store prescriptions and notes
   const [medicalRecords, setMedicalRecords] = useState({});
@@ -97,8 +98,8 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
         instructions: encrypt(editingPrescription.instructions),
       };
 
-      const response = await fetch(
-        `http://localhost:5000/appointment/${record.appointmentId}/prescriptions/${prescription.id}`, // Adjust the URL to match the API
+      const response = await api.get(
+        `/appointment/${record.appointmentId}/prescriptions/${prescription.id}`, // Adjust the URL to match the API
         {
           method: "PUT",
           headers: {
@@ -228,19 +229,13 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
 
   const fetchAppointments = async () => {
     try {
-      const userString = localStorage.getItem("userToken");
-      if (!userString) throw new Error("User data not found");
-      const doctorId = userString;
-      if (!doctorId) throw new Error("Doctor ID not found");
-
-      const response = await fetch(
-        `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch appointments");
-      const data = await response.json();
+      const response = await api.get(`/appointment/getAppointmentsByDoctorId`);
+      console.log("Appointments response 121:", response);
+      const data = response.data;
       const pendingAppointments = data.filter(
         (apt) => apt.appointmentStatus === "pending"
       );
+      console.log("Pending appointments set", pendingAppointments[0]);
       setAppointments(pendingAppointments);
     } catch (err) {
       setError(err.message);
@@ -249,7 +244,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [loading, user]);
 
   useEffect(() => {
     localStorage.setItem("medicalRecords", JSON.stringify(medicalRecords));
@@ -266,10 +261,11 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
     setShowViewModal(true);
     setLoading(true);
 
-    const link = `http://localhost:5000/appointment/${appointment.patient.id}/prescription`;
+    const link = `/appointment/${appointment.patient.id}/prescription`;
     console.log("link is: ", link);
 
-    fetch(link)
+    api
+      .get(link)
       .then((response) => response.json())
       .then((data) => {
         console.log("Prescription data from API:", data);
@@ -317,8 +313,8 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
 
     console.log("body is: ", body);
     try {
-      const response = await fetch(
-        `http://localhost:5000/appointment/${selectedAppointment._id}/prescription`,
+      const response = await api.get(
+        `/appointment/${selectedAppointment._id}/prescription`,
         {
           method: "POST",
           headers: {
@@ -362,14 +358,12 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
 
   const handleChat = async (appointment) => {
     try {
-      const userId = localStorage.getItem("userToken");
+      const userId = user._id;
       if (!userId) {
         throw new Error("User not authenticated");
       }
 
-      const conversationsResponse = await axios.get(
-        `http://localhost:5000/conversations/${userId}`
-      );
+      const conversationsResponse = await api.get(`/conversations`);
 
       const conversations = conversationsResponse.data;
 
@@ -445,9 +439,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const confirmCancellation = async (appointmentId) => {
     setIsCancelling(true);
     try {
-      await axios.patch(
-        `http://localhost:5000/appointment/${appointmentId}/cancel`
-      );
+      await api.patch(`/appointment/${appointmentId}/cancel`);
       fetchAppointments(); // Refresh the list
       setShowCancelConfirmation(false);
       showAlertMessage(
@@ -757,7 +749,7 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
             <div className="modal-body">
               <div className="mb-4">
                 <h6 className="text-lg font-semibold mb-3">Prescriptions</h6>
-                {loading ? (
+                {isLoading ? (
                   <div className="text-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
@@ -993,8 +985,8 @@ const AppointmentProgressWidget = ({ fromOverview }) => {
   const handlePriorityChange = async (appointmentId, newPriority) => {
     setIsPrioritySaving(true);
     try {
-      const response = await fetch(
-        `http://localhost:5000/appointment/updateAppointment/${appointmentId}`,
+      const response = await api.get(
+        `/appointment/updateAppointment/${appointmentId}`,
         {
           method: "PUT",
           headers: {

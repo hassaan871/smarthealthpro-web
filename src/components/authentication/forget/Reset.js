@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../../api/axiosInstance";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function ResetPassword() {
@@ -24,8 +24,8 @@ function ResetPassword() {
     }
 
     try {
-      const response = await axios.post(
-        `http://10.135.8.107:5000/user/reset-password/${userId}/${token}`,
+      const response = await api.post(
+        `https://10.135.8.107:5000/user/reset-password/${token}`,
         {
           password: newPassword,
         }
@@ -36,6 +36,7 @@ function ResetPassword() {
 
       // Redirect to login page after successful reset
       setTimeout(() => {
+        console.log("redirecting because of reset reset.js");
         navigate("/login");
       }, 2000);
     } catch (err) {

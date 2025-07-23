@@ -7,11 +7,12 @@ import DoctorProfile from "../doctor/DoctorProfile/DoctorProfile";
 import Overview from "./Overview";
 import ChatScreen from "../Chat/ChatScreen";
 import { AlertCircle } from "lucide-react";
-import Context from "../context/context";
-import axios from "axios";
+// pages/Appointments.jsx
+import { useAuth } from "../context/AuthContext";
+import api from "../../api/axiosInstance";
 
 const Dashboard = () => {
-  const { setAppointments, setUserInfo } = useContext(Context);
+  const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const [activeSection, setActiveSection] = useState(() => {
@@ -21,87 +22,71 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    const fetchDoctorData = async () => {
-      const userString = localStorage.getItem("userToken");
-      const userId = userString;
+    const fetchDoctorAndAppointments = async () => {
+      console.log(
+        "[Effect Triggered] Checking if user and loading state are valid..."
+      );
+
+      if (loading) {
+        console.log("Still loading auth...");
+        return;
+      }
+
+      if (!user || !user._id) {
+        console.warn("❌ No user or user._id found.");
+        return;
+      }
+
+      console.log("✅ Authenticated User:", user);
+
+      setIsLoading(true);
 
       try {
-        const userResponse = await axios.get(
-          `http://localhost:5000/user/getUserInfo/${userId}`
-        );
+        // === 1. Fetch User Info ===
+        console.log("📡 Fetching user info...");
+        const userResponse = await api.get(`/user/getUserInfo`);
         const userData = userResponse.data.user;
+        console.log("✅ User Info Received:", userData);
 
-        const doctorsResponse = await axios.get(
-          "http://localhost:5000/user/getAllDoctors"
-        );
+        // === 2. Fetch All Doctors ===
+        console.log("📡 Fetching all doctors...");
+        const doctorsResponse = await api.get("/user/getAllDoctors");
         const doctorsData = doctorsResponse.data;
+        console.log("✅ Doctors List Received:", doctorsData.length);
 
-        const doctorData = doctorsData.find((doctor) => doctor.user === userId);
-        const doctorId = doctorData ? doctorData._id : null;
-
-        if (doctorId) {
-          const doctorResponse = await axios.get(
-            `http://localhost:5000/user/getDoctorById/${doctorId}`
-          );
-          const doctorDetails = doctorResponse.data;
-
-          // Convert the fetched office hours to our internal format
-          const formattedOfficeHours = {};
-          Object.entries(doctorDetails.officeHours || {}).forEach(
-            ([day, hours]) => {
-              formattedOfficeHours[day] = {
-                status: hours === "Closed" ? "closed" : "open",
-                time: hours,
-              };
-            }
-          );
-          const User = {
-            userData,
-            doctor: doctorDetails,
-          };
-
-          setUserInfo(User);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchDoctorData();
-  }, []);
-
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const userString = localStorage.getItem("userToken");
-        if (!userString) {
-          throw new Error("User data not found in local storage");
-        }
-        const doctorId = userString;
-
-        if (!doctorId) {
-          throw new Error("Doctor ID not found in user data");
-        }
-
-        const response = await fetch(
-          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+        // === 3. Find Doctor ===
+        const doctorData = doctorsData.find(
+          (doctor) => doctor.user === user._id
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch appointments");
-        }
 
-        const data = await response.json();
-        const pendingAppointments = data.filter(
-          (apt) => apt.appointmentStatus === "pending"
+        // === 4. Fetch Doctor Details ===
+        console.log("📡 Fetching doctor details...");
+        const doctorResponse = await api.get(`/user/getDoctorById`);
+        const doctorDetails = doctorResponse.data;
+        console.log("✅ Doctor Details Received");
+
+        // === 5. Format Office Hours ===
+        const formattedOfficeHours = {};
+        Object.entries(doctorDetails.officeHours || {}).forEach(
+          ([day, hours]) => {
+            formattedOfficeHours[day] = {
+              status: hours === "Closed" ? "closed" : "open",
+              time: hours,
+            };
+          }
         );
-        setAppointments(pendingAppointments);
+
+        console.log("✅ User Info set in Context");
       } catch (err) {
-        console.error(err.message);
+        console.error("❌ Error during fetchDoctorAndAppointments:", err);
+      } finally {
+        setIsLoading(false);
+        console.log("✅ Loading state turned off");
       }
     };
 
-    fetchAppointments();
-  }, []);
+    fetchDoctorAndAppointments();
+  }, [user, loading]);
 
   // Add effect to handle route changes
   useEffect(() => {

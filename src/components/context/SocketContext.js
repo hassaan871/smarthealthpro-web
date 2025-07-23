@@ -6,6 +6,7 @@ import React, {
   useRef,
 } from "react";
 import io from "socket.io-client";
+import { useAuth } from "./AuthContext";
 
 const SocketContext = createContext();
 
@@ -24,6 +25,35 @@ export const SocketContextProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+  const { user, loading } = useAuth();
+
+  React.useEffect(() => {
+    if (!loading && user) {
+      connectSocket();
+    }
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [loading, user]);
+
+  const disconnectSocket = useCallback(() => {
+    if (socketRef.current) {
+      console.log("Disconnecting socket");
+
+      // Remove all listeners to prevent memory leaks
+      socketRef.current.removeAllListeners();
+
+      // Close the connection
+      socketRef.current.close();
+
+      // Reset state and refs
+      socketRef.current = null;
+      setSocket(null);
+      setIsConnected(false);
+      setError(null);
+    }
+  }, []);
 
   const connectSocket = useCallback(async () => {
     if (socketRef.current) {
@@ -32,14 +62,8 @@ export const SocketContextProvider = ({ children }) => {
     }
 
     try {
-      const userId = await localStorage.getItem("userToken");
-      if (!userId) {
-        setError("No user token found. Unable to connect to the server.");
-        return;
-      }
-
-      const newSocket = io("http://192.168.18.124:5000", {
-        query: { userId },
+      const newSocket = io("https://localhost:5000", {
+        withCredentials: true,
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
@@ -90,6 +114,13 @@ export const SocketContextProvider = ({ children }) => {
         setError("Failed to reconnect after multiple attempts");
       });
 
+      newSocket.on("error", (error) => {
+        if (error === "Authentication error") {
+          setError("Authentication failed. Please login again.");
+          disconnectSocket();
+        }
+      });
+
       // Set socket in state and ref
       setSocket(newSocket);
       socketRef.current = newSocket;
@@ -97,24 +128,6 @@ export const SocketContextProvider = ({ children }) => {
       console.error("Error initializing socket:", err);
       setError("An unexpected error occurred while connecting to the server");
       setIsConnected(false);
-    }
-  }, []);
-
-  const disconnectSocket = useCallback(() => {
-    if (socketRef.current) {
-      console.log("Disconnecting socket");
-
-      // Remove all listeners to prevent memory leaks
-      socketRef.current.removeAllListeners();
-
-      // Close the connection
-      socketRef.current.close();
-
-      // Reset state and refs
-      socketRef.current = null;
-      setSocket(null);
-      setIsConnected(false);
-      setError(null);
     }
   }, []);
 

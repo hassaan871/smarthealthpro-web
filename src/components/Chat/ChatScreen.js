@@ -1,511 +1,331 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useContext,
-} from "react";
-import Context from "../context/context";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSocketContext } from "../../components/context/SocketContext";
-import axios from "axios";
-import { FiSearch, FiSend, FiPaperclip } from "react-icons/fi";
+import { FiSearch, FiSend, FiPaperclip, FiX, FiFileText } from "react-icons/fi";
 import "./ChatScreen.css";
-import { encrypt, decrypt } from "../encrypt/Encrypt";
+import { encrypt, decrypt } from "../../encrypt/Encrypt";
 import { debounce } from "lodash";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import api from "../../api/axiosInstance";
 
-import { FiX, FiMessageSquare, FiFileText } from "react-icons/fi";
+// Online Status Dot Component
+const OnlineStatusDot = ({ isOnline }) => (
+  <span
+    className={`online-dot${isOnline ? "" : " offline"}`}
+    title={isOnline ? "Online" : "Offline"}
+  />
+);
 
-// Add this component at the top of your file
-const OnlineStatusIndicator = ({ userId }) => {
-  const [isOnline, setIsOnline] = useState(false);
-  const { socket } = useSocketContext();
+// Add global online user state
+// const [onlineMap, setOnlineMap] = useState({}); // This line is removed
 
-  useEffect(() => {
-    if (!socket || !userId) {
-      console.log("Missing socket or userId:", { socket: !!socket, userId });
-      return;
-    }
+// Listen for userStatus and onlineUsers events globally
+// useEffect(() => { // This block is removed
+//   if (!socket) return;
 
-    // Check initial status
-    socket.emit("checkOnlineStatus", userId);
+//   const handleUserStatus = ({ userId, isOnline }) => {
+//     setOnlineMap((prev) => ({ ...prev, [userId]: isOnline }));
+//   };
 
-    // Listen for status updates
-    const handleUserStatus = (data) => {
-      if (data.userId === userId) {
-        setIsOnline(data.isOnline);
-      }
-    };
+//   const handleOnlineUsers = (userIds) => {
+//     setOnlineMap((prev) => {
+//       const newMap = { ...prev };
+//       // Set all users in the list as online, others as offline
+//       Object.keys(newMap).forEach((id) => {
+//         newMap[id] = false;
+//       });
+//       userIds.forEach((id) => {
+//         newMap[id] = true;
+//       });
+//       return newMap;
+//     });
+//   };
 
-    socket.on("userStatus", handleUserStatus);
+//   socket.on("userStatus", handleUserStatus);
+//   socket.on("onlineUsers", handleOnlineUsers);
 
-    return () => {
-      socket.off("userStatus", handleUserStatus);
-    };
-  }, [socket, userId]);
+//   return () => {
+//     socket.off("userStatus", handleUserStatus);
+//     socket.off("onlineUsers", handleOnlineUsers);
+//   };
+// }, [socket]); // This line is removed
 
+// Update OnlineStatusIndicator to use onlineMap
+const OnlineStatusIndicator = ({ userId, showText, onlineMap }) => {
+  const isOnline = onlineMap[userId] || false;
   return (
-    <div className="flex items-center gap-2">
-      <div
-        className={`w-2 h-2 rounded-full ${
-          isOnline ? "bg-green-500" : "bg-gray-500"
-        }`}
-      />
-      <span className="text-sm text-gray-400">
-        {isOnline ? "Online" : "Offline"}
-      </span>
-    </div>
+    <span className="header-status-indicator">
+      <OnlineStatusDot isOnline={isOnline} />
+      {showText && (
+        <span className="header-status-text">
+          {isOnline ? "Online" : "Offline"}
+        </span>
+      )}
+    </span>
   );
 };
 
+// Memoized Details Sidebar
 const DetailsSidebar = ({ isOpen, onClose, selectedConversation }) => {
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState("none");
   const [loadingStates, setLoadingStates] = useState({
     summary: false,
     notes: false,
     prescriptions: false,
   });
-  const [summaries, setSummaries] = useState([]);
-  const [notes, setNotes] = useState([]);
-  const [prescriptions, setPrescriptions] = useState({});
-  const { userInfo } = useContext(Context);
+  const [data, setData] = useState({
+    summaries: [],
+    notes: [],
+    prescriptions: [],
+  });
+  const { user } = useAuth();
+
+  const setLoadingFor = useCallback((tab, isLoading) => {
+    setLoadingStates((prev) => ({ ...prev, [tab]: isLoading }));
+  }, []);
+
+  const fetchData = useCallback(
+    async (tab) => {
+      if (!selectedConversation?.participants[1]) return;
+
+      try {
+        setLoadingFor(tab, true);
+        const patientIDIndex = selectedConversation.participants.findIndex(
+          (id) => id !== user._id
+        );
+        const patientID = selectedConversation.participants[patientIDIndex];
+
+        let response;
+        switch (tab) {
+          case "summary":
+            response = await api.get(`/user/getSummaries/${patientID}`);
+            setData((prev) => ({ ...prev, summaries: response.data }));
+            break;
+          case "notes":
+            response = await api.get(`/user/getMatchingNotes`, {
+              params: { patientId: patientID },
+            });
+            const decryptedNotes = response.data.notes.map((note) => ({
+              ...note,
+              note: decrypt(note.note),
+            }));
+            setData((prev) => ({ ...prev, notes: decryptedNotes }));
+            break;
+          case "prescriptions":
+            response = await fetch(`/appointment/${patientID}/prescription`);
+            const prescriptionData = await response.json();
+            const decryptedPrescriptions = prescriptionData.data.map(
+              (record) => ({
+                ...record,
+                prescriptions: record.prescriptions.map((prescription) => ({
+                  ...prescription,
+                  medication: decrypt(prescription.medication),
+                  dosage: decrypt(prescription.dosage),
+                  frequency: decrypt(prescription.frequency),
+                  duration: decrypt(prescription.duration),
+                  instructions: decrypt(prescription.instructions),
+                })),
+              })
+            );
+            setData((prev) => ({
+              ...prev,
+              prescriptions: decryptedPrescriptions,
+            }));
+            break;
+        }
+      } catch (error) {
+        console.error(`Error fetching ${tab}:`, error);
+        setData((prev) => ({ ...prev, [tab]: [] }));
+      } finally {
+        setLoadingFor(tab, false);
+      }
+    },
+    [selectedConversation, user._id, setLoadingFor]
+  );
 
   useEffect(() => {
     if (selectedConversation?.participants[1]) {
-      if (activeTab === "summary") {
-        fetchSummaries();
-      } else if (activeTab === "notes") {
-        fetchNotes(selectedConversation.participants[1]);
-      } else if (activeTab === "prescriptions" && selectedConversation._id) {
-        fetchPrescriptions();
-      }
-    } else {
-      console.log("h2");
+      fetchData(activeTab);
     }
-  }, [selectedConversation, activeTab]);
+  }, [selectedConversation, activeTab, fetchData]);
 
-  const setLoadingFor = (tab, isLoading) => {
-    setLoadingStates((prev) => ({
-      ...prev,
-      [tab]: isLoading,
-    }));
-  };
-
-  const fetchSummaries = async () => {
-    console.log("fetching summary");
-    try {
-      setLoadingFor("summary", true);
-      const patientIDIndex = selectedConversation.participants.findIndex(
-        (id) => id !== userInfo
-      );
-      const patientID = selectedConversation.participants[patientIDIndex];
-      console.log("userinfo: ", userInfo);
-      const link = `http://localhost:5000/user/getSummaries/${patientID}/${userInfo}`;
-      console.log("link is: ", link);
-      const response = await axios.get(link);
-      console.log("Summaries response:", response.data);
-      setSummaries(response.data);
-    } catch (error) {
-      console.error("Error fetching summaries:", error);
-      setSummaries([]);
-    } finally {
-      setLoadingFor("summary", false);
-    }
-  };
-
-  const fetchNotes = async (patientId) => {
-    try {
-      setLoadingFor("notes", true);
-      const userString = localStorage.getItem("userToken");
-      const response = await axios.get(
-        `http://localhost:5000/user/getMatchingNotes`,
-        {
-          params: {
-            doctorId: userString,
-            patientId: patientId,
-          },
-        }
-      );
-      const decryptedNotes = response.data.notes.map((note) => ({
-        ...note,
-        note: decrypt(note.note), // Decrypt the note content
-      }));
-      setNotes(decryptedNotes);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
-      setNotes([]);
-    } finally {
-      setLoadingFor("notes", false);
-    }
-  };
-
-  const fetchPrescriptions = async () => {
-    try {
-      setLoadingFor("prescriptions", true);
-
-      const patientIDIndex = selectedConversation.participants.findIndex(
-        (id) => id !== userInfo
-      );
-      const patientID = selectedConversation.participants[patientIDIndex];
-      const response = await fetch(
-        `http://localhost:5000/appointment/${patientID}/prescription`
-      );
-      const data = await response.json();
-      const decryptedPrescriptions = data.data.map((record) => ({
-        ...record,
-        prescriptions: record.prescriptions.map((prescription) => ({
-          ...prescription,
-          medication: decrypt(prescription.medication),
-          dosage: decrypt(prescription.dosage),
-          frequency: decrypt(prescription.frequency),
-          duration: decrypt(prescription.duration),
-          instructions: decrypt(prescription.instructions),
-        })),
-      }));
-      console.log("Raw API Response:", data);
-      setPrescriptions(decryptedPrescriptions);
-    } catch (error) {
-      console.error("Error fetching prescriptions:", error);
-      setPrescriptions({});
-    } finally {
-      setLoadingFor("prescriptions", false);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const options = {
+  const formatDate = useCallback((dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    };
-    return new Date(dateString).toLocaleDateString("en-US", options);
-  };
+    });
+  }, []);
 
-  const renderLoader = () => (
-    <div className="loading-state">
-      <div className="loader-container">
-        <div className="loader"></div>
-        <div className="loader-text">Loading...</div>
-      </div>
-    </div>
-  );
-
-  const renderContent = () => {
+  const renderContent = useMemo(() => {
     if (loadingStates[activeTab]) {
-      return renderLoader();
+      return (
+        <div className="loading-state">
+          <div className="loader-container">
+            <div className="loader"></div>
+            <div className="loader-text">Loading...</div>
+          </div>
+        </div>
+      );
     }
+
+    const renderItems = (items, type) => {
+      if (!items?.length) {
+        return <div className="empty-state">No {type} available</div>;
+      }
+
+      return items.map((item, index) => (
+        <div key={index} className={`${type}-item`}>
+          <div className="item-header">
+            <span className="item-type">
+              {type === "summaries"
+                ? "Summary"
+                : type === "notes"
+                ? "Clinical Note"
+                : "Prescription"}
+            </span>
+            <span className="item-date">
+              {formatDate(item.createdAt || item.date)}
+            </span>
+          </div>
+          <div className="item-content">
+            {type === "summaries" && item.summary}
+            {type === "notes" && item.note}
+            {type === "prescriptions" && (
+              <div className="prescription-content">
+                <div className="medicine-name">{item.medication}</div>
+                <div className="medicine-details">
+                  <div>Dosage: {item.dosage}</div>
+                  <div>Frequency: {item.frequency}</div>
+                  <div>Duration: {item.duration}</div>
+                  <div>Instructions: {item.instructions}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ));
+    };
 
     switch (activeTab) {
       case "summary":
         return (
           <div className="summaries-list">
-            {summaries?.length > 0 ? (
-              summaries.map((summary, index) => (
-                <div key={index} className="summary-item">
-                  <div className="item-header">
-                    <span className="item-type">Summary</span>
-                    <span className="item-date">
-                      {formatDate(summary.createdAt)}
-                    </span>
-                  </div>
-                  <div className="item-content">{summary.summary}</div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">No summaries available</div>
-            )}
+            {renderItems(data.summaries, "summaries")}
           </div>
         );
-
       case "notes":
         return (
-          <div className="notes-list">
-            {notes?.length > 0 ? (
-              notes.map((note, index) => (
-                <div key={index} className="note-item">
-                  <div className="item-header">
-                    <span className="item-type">Clinical Note</span>
-                    <span className="item-date">{formatDate(note.date)}</span>
-                  </div>
-                  <div className="item-content">{note.note}</div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">No clinical notes available</div>
-            )}
-          </div>
+          <div className="notes-list">{renderItems(data.notes, "notes")}</div>
         );
-
       case "prescriptions":
+        const flatPrescriptions = data.prescriptions.flatMap((appointment) =>
+          appointment.prescriptions.map((prescription) => ({
+            ...prescription,
+            date: appointment.date,
+          }))
+        );
         return (
           <div className="prescriptions-list">
-            {prescriptions.length > 0 ? (
-              prescriptions.map((appointment) =>
-                appointment.prescriptions.map((prescription, index) => (
-                  <div key={index} className="prescription-item">
-                    <div className="item-header">
-                      <span className="item-type">Prescription</span>
-                      <span className="item-date">{appointment.date}</span>
-                    </div>
-                    <div className="prescription-content">
-                      <div className="medicine-name">
-                        {prescription.medication}
-                      </div>
-                      <div className="medicine-details">
-                        <div>Dosage: {prescription.dosage}</div>
-                        <div>Frequency: {prescription.frequency}</div>
-                        <div>Duration: {prescription.duration}</div>
-                        <div>Instructions: {prescription.instructions}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )
-            ) : (
-              <div className="empty-state">No prescriptions available</div>
-            )}
+            {renderItems(flatPrescriptions, "prescriptions")}
           </div>
         );
       default:
         return null;
     }
-  };
+  }, [activeTab, loadingStates, data, formatDate]);
 
   return (
     <div className={`details-sidebar ${isOpen ? "open" : ""}`}>
       <div className="details-content">
         <div className="tabs-header">
-          <button
-            className={`tab ${activeTab === "summary" ? "active" : ""}`}
-            onClick={() => setActiveTab("summary")}
-          >
-            Summary
-          </button>
-          <button
-            className={`tab ${activeTab === "notes" ? "active" : ""}`}
-            onClick={() => setActiveTab("notes")}
-          >
-            Notes
-          </button>
-          <button
-            className={`tab ${activeTab === "prescriptions" ? "active" : ""}`}
-            onClick={() => setActiveTab("prescriptions")}
-          >
-            Prescriptions
-          </button>
+          {["summary", "notes", "prescriptions"].map((tab) => (
+            <button
+              key={tab}
+              className={`tab ${activeTab === tab ? "active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
           <div className="sidebar-header">
             <button onClick={onClose} className="close-sidebar-btn">
               <FiX />
             </button>
           </div>
         </div>
-
-        <div className="tab-content">{renderContent()}</div>
+        <div className="tab-content">{renderContent}</div>
       </div>
     </div>
   );
 };
 
+// Main ChatScreen Component
 const ChatScreen = () => {
-  const { setUserInfo, userInfo } = useContext(Context);
+  // State management
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messagesByConversation, setMessagesByConversation] = useState({});
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [messageReadStatus, setMessageReadStatus] = useState({});
-  const [activeTab, setActiveTab] = useState("chatSummaries");
+  const [onlineMap, setOnlineMap] = useState({});
+  const [typingUsers, setTypingUsers] = useState({});
+  const typingTimeoutRef = useRef(null);
+
+  // Refs and context
   const messagesEndRef = useRef(null);
-  const {
-    socket,
-    connectSocket,
-    disconnectSocket, // New: Added disconnectSocket
-    joinRoom, // New: Added joinRoom for explicit room management
-    isConnected, // New: Added connection status
-  } = useSocketContext();
+  const { user } = useAuth();
+  const { socket, connectSocket, disconnectSocket, joinRoom, isConnected } =
+    useSocketContext();
   const location = useLocation();
-  // console.log("Full location object:", location); // Debug full location object
+
+  // Debug: Log when ChatScreen mounts
+  // console.log("[ChatScreen] Rendered. User:", user);
+
+  // Move this to the top, before any useEffect or other usage!
+  const currentMessages = selectedConversation
+    ? messagesByConversation[selectedConversation._id] || []
+    : [];
+
+  const getDateLabel = (dateString) => {
+    const messageDate = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isSameDay = (d1, d2) =>
+      d1.getDate() === d2.getDate() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear();
+
+    if (isSameDay(messageDate, today)) return "Today";
+    if (isSameDay(messageDate, yesterday)) return "Yesterday";
+
+    const diffInDays = Math.floor(
+      (today - messageDate) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffInDays < 7) {
+      return messageDate.toLocaleDateString("en-US", { weekday: "long" });
+    }
+
+    return messageDate.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Navigation state
   const incomingConversation = location.state?.conversation;
-  // console.log("Incoming conversation:", incomingConversation);
-  // console.log("Received conversation in ChatScreen:", incomingConversation);
   const incomingPatient = location.state?.patient;
-  const doctorInfo = location.state?.doctorInfo;
 
-  useEffect(() => {
-    if (socket) {
-      const handleMessageRead = (data) => {
-        console.log("Received messageRead event:", data);
-
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === data.messageId
-              ? {
-                  ...msg,
-                  readStatus: {
-                    ...msg.readStatus,
-                    [data.userId]: true,
-                  },
-                }
-              : msg
-          )
-        );
-      };
-
-      socket.on("messageRead", handleMessageRead);
-      return () => socket.off("messageRead", handleMessageRead);
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (selectedConversation?._id && userInfo) {
-      const markMessagesAsRead = async () => {
-        try {
-          await axios.post(
-            `http://localhost:5000/conversations/${selectedConversation._id}/mark-messages-read`,
-            {
-              conversationId: selectedConversation._id,
-              userId: userInfo,
-            }
-          );
-
-          // Reset unread count
-          await axios.post(
-            `http://localhost:5000/conversations/${selectedConversation._id}/read/${userInfo}`
-          );
-        } catch (error) {
-          console.error("Error marking messages as read:", error);
-        }
-      };
-
-      markMessagesAsRead();
-    }
-  }, [selectedConversation?._id, userInfo]);
-
-  useEffect(() => {
-    console.log("ChatScreen mounted - initializing socket connection");
-    connectSocket(); // Connect socket when ChatScreen mounts
-
-    // Cleanup function runs when component unmounts
-    return () => {
-      console.log("ChatScreen unmounting - cleaning up socket connection");
-      disconnectSocket(); // Disconnect socket when leaving ChatScreen
-    };
-  }, [connectSocket, disconnectSocket]);
-
-  // 1. Consolidate socket event handlers into one place, outside of useEffect
-  const socketHandlers = {
-    handleDisconnect: (socket, connectSocket) => (reason) => {
-      console.log("Socket disconnected:", reason);
-      if (reason === "io server disconnect") {
-        connectSocket();
-      }
-    },
-
-    handleConversationUpdate: (setConversations) => (updatedConversation) => {
-      setConversations((prevConversations) => {
-        const index = prevConversations.findIndex(
-          (c) => c._id === updatedConversation._id
-        );
-        if (index !== -1) {
-          return [
-            ...prevConversations.slice(0, index),
-            updatedConversation,
-            ...prevConversations.slice(index + 1),
-          ];
-        }
-        return [updatedConversation, ...prevConversations];
-      });
-    },
-  };
-
-  // 2. Replace your current socket useEffect with this optimized version
-
-  // 3. Remove the standalone userInfo useEffect and combine it with socket initialization
-  useEffect(() => {
-    const userString = localStorage.getItem("userToken");
-    setUserInfo(userString);
-  }, [setUserInfo]);
-
-  // Function to create a new conversation
-  const createNewConversation = async (firstMessage) => {
-    try {
-      console.log("Creating new conversation...");
-
-      const newConversationResponse = await axios.post(
-        "http://localhost:5000/conversations",
-        {
-          currentUserId: doctorInfo.id,
-          otherUserId: incomingPatient.id,
-          currentUserObjectIdAvatar: doctorInfo.avatar,
-          otherUserObjectIdAvatar: incomingPatient.avatar,
-          currentUserObjectIdName: doctorInfo.name,
-          otherUserObjectIdName: incomingPatient.name,
-        }
-      );
-
-      const newConversation = newConversationResponse.data;
-      console.log("New conversation created:", newConversation);
-
-      // Set the selected conversation
-      setSelectedConversation(newConversation);
-
-      // Important: Join the socket room for the new conversation
-      if (socket?.connected && newConversation._id) {
-        socket.emit("joinRoom", newConversation._id);
-        console.log("Joined room:", newConversation._id);
-      }
-
-      // Wait for room join to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const encryptedContent = encrypt(firstMessage);
-      const messageData = {
-        conversationId: newConversation._id,
-        sender: userInfo,
-        content: encryptedContent,
-        timestamp: new Date(),
-      };
-
-      console.log("Sending first message with data:", messageData);
-
-      const messageResponse = await axios.post(
-        `http://localhost:5000/conversations/${newConversation._id}/messages`,
-        messageData
-      );
-
-      await axios.put(
-        `http://localhost:5000/conversations/${newConversation._id}/lastMessage`,
-        { lastMessage: firstMessage }
-      );
-
-      // Emit the message with conversation ID
-      if (socket?.connected) {
-        socket.emit("sendMessage", {
-          newMessage: messageResponse.data,
-          conversationId: newConversation._id, // Add this line
-        });
-        console.log(
-          "Message emitted to socket with conversationId:",
-          newConversation._id
-        );
-      }
-
-      // Update conversations list
-      setConversations((prev) => [newConversation, ...prev]);
-      setNewMessage("");
-
-      return newConversation;
-    } catch (error) {
-      console.error("Error in createNewConversation:", error);
-      throw error;
-    }
-  };
-
+  // Memoized decryption function
   const decryptMessage = useCallback((msg) => {
     try {
       return {
@@ -528,101 +348,82 @@ const ChatScreen = () => {
         ...msg,
         content: "Decryption failed",
         fileInfo: msg.fileInfo
-          ? {
-              ...msg.fileInfo,
-              originalName: "Unknown file",
-              url: "",
-            }
+          ? { ...msg.fileInfo, originalName: "Unknown file", url: "" }
           : null,
       };
     }
   }, []);
 
+  // Optimized fetch functions
   const fetchConversations = useCallback(async () => {
+    if (!user) {
+      setFetchError("User not authenticated. Please log in.");
+      return;
+    }
+
     try {
-      const userId = localStorage.getItem("userToken");
-      if (!userId) {
-        setFetchError("User not authenticated. Please log in.");
-        return;
-      }
-      const response = await axios.get(
-        `http://localhost:5000/conversations/${userId}`
-      );
+      const response = await api.get("/conversations");
       setConversations(response.data);
+      setFetchError(null);
     } catch (error) {
       console.error("Error fetching conversations:", error);
       setFetchError("Failed to load conversations. Please try again later.");
     }
-  }, [userInfo]);
+  }, [user]);
 
+  // Update fetchMessages to merge backend and socket messages
   const fetchMessages = useCallback(
     async (conversationId) => {
-      if (!conversationId) return;
-
+      if (!conversationId) return [];
       try {
         setLoading(true);
-        console.log("Fetching messages for conversation:", conversationId);
-
-        const response = await axios.get(
-          `http://localhost:5000/conversations/${conversationId}/messages`
+        const response = await api.get(
+          `/conversations/${conversationId}/messages`
         );
-
-        console.log("Raw messages from server:", response.data);
-
-        const decryptedMessages = response.data.map((msg) => {
-          const decryptedMsg = decryptMessage(msg);
-          // Ensure readStatus exists
+        const decryptedMessages = response.data.map((msg) => ({
+          ...decryptMessage(msg),
+          readStatus: msg.readStatus || { [user._id]: true },
+        }));
+        setMessagesByConversation((prev) => {
+          const socketMsgs = prev[conversationId] || [];
+          // Merge, avoiding duplicates
+          const allMsgs = [...decryptedMessages];
+          socketMsgs.forEach((msg) => {
+            if (!allMsgs.some((m) => m._id === msg._id)) allMsgs.push(msg);
+          });
           return {
-            ...decryptedMsg,
-            readStatus: decryptedMsg.readStatus || {
-              [userInfo]: true,
-            },
+            ...prev,
+            [conversationId]: allMsgs,
           };
         });
-
-        setMessages(decryptedMessages);
-
-        // Mark messages as read immediately after fetching
-        if (socket && socket.connected) {
-          const lastMessage = response.data[response.data.length - 1];
-          if (lastMessage && lastMessage.sender !== userInfo) {
-            socket.emit("messageRead", {
-              messageId: lastMessage._id,
-              conversationId: conversationId,
-              userId: userInfo,
-            });
-          }
-        }
+        return decryptedMessages;
       } catch (error) {
         console.error("Error fetching messages:", error);
         setFetchError("Failed to load messages. Please try again later.");
+        return [];
       } finally {
         setLoading(false);
       }
     },
-    [decryptMessage, userInfo, socket]
+    [decryptMessage, user._id]
   );
 
-  useEffect(() => {
-    if (selectedConversation?._id && isConnected) {
-      console.log("Joining conversation room:", selectedConversation._id);
-      joinRoom(selectedConversation._id);
-      fetchMessages(selectedConversation._id);
-    }
-  }, [selectedConversation, isConnected, joinRoom, fetchMessages]);
-
+  // --- Bulletproof socket event handlers ---
   const handleNewMessage = useCallback(
-    (newMessage) => {
-      console.log("Received new message:", newMessage);
-      const decryptedMessage = decryptMessage(newMessage);
-
-      setMessages((prevMessages) => {
-        if (prevMessages.some((msg) => msg._id === decryptedMessage._id)) {
+    (data) => {
+      console.log("Received new message:", data);
+      const decryptedMessage = decryptMessage(data);
+      setMessagesByConversation((prevMessages) => {
+        const convId = decryptedMessage.conversationId;
+        const convMessages = prevMessages[convId] || [];
+        if (convMessages.some((msg) => msg._id === decryptedMessage._id)) {
           return prevMessages;
         }
-        return [...prevMessages, decryptedMessage];
+        return {
+          ...prevMessages,
+          [convId]: [...convMessages, decryptedMessage],
+        };
       });
-
       setConversations((prevConversations) =>
         prevConversations.map((conv) =>
           conv._id === decryptedMessage.conversationId
@@ -638,399 +439,790 @@ const ChatScreen = () => {
     [decryptMessage]
   );
 
+  const handleTyping = useCallback((data) => {
+    // Implement your typing indicator logic here
+    // Example: setTypingUsers((prev) => ({ ...prev, [data.userId]: true }));
+    // You may need to add typingUsers state if not present
+  }, []);
+
+  const handleStopTyping = useCallback((data) => {
+    // Implement your stop typing indicator logic here
+    // Example: setTypingUsers((prev) => { const updated = { ...prev }; delete updated[data.userId]; return updated; });
+  }, []);
+
+  const handleMessageRead = useCallback((data) => {
+    setMessagesByConversation((prev) =>
+      Object.keys(prev).reduce((acc, convId) => {
+        const convMsgs = prev[convId] || [];
+        return {
+          ...acc,
+          [convId]: convMsgs.map((msg) =>
+            msg._id === data.messageId
+              ? {
+                  ...msg,
+                  readStatus: { ...msg.readStatus, [data.userId]: true },
+                }
+              : msg
+          ),
+        };
+      }, {})
+    );
+  }, []);
+
   useEffect(() => {
-    let isSubscribed = true;
+    if (!socket) return;
+    console.log("Attaching socket listeners");
+    socket.on("newMessage", handleNewMessage);
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    socket.on("messageRead", handleMessageRead);
+    return () => {
+      console.log("Detaching socket listeners");
+      socket.off("newMessage", handleNewMessage);
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+      socket.off("messageRead", handleMessageRead);
+    };
+  }, [
+    socket,
+    handleNewMessage,
+    handleTyping,
+    handleStopTyping,
+    handleMessageRead,
+  ]);
 
-    const initializeSocket = async () => {
-      if (!socket || !socket.connected) {
-        console.log("Initializing socket connection...");
-        await connectSocket();
-      }
+  // Socket connection management
+  useEffect(() => {
+    if (!user?._id) return;
 
-      // Add connection status logging
-      console.log("Socket connection status:", {
-        socketExists: !!socket,
-        isConnected: socket?.connected,
-        socketId: socket?.id,
-      });
+    connectSocket(user._id);
+    return () => disconnectSocket();
+  }, [user?._id, connectSocket, disconnectSocket]);
 
-      if (socket && isSubscribed) {
-        socket.on("connect", () => {
-          console.log("Socket connected successfully:", socket.id);
-        });
+  useEffect(() => {
+    if (!socket) return;
 
-        socket.on("disconnect", (reason) => {
-          console.log("Socket disconnected:", reason);
-          if (reason === "io server disconnect") {
-            connectSocket();
-          }
-        });
-
-        socket.on("newMessage", (data) => {
-          console.log("Received new message:", data);
-          if (data.conversationId) {
-            handleNewMessage(data);
-          } else {
-            console.warn("Received message without conversationId:", data);
-          }
-        });
-
-        // Add error handling
-        socket.on("connect_error", (error) => {
-          console.error("Socket connection error:", error);
-        });
-
-        socket.on("error", (error) => {
-          console.error("Socket error:", error);
-        });
-
-        if (selectedConversation?._id) {
-          socket.emit("joinRoom", selectedConversation._id);
-          console.log("Joined room:", selectedConversation._id);
-        }
-      }
+    const handleUserStatus = ({ userId, isOnline }) => {
+      console.log("[Socket] userStatus event:", userId, isOnline);
+      setOnlineMap((prev) => ({ ...prev, [userId]: isOnline }));
     };
 
-    initializeSocket();
+    const handleOnlineUsers = (userIds) => {
+      console.log("[Socket] onlineUsers event:", userIds);
+      setOnlineMap((prev) => {
+        const newMap = { ...prev };
+        Object.keys(newMap).forEach((id) => {
+          newMap[id] = false;
+        });
+        userIds.forEach((id) => {
+          newMap[id] = true;
+        });
+        return newMap;
+      });
+    };
+
+    socket.on("userStatus", handleUserStatus);
+    socket.on("onlineUsers", handleOnlineUsers);
 
     return () => {
-      isSubscribed = false;
-      if (socket) {
-        socket.off("newMessage");
-        socket.off("disconnect");
-        socket.off("connect");
-        socket.off("connect_error");
-        socket.off("error");
+      socket.off("userStatus", handleUserStatus);
+      socket.off("onlineUsers", handleOnlineUsers);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!selectedConversation?._id || !user) return;
+
+    const markMessagesAsRead = async () => {
+      try {
+        const conversationId = selectedConversation._id;
+
+        // 1. Mark messages as read in DB
+        await api.post(`/conversations/${conversationId}/mark-messages-read`, {
+          conversationId,
+        });
+
+        // 2. Reset unread count
+        await api.post(`/conversations/${conversationId}/read`);
+
+        // 3. Emit "messageRead" for unread messages
+        if (socket?.connected) {
+          const unreadMessages = messagesByConversation[conversationId]?.filter(
+            (msg) =>
+              msg.sender !== user._id &&
+              (!msg.readStatus || !msg.readStatus[user._id])
+          );
+
+          unreadMessages.forEach((msg) => {
+            socket.emit("messageRead", {
+              messageId: msg._id,
+              conversationId,
+              userId: user._id,
+            });
+          });
+        }
+      } catch (error) {
+        console.error("🔴 Error marking messages as read:", error);
       }
     };
-  }, [socket, connectSocket, selectedConversation]);
 
+    markMessagesAsRead();
+  }, [selectedConversation?._id, user._id, socket, messagesByConversation]);
+
+  // Room management
+  useEffect(() => {
+    if (selectedConversation?._id && isConnected) {
+      joinRoom(selectedConversation._id);
+      fetchMessages(selectedConversation._id);
+    }
+  }, [selectedConversation?._id, isConnected, joinRoom, fetchMessages]);
+
+  // Initial data loading
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Handle incoming conversation
   useEffect(() => {
-    if (selectedConversation) {
-      fetchMessages(selectedConversation._id);
-    }
-  }, [selectedConversation, fetchMessages]);
-
-  useEffect(() => {
-    console.log(
-      "useEffect triggered with incomingConversation:",
-      incomingConversation
-    );
-    // If we have an incoming conversation from navigation, select it
     if (incomingConversation) {
-      console.log("Setting selected conversation:", incomingConversation);
       setSelectedConversation(incomingConversation);
-      // Fetch messages for existing conversation
       if (incomingConversation._id) {
-        console.log(
-          "Fetching messages for conversation ID:",
-          incomingConversation._id
-        );
         fetchMessages(incomingConversation._id);
       }
     }
   }, [incomingConversation, fetchMessages]);
 
+  // Auto-scroll to bottom only if user is near the bottom or a new message is sent by the user
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const container = messagesEndRef.current?.parentNode;
+    if (!container) return;
 
-  // Modified send message function
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !socket?.connected) return;
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    // If the last message is sent by the user, always scroll
+    else if (
+      currentMessages.length &&
+      currentMessages[currentMessages.length - 1].sender === user._id
+    ) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    // Otherwise, do not auto-scroll (user is reading history)
+  }, [currentMessages, user._id]);
+
+  // Always scroll to bottom when messages for the selected conversation are loaded or change
+  useEffect(() => {
+    if (!selectedConversation?._id) return;
+    if (currentMessages.length > 0) {
+      // Scroll immediately
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      // Scroll after a short delay
+      const timeout1 = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+
+      // Scroll after a longer delay
+      const timeout2 = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 250);
+
+      // Clean up
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
+    }
+  }, [selectedConversation?._id, currentMessages.length]);
+
+  // Auto-scroll to bottom when typing indicator appears (typingUsers changes)
+  useEffect(() => {
+    if (!selectedConversation?._id) return;
+    if (Object.keys(typingUsers).length > 0) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 30);
+    }
+  }, [typingUsers, selectedConversation?._id]);
+
+  // Message sending
+  const createNewConversation = useCallback(
+    async (firstMessage) => {
+      try {
+        const response = await api.post("/conversations", {
+          otherUserId: incomingPatient.id,
+        });
+
+        const newConversation = response.data;
+        setSelectedConversation(newConversation);
+
+        if (socket?.connected) {
+          socket.emit("joinRoom", newConversation._id);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        const messageData = {
+          conversationId: newConversation._id,
+          sender: user._id,
+          content: encrypt(firstMessage),
+          timestamp: new Date(),
+        };
+
+        const messageResponse = await api.post(
+          `/conversations/${newConversation._id}/messages`,
+          messageData
+        );
+
+        await api.put(`/conversations/${newConversation._id}/lastMessage`, {
+          lastMessage: firstMessage,
+        });
+
+        if (socket?.connected) {
+          socket.emit("sendMessage", {
+            newMessage: messageResponse.data,
+            conversationId: newConversation._id,
+          });
+        }
+
+        setConversations((prev) => [newConversation, ...prev]);
+        setNewMessage("");
+
+        return newConversation;
+      } catch (error) {
+        console.error("Error creating conversation:", error);
+        throw error;
+      }
+    },
+    [incomingPatient, socket, user._id]
+  );
+
+  const sendMessage = useCallback(async () => {
+    if (!newMessage.trim()) return;
+
+    const tempId = Date.now().toString(); // Temporary ID
+    const timestamp = new Date();
+    const messagePayload = {
+      _id: tempId,
+      content: newMessage,
+      sender: user._id,
+      timestamp,
+      status: "sending",
+    };
+
+    // Optimistically add message to UI
+    setMessagesByConversation((prev) => {
+      const convId = selectedConversation?._id;
+      if (!convId) return prev;
+      const prevMsgs = prev[convId] || [];
+      if (prevMsgs.some((msg) => msg._id === tempId)) return prev;
+      return {
+        ...prev,
+        [convId]: [...prevMsgs, messagePayload],
+      };
+    });
+    setNewMessage("");
 
     try {
       let conversationToUse = selectedConversation;
 
+      // Create conversation if doesn't exist yet
       if (!conversationToUse && incomingPatient) {
-        try {
-          conversationToUse = await createNewConversation(newMessage);
-          return; // createNewConversation handles everything
-        } catch (error) {
-          console.error("Error creating new conversation:", error);
-          alert("Failed to create conversation. Please try again.");
-          return;
-        }
+        conversationToUse = await createNewConversation(newMessage);
       }
 
-      const encryptedContent = encrypt(newMessage);
-      const messageData = {
-        conversationId: conversationToUse._id,
-        sender: userInfo,
-        content: encryptedContent,
-        timestamp: new Date(),
+      const payload = {
+        conversationId: conversationToUse._id, // backend needs this
+        sender: user._id,
+        content: encrypt(newMessage),
+        timestamp,
       };
 
-      const response = await axios.post(
-        `http://localhost:5000/conversations/${conversationToUse._id}/messages`,
-        messageData
+      const response = await api.post(
+        `/conversations/${conversationToUse._id}/sendMessageAtomic`,
+        payload
       );
 
-      await axios.put(
-        `http://localhost:5000/conversations/${conversationToUse._id}/lastMessage`,
-        { lastMessage: newMessage }
-      );
-
-      // Include conversationId in socket emission
+      // Emit socket event for real-time update
       if (socket?.connected) {
         socket.emit("sendMessage", {
           newMessage: response.data,
-          conversationId: conversationToUse._id, // Add this line
+          conversationId: conversationToUse._id,
         });
-        console.log(
-          "Message emitted to socket with conversationId:",
-          conversationToUse._id
-        );
       }
 
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-      alert("Failed to send the message. Please try again.");
+      // Replace temporary message with server-confirmed message
+      setMessagesByConversation((prev) => {
+        const convId = selectedConversation?._id;
+        if (!convId) return prev;
+        return {
+          ...prev,
+          [convId]: prev[convId]?.map((msg) =>
+            msg._id === tempId
+              ? { ...decryptMessage(response.data), status: "sent" }
+              : msg
+          ),
+        };
+      });
+    } catch (err) {
+      console.error("Message send failed", err);
+
+      // Mark message as failed so UI can reflect retry option or failure
+      setMessagesByConversation((prev) => {
+        const convId = selectedConversation?._id;
+        if (!convId) return prev;
+        return {
+          ...prev,
+          [convId]: prev[convId]?.map((msg) =>
+            msg._id === tempId ? { ...msg, status: "failed" } : msg
+          ),
+        };
+      });
     }
+  }, [
+    newMessage,
+    selectedConversation,
+    incomingPatient,
+    createNewConversation,
+    decryptMessage,
+    user._id,
+    socket,
+  ]);
+
+  const retryMessage = async (failedMessage) => {
+    setNewMessage(failedMessage.content); // Prefill input with failed content
   };
 
   const debouncedSendMessage = useCallback(
-    debounce(() => sendMessage(), 300, { leading: true, trailing: false }),
+    debounce(sendMessage, 300, { leading: true, trailing: false }),
     [sendMessage]
   );
 
-  const joinConversationRoom = useCallback(
-    (conversationId) => {
-      if (!socket?.connected || !conversationId) return;
+  // File upload
+  const handleFileUpload = useCallback(
+    async (event) => {
+      const file = event.target.files[0];
+      if (
+        !file ||
+        (!selectedConversation && !incomingPatient) ||
+        !socket?.connected
+      )
+        return;
 
-      console.log("Attempting to join room:", conversationId);
-      socket.emit("joinRoom", conversationId);
-    },
-    [socket]
-  );
+      let conversationToUse = selectedConversation;
 
-  useEffect(() => {
-    if (selectedConversation?._id) {
-      console.log("Selected conversation changed:", selectedConversation._id);
-      joinConversationRoom(selectedConversation._id);
-      fetchMessages(selectedConversation._id);
-    }
-  }, [selectedConversation, joinConversationRoom, fetchMessages]);
+      try {
+        // 1. Upload file to server
+        const formData = new FormData();
+        formData.append("file", file);
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file || !selectedConversation || !socket?.connected) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const uploadResponse = await axios.post(
-        `http://localhost:5000/upload`,
-        formData,
-        {
+        const uploadResponse = await api.post("/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-
-      const encryptedFileName = encrypt(uploadResponse.data.file.originalName);
-      const encryptedFileUrl = encrypt(uploadResponse.data.file.url);
-
-      const messageData = {
-        content: encrypt("File shared"),
-        sender: userInfo,
-        conversationId: selectedConversation._id,
-        timestamp: new Date(),
-        fileInfo: {
-          ...uploadResponse.data.file,
-          originalName: encryptedFileName,
-          url: encryptedFileUrl,
-        },
-      };
-
-      const response = await axios.post(
-        `http://localhost:5000/conversations/${selectedConversation._id}/messages`,
-        messageData
-      );
-
-      await axios.put(
-        `http://localhost:5000/conversations/${selectedConversation._id}/lastMessage`,
-        { lastMessage: "File shared" }
-      );
-
-      if (socket.connected) {
-        socket.emit("sendMessage", {
-          newMessage: response.data,
-          conversationId: selectedConversation._id, // Add conversationId here
         });
+
+        // 2. If conversation doesn't exist, create it first
+        if (!conversationToUse && incomingPatient) {
+          conversationToUse = await createNewConversation("File shared");
+        }
+
+        // 3. Prepare fileInfo for message
+        const uploadedFile = uploadResponse.data.file;
+        const fileInfo = {
+          ...uploadedFile,
+          originalName: encrypt(uploadedFile.originalName),
+          url: encrypt(uploadedFile.url),
+        };
+
+        // 4. Send file message using atomic endpoint
+        const messageData = {
+          conversationId: conversationToUse._id,
+          sender: user._id,
+          fileInfo,
+        };
+
+        const response = await api.post(
+          `/conversations/${conversationToUse._id}/sendMessageAtomic`,
+          messageData
+        );
+
+        // 5. Emit socket event for real-time update
+        if (socket.connected) {
+          socket.emit("sendMessage", {
+            newMessage: response.data,
+            conversationId: conversationToUse._id,
+          });
+        }
+
+        // 6. Optionally update lastMessage in conversation list (already handled by backend)
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        alert("Failed to upload file. Please try again.");
       }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("Failed to upload file. Please try again.");
-    }
-  };
-
-  const formatTime = (time) => {
-    const options = { hour: "numeric", minute: "numeric", hour12: true };
-    return new Date(time).toLocaleString("en-US", options);
-  };
-
-  const getOtherUserName = (conversation) => {
-    if (!conversation || !conversation.name || !userInfo) return "Unknown";
-    const otherUserIndex = conversation.participants.findIndex(
-      (id) => id !== userInfo
-    );
-    return conversation.name[otherUserIndex] || "Unknown";
-  };
-
-  const getOtherUserAvatar = (conversation) => {
-    if (!conversation || !conversation.avatar || !userInfo)
-      return "default-avatar.png";
-    const otherUserIndex = conversation.participants.findIndex(
-      (id) => id !== userInfo
-    );
-
-    return conversation.avatar[otherUserIndex]?.url?.length > 0
-      ? conversation.avatar[otherUserIndex].url
-      : conversation.avatar[otherUserIndex];
-  };
-
-  const filteredConversations = conversations.filter((conv) =>
-    getOtherUserName(conv).toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const handleFileClick = (fileInfo) => {
-    if (fileInfo && fileInfo.url) {
-      const decodedUrl = fileInfo.url;
-      const decodedFileName = fileInfo.originalName;
-
-      if (fileInfo.mimetype === "application/pdf") {
-        window.open(decodedUrl, "_blank");
-      } else {
-        const link = document.createElement("a");
-        link.href = decodedUrl;
-        link.download = decodedFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    }
-  };
-
-  // Modified conversation item rendering
-  const renderConversationItem = (conv) => (
-    <div
-      key={conv._id}
-      className={`conversation-item bg-gray-800 hover:bg-gray-700 ${
-        selectedConversation?._id === conv._id ? "bg-gray-700" : ""
-      }`}
-      onClick={() => setSelectedConversation(conv)}
-    >
-      <img
-        src={getOtherUserAvatar(conv)}
-        alt={getOtherUserName(conv)}
-        className="conversation-avatar"
-      />
-      <div className="conversation-info">
-        <h4 className="text-white">{getOtherUserName(conv)}</h4>
-        <p className="text-gray-400">{conv.lastMessage || "No messages yet"}</p>
-      </div>
-      <span className="conversation-time text-gray-500">
-        {formatTime(conv.updatedAt)}
-      </span>
-    </div>
+    },
+    [
+      selectedConversation,
+      incomingPatient,
+      socket,
+      user._id,
+      createNewConversation,
+    ]
   );
 
-  // Render the active chat header
-  const renderChatHeader = () => {
-    if (selectedConversation) {
-      const otherUserId = selectedConversation.participants.find(
-        (id) => id !== userInfo
+  // Utility functions
+  const formatTime = useCallback((time) => {
+    return new Date(time).toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+  }, []);
+
+  const getOtherUserName = useCallback(
+    (conversation) => {
+      if (!conversation?.name || !user._id) return "Unknown";
+      const otherUserIndex = conversation.participants.findIndex(
+        (id) => id !== user._id
       );
+      return conversation.name[otherUserIndex] || "Unknown";
+    },
+    [user._id]
+  );
+
+  const getOtherUserAvatar = useCallback(
+    (conversation) => {
+      if (!conversation?.avatar || !user._id) return "default-avatar.png";
+      const otherUserIndex = conversation.participants.findIndex(
+        (id) => id !== user._id
+      );
+      const avatar = conversation.avatar[otherUserIndex];
+      return avatar?.url?.length > 0 ? avatar.url : avatar;
+    },
+    [user._id]
+  );
+
+  const handleFileClick = useCallback((fileInfo) => {
+    if (!fileInfo?.url) return;
+    // Use url and originalName as-is, do NOT decrypt again
+    const url = fileInfo.url;
+    const originalName = fileInfo.originalName;
+
+    if (fileInfo.mimetype === "application/pdf") {
+      window.open(url, "_blank");
+    } else {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, []);
+
+  // When a conversation is selected, clear its unread count for the current user in the UI
+  const handleSelectConversation = async (conv) => {
+    // Clear unread count visually for the current user
+    setConversations((prevConvs) =>
+      prevConvs.map((c) => {
+        if (c._id === conv._id) {
+          // If unreadCount is a number, set to 0. If it's an object, set for current user.
+          if (typeof c.unreadCount === "number") {
+            return { ...c, unreadCount: 0 };
+          } else if (c.unreadCount && user?._id) {
+            return {
+              ...c,
+              unreadCount: { ...c.unreadCount, [user._id]: 0 },
+            };
+          }
+        }
+        return c;
+      })
+    );
+    // Fetch and merge messages, then set selectedConversation
+    await fetchMessages(conv._id);
+    setSelectedConversation(conv);
+  };
+
+  // Memoized filtered conversations
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((conv) =>
+        getOtherUserName(conv).toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [conversations, searchQuery, getOtherUserName]
+  );
+
+  // Render functions
+  const renderConversationItem = useCallback(
+    (conv) => {
+      const unreadCount =
+        typeof conv.unreadCount === "number"
+          ? conv.unreadCount
+          : conv.unreadCount && user?._id
+          ? conv.unreadCount[user._id]
+          : 0;
 
       return (
-        <div className="header-content2">
-          <div className="flex items-center gap-3">
-            <img
-              src={getOtherUserAvatar(selectedConversation)}
-              alt={getOtherUserName(selectedConversation)}
-              className="conversation-avatar2"
-            />
-            <div className="header-text2">
-              <h3 className="text-white">
-                {getOtherUserName(selectedConversation)}
-              </h3>
-              <OnlineStatusIndicator userId={otherUserId} />
-            </div>
+        <div
+          key={conv._id}
+          className={`conversation-item bg-gray-800 hover:bg-gray-700 ${
+            selectedConversation?._id === conv._id ? "bg-gray-700" : ""
+          }`}
+          onClick={async () => await handleSelectConversation(conv)}
+          style={{ position: "relative" }}
+        >
+          <img
+            src={getOtherUserAvatar(conv)}
+            alt={getOtherUserName(conv)}
+            className="conversation-avatar"
+          />
+          <div className="conversation-info">
+            <h4 className="text-white">{getOtherUserName(conv)}</h4>
+            <p className="text-gray-400">
+              {decrypt(conv.lastMessage) ||
+                conv.lastMessage ||
+                "No messages yet"}
+            </p>
           </div>
+          <span className="conversation-time text-gray-500">
+            {formatTime(conv.updatedAt)}
+          </span>
+          {/* Unread count badge */}
+          {unreadCount > 0 && (
+            <span
+              className="unread-badge"
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 16,
+                background: "#e53e3e",
+                color: "white",
+                borderRadius: "50%",
+                minWidth: 22,
+                height: 22,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 700,
+                zIndex: 2,
+                boxShadow: "0 0 0 2px #222",
+              }}
+            >
+              {unreadCount}
+            </span>
+          )}
+        </div>
+      );
+    },
+    [
+      selectedConversation,
+      getOtherUserAvatar,
+      getOtherUserName,
+      formatTime,
+      user._id,
+    ]
+  );
+
+  function ChatHeader({
+    avatar,
+    name,
+    userId,
+    showDetailsToggle,
+    isSidebarOpen,
+    onToggleSidebar,
+    onlineMap,
+  }) {
+    const [showStatusText, setShowStatusText] = useState(true);
+
+    useEffect(() => {
+      setShowStatusText(true);
+      const timer = setTimeout(() => setShowStatusText(false), 3000);
+      return () => clearTimeout(timer);
+    }, [userId]);
+
+    return (
+      <div className="header-content2">
+        <div className="header-row">
+          <img src={avatar} alt={name} className="conversation-avatar2" />
+          <span className="header-name">
+            {name}
+            <OnlineStatusIndicator
+              userId={userId}
+              showText={showStatusText}
+              onlineMap={onlineMap}
+            />
+          </span>
+        </div>
+        {showDetailsToggle && (
           <button
             className="details-toggle"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={onToggleSidebar}
+            title={isSidebarOpen ? "Close details" : "Show details"}
           >
             {isSidebarOpen ? <FiX /> : <FiFileText />}
           </button>
-        </div>
-      );
+        )}
+      </div>
+    );
+  }
+
+  const renderChatHeader = () => {
+    let avatar,
+      name,
+      userId,
+      showDetailsToggle = false;
+    if (selectedConversation) {
+      avatar = getOtherUserAvatar(selectedConversation);
+      name = getOtherUserName(selectedConversation);
+
+      userId = selectedConversation.participants.find((id) => id !== user._id);
+      showDetailsToggle = true;
     } else if (incomingPatient) {
-      return (
-        <div className="header-content2">
-          <div className="flex items-center gap-3">
-            <img
-              src={incomingPatient.avatar}
-              alt={incomingPatient.name}
-              className="conversation-avatar2"
-            />
-            <div className="header-text2">
-              <h3 className="text-white">{incomingPatient.name}</h3>
-              <OnlineStatusIndicator userId={incomingPatient.id} />
-            </div>
-          </div>
-        </div>
-      );
+      avatar = incomingPatient.avatar;
+      name = incomingPatient.name;
+      userId = incomingPatient.id;
+    } else {
+      return null;
     }
-    return null;
+    return (
+      <ChatHeader
+        avatar={avatar}
+        name={name}
+        userId={userId}
+        showDetailsToggle={showDetailsToggle}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onlineMap={onlineMap}
+      />
+    );
   };
 
   useEffect(() => {
-    if (selectedConversation?._id && userInfo) {
-      const markMessagesAsRead = async () => {
-        try {
-          // Mark messages as read in the backend
-          await axios.post(
-            `http://localhost:5000/conversations/${selectedConversation._id}/mark-messages-read`,
-            {
-              conversationId: selectedConversation._id,
-              userId: userInfo,
-            }
-          );
+    if (!isConnected || !conversations.length) return;
+    conversations.forEach((conv) => {
+      joinRoom(conv._id);
+    });
+  }, [isConnected, conversations, joinRoom]);
 
-          // Emit socket event for real-time update
-          if (socket && socket.connected) {
-            const unreadMessages = messages.filter(
-              (msg) =>
-                msg.sender !== userInfo &&
-                (!msg.readStatus || !msg.readStatus[userInfo])
-            );
-
-            unreadMessages.forEach((msg) => {
-              socket.emit("messageRead", {
-                messageId: msg._id,
-                conversationId: selectedConversation._id,
-                userId: userInfo,
-              });
-            });
-          }
-        } catch (error) {
-          console.error("Error marking messages as read:", error);
-        }
-      };
-
-      markMessagesAsRead();
+  useEffect(() => {
+    if (socket && user?._id) {
+      socket.emit("register", user._id);
     }
-  }, [selectedConversation?._id, userInfo, socket]);
+  }, [socket, user?._id]);
+
+  // Add this handler for input change to emit typing events
+  const handleInputChange = (e) => {
+    setNewMessage(e.target.value);
+    if (!socket || !selectedConversation) return;
+    socket.emit("typing", { conversationId: selectedConversation._id });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stopTyping", { conversationId: selectedConversation._id });
+    }, 1500); // 1.5 seconds after user stops typing
+  };
+
+  // Listen for typing and stopTyping events
+  useEffect(() => {
+    if (!socket || !selectedConversation) return;
+    const handleTyping = ({ userId, conversationId }) => {
+      if (conversationId !== selectedConversation._id || userId === user._id)
+        return;
+      setTypingUsers((prev) => ({ ...prev, [userId]: true }));
+    };
+    const handleStopTyping = ({ userId, conversationId }) => {
+      if (conversationId !== selectedConversation._id || userId === user._id)
+        return;
+      setTypingUsers((prev) => {
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
+      });
+    };
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+    };
+  }, [socket, selectedConversation, user._id]);
+
+  // Optional: Clear typing users on conversation change
+  useEffect(() => {
+    setTypingUsers({});
+  }, [selectedConversation?._id]);
+
+  // Log socket connection status and id
+  useEffect(() => {
+    if (socket) {
+      console.log("[Socket] ID:", socket.id, "Connected:", socket.connected);
+    }
+  }, [socket]);
+
+  // On socket reconnect, re-join all active conversation rooms
+  useEffect(() => {
+    if (!socket) return;
+    const handleReconnect = () => {
+      if (conversations && conversations.length > 0) {
+        conversations.forEach((conv) => {
+          if (conv._id) {
+            socket.emit("joinRoom", conv._id);
+            console.log("[Socket] Re-joining room:", conv._id);
+          }
+        });
+      }
+    };
+    socket.on("reconnect", handleReconnect);
+    return () => {
+      socket.off("reconnect", handleReconnect);
+    };
+  }, [socket, conversations]);
+
+  // Force reconnect on tab visibility change if socket is not connected
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (
+        document.visibilityState === "visible" &&
+        socket &&
+        !socket.connected
+      ) {
+        console.log(
+          "Tab became visible and socket is disconnected. Forcing reconnect..."
+        );
+        socket.connect();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [socket]);
+
+  // Emit messageRead for all unread messages as soon as conversation/messages are loaded
+  useEffect(() => {
+    if (selectedConversation?._id && socket && socket.connected) {
+      const unreadMessages = (
+        messagesByConversation[selectedConversation._id] || []
+      ).filter(
+        (msg) =>
+          msg.sender !== user._id &&
+          (!msg.readStatus || !msg.readStatus[user._id])
+      );
+      unreadMessages.forEach((msg) => {
+        socket.emit("messageRead", {
+          messageId: msg._id,
+          conversationId: selectedConversation._id,
+          userId: user._id,
+        });
+      });
+    }
+  }, [selectedConversation?._id, socket, user._id, messagesByConversation]);
 
   return (
     <div className="chat-screen">
+      {/* Socket status indicator removed */}
       <div className="chat-sidebar bg-gray-800 border-r border-gray-700">
         <div className="chat-search bg-gray-700">
           <div className="input-group">
@@ -1060,8 +1252,6 @@ const ChatScreen = () => {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           selectedConversation={selectedConversation}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
         />
         {selectedConversation || incomingConversation || incomingPatient ? (
           <>
@@ -1073,56 +1263,129 @@ const ChatScreen = () => {
                 {loading ? (
                   <div className="loader text-gray-400"></div>
                 ) : (
-                  messages.map((message, index) => {
-                    const isLastMessage = index === messages.length - 1;
-                    const otherUserId = selectedConversation.participants.find(
-                      (id) => id !== userInfo
-                    );
-                    const isRead =
-                      message.readStatus && message.readStatus[otherUserId];
+                  (() => {
+                    let lastMessageDate = null;
 
-                    return (
-                      <div
-                        key={index}
-                        className={`message ${
-                          message.sender === userInfo ? "sent" : "received"
-                        }`}
-                      >
-                        {message.fileInfo ? (
-                          <div
-                            className="file-message"
-                            onClick={() => handleFileClick(message.fileInfo)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <FiPaperclip />
-                            <span>{message.fileInfo.originalName}</span>
-                          </div>
-                        ) : (
-                          <p>{message.content}</p>
-                        )}
-                        <span className="message-time">
-                          {formatTime(message.timestamp)}
-                          {message.sender === userInfo && isLastMessage && (
-                            <span className="message-status">
-                              {" • "}
-                              {isRead ? "Read" : "Delivered"}
-                            </span>
+                    return currentMessages.map((message, index) => {
+                      const messageDate = new Date(message.timestamp);
+                      const currentDateStr = messageDate.toDateString();
+
+                      const showDateSeparator =
+                        currentDateStr !== lastMessageDate;
+                      lastMessageDate = currentDateStr;
+
+                      const isLastMessage =
+                        index === currentMessages.length - 1;
+                      const otherUserId =
+                        selectedConversation?.participants.find(
+                          (id) => id !== user._id
+                        );
+                      // Use readStatus as-is (no decryption)
+                      const isRead = message.readStatus?.[otherUserId];
+
+                      return (
+                        <div key={message._id || index}>
+                          {showDateSeparator && (
+                            <div className="date-separator">
+                              <span>{getDateLabel(message.timestamp)}</span>
+                            </div>
                           )}
-                        </span>
-                      </div>
-                    );
-                  })
+
+                          <div
+                            className={`message ${
+                              message.sender === user._id ? "sent" : "received"
+                            }`}
+                          >
+                            {message.fileInfo ? (
+                              <div
+                                className="file-message"
+                                onClick={() =>
+                                  handleFileClick({
+                                    ...message.fileInfo,
+                                    // No need to decrypt here, already decrypted in decryptMessage
+                                    url: message.fileInfo.url,
+                                    originalName: message.fileInfo.originalName,
+                                  })
+                                }
+                                style={{ cursor: "pointer" }}
+                              >
+                                <FiPaperclip />
+                                <span>
+                                  {message.fileInfo.originalName}{" "}
+                                  <span className="file-type">
+                                    ({message.fileInfo.mimetype})
+                                  </span>
+                                </span>
+                                <span className="file-view-link">
+                                  {message.fileInfo.mimetype ===
+                                  "application/pdf"
+                                    ? "View"
+                                    : "Download"}
+                                </span>
+                              </div>
+                            ) : (
+                              <p>{message.content}</p>
+                            )}
+
+                            <span className="message-time">
+                              {formatTime(message.timestamp)}
+                              {message.sender === user._id && (
+                                <span className="message-status">
+                                  {" • "}
+                                  {message.status === "failed" ? (
+                                    <span
+                                      className="text-red-400 cursor-pointer"
+                                      onClick={() => retryMessage(message)}
+                                    >
+                                      Failed. Retry?
+                                    </span>
+                                  ) : message.status === "sending" ? (
+                                    "Sending..."
+                                  ) : isLastMessage ? (
+                                    isRead ? (
+                                      "Read"
+                                    ) : (
+                                      "Delivered"
+                                    )
+                                  ) : null}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()
                 )}
+                {/* Typing indicator */}
+                <div
+                  className={
+                    "typing-indicator" +
+                    (Object.keys(typingUsers).length === 0
+                      ? " typing-indicator--hidden"
+                      : "")
+                  }
+                >
+                  {Object.keys(typingUsers).map((id) => (
+                    <span key={id}>
+                      Typing
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                    </span>
+                  ))}
+                </div>
                 <div ref={messagesEndRef} />
               </div>
             </div>
+
             <div className="chat-input bg-gray-800 border-t border-gray-700">
               <input
                 type="text"
                 className="bg-gray-700 text-white border-0 focus:ring-2 focus:ring-blue-500"
                 placeholder="Type a message"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleInputChange}
                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               />
               <input
@@ -1137,6 +1400,12 @@ const ChatScreen = () => {
               >
                 <FiPaperclip />
               </label>
+              {!socket?.connected && (
+                <div className="text-yellow-400 text-sm text-center py-1">
+                  ⚠️ Disconnected. Messages will fail to send.
+                </div>
+              )}
+
               <button
                 onClick={debouncedSendMessage}
                 className="text-gray-400 hover:text-white"

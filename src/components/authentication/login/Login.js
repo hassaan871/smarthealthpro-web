@@ -1,40 +1,48 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Context from "../../context/context";
-import axios from "axios";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import api from "../../../api/axiosInstance";
+import { useAuth } from "../../context/AuthContext";
+import localforage from "localforage";
+import {
+  uploadPublicKeys,
+  generatePreKeys,
+  generateKeyPair,
+} from "../../../encrypt/Crypto.js";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+  const { user, checkSession } = useAuth();
   const navigate = useNavigate();
-  const { setUserInfo, setToken } = useContext(Context);
 
   useEffect(() => {
-    const auth = localStorage.getItem("userToken");
-    if (auth) {
-      navigate("/dashboard");
+    if (user) {
+      console.log("✅ User already logged in — redirecting to dashboard");
+      navigate("/dashboard/overview");
     }
-  }, [navigate]);
+  }, [user]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5000/user/login", {
+      console.log("Attempting to log in with:", { email, password });
+      const response = await api.post("/login", {
         email,
         password,
+        isMobileClient: false, // explicitly say it's web
       });
-      const result = response.data;
 
-      if (result.token && result.role === "doctor") {
-        console.log("userToken: ", result.token);
-        localStorage.setItem("userToken", result.id);
-        setToken(result.id);
-        navigate("/dashboard/overview");
+      const result = response.data;
+      console.log("Login response:", result);
+
+      if (result.message === "Login successful") {
+        console.log("Login successful:", result);
+
+        await checkSession();
       } else {
         setError("Invalid credentials. Please try again.");
       }

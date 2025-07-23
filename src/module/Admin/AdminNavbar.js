@@ -17,6 +17,7 @@ const AdminNavbar = () => {
     event.preventDefault();
     // Clear any authentication tokens
     localStorage.removeItem("adminInfo");
+    console.log("Admin logged out, redirecting to login page.");
     navigate("/admin/login");
   };
 

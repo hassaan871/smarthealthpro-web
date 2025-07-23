@@ -15,13 +15,33 @@ import {
 } from "../components/dashboard/Dashboard";
 import ChatScreen from "../components/Chat/ChatScreen";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { useAuth } from "../components/context/AuthContext";
 
 const DoctorRoutes = () => {
+  const { user } = useAuth();
+
+  const NavigateToLogin = () => {
+    console.log("Redirecting to login because of / doctor route");
+    return <Navigate to="/login" />;
+  };
+
+  const Redirect404 = () => {
+    console.log("Redirecting because of 404 doctorRoutes.js");
+    return <Navigate to="/" replace />;
+  };
+
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<NavigateToLogin />} />
+
+      <Route
+        path="/login"
+        element={
+          user ? <Navigate to="/dashboard/overview" replace /> : <Login />
+        }
+      />
+
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
@@ -48,7 +68,10 @@ const DoctorRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard/overview" replace />} />
+        <Route
+          index
+          element={user ? <Navigate to="overview" /> : <Navigate to="/login" />}
+        />
         <Route path="overview" element={<DashboardOverview />} />
         <Route path="appointments" element={<DashboardAppointments />} />
         <Route path="patients" element={<DashboardPatients />} />
@@ -58,7 +81,7 @@ const DoctorRoutes = () => {
       </Route>
 
       {/* Catch all route - 404 */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Redirect404 />} />
     </Routes>
   );
 };

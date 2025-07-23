@@ -15,10 +15,11 @@ import {
   ClipboardList,
   CheckCircle, // Add this
 } from "lucide-react";
-import axios from "axios";
 import SummaryModal from "../notes/SummaryModal";
 import NotesModal from "../notes/NotesModal";
 import { getPriorityConfig, getStatusConfig } from "../../colorsConfig";
+import api from "../../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 const Patients = () => {
   const [appointments, setAppointments] = useState([]);
@@ -33,6 +34,7 @@ const Patients = () => {
   const [note, setNote] = useState("");
   const [updatingPriority, setUpdatingPriority] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { user, loading2 } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,19 +45,13 @@ const Patients = () => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
-        const userString = localStorage.getItem("userToken");
+        const userString = user._id;
         if (!userString) {
           throw new Error("User data not found in local storage");
         }
 
-        const doctorId = userString;
-
-        if (!doctorId) {
-          throw new Error("Doctor ID not found in user data");
-        }
-
-        const response = await fetch(
-          `http://localhost:5000/appointment/getAppointmentsByDoctorId/${doctorId}`
+        const response = await api.get(
+          `/appointment/getAppointmentsByDoctorId`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch appointments");
@@ -80,15 +76,13 @@ const Patients = () => {
 
   const handleViewClick = async (appointment) => {
     try {
-      const userId = localStorage.getItem("userToken");
+      const userId = user._id;
       if (!userId) {
         throw new Error("User not authenticated");
       }
 
       // Get all conversations for the current user
-      const conversationsResponse = await axios.get(
-        `http://localhost:5000/conversations/${userId}`
-      );
+      const conversationsResponse = await api.get(`/conversations`);
 
       const conversations = conversationsResponse.data;
       console.log("All conversations:", conversations);
@@ -167,8 +161,8 @@ const Patients = () => {
     e.stopPropagation();
     setUpdatingPriority(appointmentId);
     try {
-      const response = await fetch(
-        `http://localhost:5000/appointment/updateAppointment/${appointmentId}`,
+      const response = await api.get(
+        `/appointment/updateAppointment/${appointmentId}`,
         {
           method: "PUT",
           headers: {
